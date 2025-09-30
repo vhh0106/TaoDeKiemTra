@@ -2,8 +2,8 @@
 import { GoogleGenAI } from "@google/genai";
 import type { ExamFormData } from '../types';
 
-// The API key is expected to be set as an environment variable.
-const apiKey = process.env.API_KEY;
+// The API key is expected to be set as a Vite environment variable.
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 if (!apiKey) {
     throw new Error("API_KEY environment variable not set");
 }
