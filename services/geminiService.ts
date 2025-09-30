@@ -39,6 +39,7 @@ Bạn là một trợ lý AI chuyên gia cho giáo viên Việt Nam, có chuyên
       ĐỀ KIỂM TRA
       NĂM HỌC 2025-2026
       MÔN: ${data.subject}
+      lỚP: ${data.grade}
       Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
       \`\`\`
       Sau khối tiêu đề trên, chỉ chứa đề bài hoàn chỉnh cho học sinh. **TUYỆT ĐỐI KHÔNG** bao gồm bất kỳ đáp án, lời giải, hay hướng dẫn chấm nào trong phần này.
@@ -128,6 +129,13 @@ Bây giờ, hãy tạo ra bộ đề kiểm tra hoàn chỉnh, tuân thủ nghi�
 
 
 const createEnglishPrompt = (data: ExamFormData): string => {
+    const schoolHeader = data.schoolName
+        ? data.schoolName
+        : (data.schoolLevel === 'Cấp 1'
+            ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
+            : data.schoolLevel === 'Cấp 2'
+                ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+                : 'TRƯỜNG THPT SƠN HẠ SỐ I');
     return `
 You are an expert English Language Teaching (ELT) specialist AI. Your task is to create a complete, high-quality English exam package for Vietnamese students based on the user's specifications.
 
@@ -154,6 +162,7 @@ You are an expert English Language Teaching (ELT) specialist AI. Your task is to
 8.  **Model Answers:** For all writing and open-ended tasks, provide a detailed, error-free model answer. Answers must be pedagogically sound and demonstrate best practices in English teaching.
 9.  **Grading Rubrics:** For writing tasks, provide a practical, easy-to-use grading rubric. Each criterion must be clear and directly related to the task. Example: grammar, vocabulary, coherence, spelling, punctuation.
 10. **Clarity & Pedagogy:** Ensure all content is concise, clear, and supports effective learning. Avoid unnecessary complexity or ambiguity.
+11. **Consistency Across Levels:** Regardless of school level (Cấp 1, Cấp 2, Cấp 3), ALWAYS use the same structure, table format, and section headers for all exam outputs. Do NOT change the output format based on level.
 
 **EXAM SPECIFICATIONS:**
 - **Level:** ${data.schoolLevel}
@@ -167,16 +176,11 @@ ${data.knowledgeContent}
 **ILLUSTRATIVE EXAM STRUCTURE (ADAPT AS NEEDED FOR THE GRADE LEVEL):**
 - **Part 3 (Exam Paper) must begin with this mandatory Vietnamese header block:**
   \`\`\`text
-  ${data.schoolName
-  ? data.schoolName
-  : data.schoolLevel === 'Cấp 1'
-    ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
-    : data.schoolLevel === 'Cấp 2'
-      ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
-      : 'TRƯỜNG THPT SƠN HẠ SỐ I'}
+  ${schoolHeader}
   ĐỀ KIỂM TRA
   NĂM HỌC 2025-2026
   MÔN: ${data.subject}
+  LỚP: ${data.grade}
   Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
   \`\`\`
 - **After the header, continue with sections like:**
@@ -204,21 +208,42 @@ Please generate the complete exam package now, adhering to all instructions.
 
 const createLiteraturePrompt = (data: ExamFormData): string => {
     return `
-Bạn là một chuyên gia giàu kinh nghiệm trong việc biên soạn đề thi môn Ngữ văn cho học sinh THCS và THPT tại Việt Nam. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, khoa học, và bám sát chương trình giáo dục.
+Bạn là một chuyên gia giàu kinh nghiệm trong việc biên soạn đề thi môn Ngữ văn cho học sinh Tiểu học, THCS và THPT tại Việt Nam. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, khoa học, và bám sát chương trình giáo dục.
 
 **HƯỚNG DẪN TỐI THƯỢNG (BẮT BUỘC TUÂN THỦ):**
 1.  **Ngôn ngữ:** 100% nội dung và tiêu đề phải là tiếng Việt.
 2.  **Cấu trúc 4 phần:** Phải tuân thủ nghiêm ngặt cấu trúc 4 phần với tiêu đề chính xác. Dùng '---' để ngăn cách các phần.
-    - \`PHẦN 1: MA TRẬN ĐỀ KIỂM TRA\`
+    - PHẦN 1: MA TRẬN ĐỀ KIỂM TRA
     - ---
-    - \`PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT\`
+    - PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT
     - ---
-    - \`PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA\`
+    - PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA
     - ---
-    - \`PHẦN 4: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM\`
-3.  **Định dạng bảng:** Các phần 1, 2, 3, 4 phải là bảng markdown sạch, không có ký tự thừa.
-4.  **Phần 3:** Mở đầu bằng khối tiêu đề chuẩn, sau đó là nội dung đề bài.
-5.  **Phần 4:** Bảng đáp án gồm 3 cột: Câu | Đáp án và Hướng dẫn chấm | Điểm. Đáp án mẫu và biểu điểm rõ ràng.
+    - PHẦN 4: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM
+3.  **Định dạng trình bày:** Các phần có thể trình bày dưới dạng đoạn văn, danh sách hoặc bảng tùy ý, miễn là rõ ràng, khoa học, dễ đọc cho giáo viên. Không bắt buộc phải dùng bảng markdown.
+4.  **Tiêu đề phần:** Các tiêu đề phần phải là văn bản thuần túy, không dùng markdown hoặc ký tự đặc biệt.
+5.  **Chất lượng câu hỏi:** Câu hỏi phải rõ ràng, phù hợp cấp học, đa dạng dạng bài (tự luận, đọc hiểu, phân tích, nghị luận, v.v.). Không cần có câu hỏi trắc nghiệm.
+6.  **Đáp án mẫu:** Đáp án mẫu phải đầy đủ, chính xác, trình bày khoa học, không chung chung. Đối với tự luận, phải có đủ ý, luận cứ, dẫn chứng.
+7.  **Biểu điểm:** Biểu điểm phải rõ ràng, dễ áp dụng, chia nhỏ từng ý cụ thể, tổng điểm khớp với điểm câu hỏi.
+8.  **Không lặp lại đề:** Phần đáp án chỉ chứa đáp án và biểu điểm, không lặp lại đề bài.
+9.  **Đồng nhất cấu trúc:** Dù là tiểu học, THCS hay THPT, luôn dùng cùng một cấu trúc, định dạng bảng, và tiêu đề phần cho mọi đề kiểm tra.
+10. **Rõ ràng & Khoa học:** Đảm bảo mọi nội dung đều rõ ràng, mạch lạc, trình bày khoa học, không thừa hoặc thiếu phần.
+
+**THÔNG SỐ ĐỀ KIỂM TRA CẦN TẠO:**
+- **Cấp học:** ${data.schoolLevel}
+- **Lớp:** ${data.grade}
+- **Môn học:** ${data.subject}
+- **Bộ sách:** ${data.textbook}
+- **Thời gian làm bài:** ${data.duration} phút
+- **Nội dung kiến thức:**
+${data.knowledgeContent}
+
+**CẤU TRÚC ĐỀ (BẮT BUỘC TUÂN THỦ):**
+- Đề kiểm tra gồm các phần tự luận, đọc hiểu, phân tích, nghị luận phù hợp với chương trình Ngữ văn. Không cần có câu hỏi trắc nghiệm.
+- Tổng điểm: 10
+
+**YÊU CẦU BỔ SUNG (nếu có):**
+${data.additionalRequirements || 'Không có'}
 
 ---
 Hãy tạo bộ đề kiểm tra hoàn chỉnh, tuân thủ nghiêm ngặt mọi yêu cầu trên.

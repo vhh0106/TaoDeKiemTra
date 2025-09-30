@@ -173,7 +173,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
   isLoading,
 }) => {
   const isSpecialSubject = useMemo(
-    () => ["Ngoại ngữ 1 (Tiếng Anh)", "Ngữ văn"].includes(formData.subject),
+  () => ["Ngoại ngữ 1 (Tiếng Anh)", "Ngữ văn", (formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt") ? "Tiếng Việt" : null].includes(formData.subject),
     [formData.subject]
   );
   const totalSteps = isSpecialSubject ? 2 : 3;
@@ -234,14 +234,46 @@ const ExamForm: React.FC<ExamFormProps> = ({
     field: keyof QuestionTypeDistribution,
     value: number
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [type]: { ...prev[type], [field]: value },
-    }));
+    setFormData((prev) => {
+      // Tự động tính toán lại tỉ lệ (%) và điểm khi nhập số câu
+      let updated = { ...prev };
+      updated[type] = { ...updated[type], [field]: value };
+
+      // Nếu thay đổi số câu, tự động phân bổ lại tỉ lệ và điểm
+      if (field === "questionCount") {
+        const types = ["multipleChoice", "trueFalse", "shortAnswer", "essay"];
+        const totalQuestions = types.reduce((sum, t) => sum + (updated[t].questionCount || 0), 0);
+        // Nếu tổng số câu > 0 thì phân bổ lại tỉ lệ và điểm
+        if (totalQuestions > 0) {
+          types.forEach((t) => {
+            // Tỉ lệ (%)
+            updated[t].percentage = Math.round((updated[t].questionCount / totalQuestions) * 100);
+          });
+          // Điều chỉnh tổng cho đúng 100%
+          let sumPercent = types.reduce((sum, t) => sum + updated[t].percentage, 0);
+          if (sumPercent !== 100) {
+            // Ưu tiên cộng/trừ vào loại có số câu lớn nhất
+            let maxType = types.reduce((a, b) => updated[a].questionCount >= updated[b].questionCount ? a : b);
+            updated[maxType].percentage += (100 - sumPercent);
+          }
+          // Điểm: chia đều theo tỉ lệ
+          types.forEach((t) => {
+            updated[t].score = parseFloat(((updated[t].percentage / 100) * 10).toFixed(2));
+          });
+          // Điều chỉnh tổng điểm cho đúng 10
+          let sumScore = types.reduce((sum, t) => sum + updated[t].score, 0);
+          if (sumScore !== 10) {
+            let maxType = types.reduce((a, b) => updated[a].questionCount >= updated[b].questionCount ? a : b);
+            updated[maxType].score = parseFloat((updated[maxType].score + (10 - sumScore)).toFixed(2));
+          }
+        }
+      }
+      return updated;
+    });
   };
 
   const { totalPercentage, totalScore } = useMemo(() => {
-    if (isSpecialSubject) return { totalPercentage: 100, totalScore: 10.0 };
+  if (isSpecialSubject) return { totalPercentage: 100, totalScore: 10.0 };
     const questionTypes = [
       formData.multipleChoice,
       formData.trueFalse,
@@ -448,7 +480,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
             description="Điều chỉnh số lượng câu hỏi, tỉ lệ % và điểm số cho từng dạng. Tổng điểm phải là 10."
           >
             <div className="space-y-3">
-              <div className="grid grid-cols-5 gap-4 items-center text-sm font-medium text-slate-500 px-3">
+              <div className="grid grid-cols-4 gap-4 items-center text-sm font-medium text-slate-500 px-3">
                 <div className="col-span-5 sm:col-span-1">Dạng câu hỏi</div>
                 <div>Số câu</div>
                 <div>Tỉ lệ (%)</div>
@@ -513,7 +545,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
           <Section
             title={
               isSpecialSubject
-                ? "2. Nội dung và Yêu cầu"
+                ? ((formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt") ? "2. Nội dung và Yêu cầu (Tiếng Việt cấp 1)" : "2. Nội dung và Yêu cầu")
                 : "3. Nội dung và Yêu cầu"
             }
             description="Cung cấp nội dung kiến thức và các yêu cầu đặc biệt để AI tùy chỉnh đề bài tốt hơn."
