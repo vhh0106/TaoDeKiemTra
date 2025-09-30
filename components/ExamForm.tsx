@@ -11,9 +11,9 @@ interface ExamFormProps {
 }
 
 const Section: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
-    <div className="flex flex-col h-full">
-        <h2 className="text-xl font-bold text-slate-800">{title}</h2>
-        <p className="text-sm text-slate-500 mt-1 mb-6">{description}</p>
+    <div className="card bg-white/90 flex flex-col h-full border-0 shadow-lg animate-scale-in">
+        <h2 className="text-2xl font-bold text-indigo-700 mb-2 tracking-tight">{title}</h2>
+        <p className="text-sm text-slate-500 mb-6">{description}</p>
         <div className="space-y-4 flex-grow flex flex-col">
             {children}
         </div>
@@ -26,14 +26,14 @@ const QuestionTypeInput: React.FC<{
     onChange: (field: keyof QuestionTypeDistribution, val: number) => void;
 }> = ({ label, value, onChange }) => {
     return (
-        <div className="grid grid-cols-5 gap-4 items-center p-3 bg-slate-50/70 rounded-lg border border-slate-200/80">
-            <label className="font-semibold text-slate-700 col-span-5 sm:col-span-1">{label}</label>
+        <div className="grid grid-cols-5 gap-4 items-center p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border-0 shadow-sm">
+            <label className="font-semibold text-indigo-700 col-span-5 sm:col-span-1">{label}</label>
             <div className="flex items-center space-x-2">
                 <input
                     type="number"
                     value={value.questionCount}
                     onChange={(e) => onChange('questionCount', parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    className="w-full px-3 py-2 border border-indigo-200 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 text-sm bg-white"
                     min="0"
                 />
                 <span className="text-slate-600 text-sm">câu</span>
@@ -43,7 +43,7 @@ const QuestionTypeInput: React.FC<{
                     type="number"
                     value={value.percentage}
                     onChange={(e) => onChange('percentage', parseInt(e.target.value, 10) || 0)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    className="w-full px-3 py-2 border border-indigo-200 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 text-sm bg-white"
                     min="0"
                     max="100"
                     step="5"
@@ -55,7 +55,7 @@ const QuestionTypeInput: React.FC<{
                     type="number"
                     value={value.score}
                     onChange={(e) => onChange('score', parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    className="w-full px-3 py-2 border border-indigo-200 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 text-sm bg-white"
                     min="0"
                     max="10"
                     step="0.25"
@@ -237,7 +237,7 @@ const ExamForm: React.FC<ExamFormProps> = ({ formData, setFormData, onSubmit, is
 
 
     return (
-        <form className="space-y-8 bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-200/80">
+        <form className="space-y-8 card bg-white/95 p-8 sm:p-10 rounded-3xl shadow-2xl border-0 animate-scale-in text-slate-900">
              <div className="mb-12 pt-4 pb-8">
                 <StepIndicator currentStep={step} totalSteps={totalSteps} setStep={jumpToStep}/>
             </div>
