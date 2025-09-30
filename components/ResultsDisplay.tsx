@@ -229,7 +229,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                         </button>
                     ))}
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-2">
                      <button onClick={onRegenerate} title="Tạo lại" className="p-2.5 text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 hover:text-slate-800 transition duration-300 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v.001" />

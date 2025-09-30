@@ -266,7 +266,7 @@ export const generateExam = async (data: ExamFormData): Promise<string> => {
         }
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 systemInstruction: systemInstruction,
