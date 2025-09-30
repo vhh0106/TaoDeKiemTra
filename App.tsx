@@ -166,7 +166,7 @@ const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
 
 const App: React.FC = () => {
     const [formData, setFormData] = useState<ExamFormData>({
-        schoolLevel: 'Cấp 1',
+        schoolLevel: 'Tiểu học',
         subject: 'Tin học',
         grade: 'Lớp 5',
         textbook: 'Kết nối tri thức',
