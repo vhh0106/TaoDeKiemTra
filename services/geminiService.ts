@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import type { ExamFormData } from '../types';
 
@@ -144,8 +143,17 @@ You are an expert English Language Teaching (ELT) specialist AI. Your task is to
     - \`PART 4: ANSWER KEY & GRADING GUIDE\`
 3.  **Header Formatting (IMPORTANT):** The 4 part headers above MUST be plain text. DO NOT use markdown (e.g., no \`**bold**\`, no \`# heading\`). Write the headers exactly as specified.
 4.  **IGNORE Question Distribution:** The user has NOT provided a specific question distribution for this subject. You MUST create a balanced and pedagogically sound exam structure YOURSELF based on the illustrative model below. Do NOT refer to any question distribution numbers.
-5.  **Table Formatting:** For Parts 1, 2, and 4, the output MUST be a single, clean, well-formed markdown table ONLY. Do not add any text before or after the table in these sections.
+5.  **Table Formatting (MANDATORY):** For Parts 1, 2, and 4, the output MUST be a single, clean, well-formed markdown table ONLY. Use standard markdown table syntax:
+    - Each table must start with a header row using pipes (|) and a separator row (e.g., | Header 1 | Header 2 | ... |, then |---|---|...|).
+    - All rows must have the same number of columns as the header.
+    - Do NOT use merged cells, extra formatting, or non-standard markdown.
+    - Do NOT add any text before or after the table in these sections.
+    - Visually check the table for correctness before returning.
 6.  **Teacher's Priorities:** Pay close attention to and prioritize any specific instructions in the "Additional Requirements" section.
+7.  **Question Quality:** All questions must be clear, unambiguous, and appropriate for the grade level. MCQs must have plausible distractors. Include a variety of question types and cognitive levels (knowledge, application, analysis, etc.).
+8.  **Model Answers:** For all writing and open-ended tasks, provide a detailed, error-free model answer. Answers must be pedagogically sound and demonstrate best practices in English teaching.
+9.  **Grading Rubrics:** For writing tasks, provide a practical, easy-to-use grading rubric. Each criterion must be clear and directly related to the task. Example: grammar, vocabulary, coherence, spelling, punctuation.
+10. **Clarity & Pedagogy:** Ensure all content is concise, clear, and supports effective learning. Avoid unnecessary complexity or ambiguity.
 
 **EXAM SPECIFICATIONS:**
 - **Level:** ${data.schoolLevel}
@@ -159,7 +167,13 @@ ${data.knowledgeContent}
 **ILLUSTRATIVE EXAM STRUCTURE (ADAPT AS NEEDED FOR THE GRADE LEVEL):**
 - **Part 3 (Exam Paper) must begin with this mandatory Vietnamese header block:**
   \`\`\`text
-  ${data.schoolLevel === 'Cấp 1' ? 'TRƯỜNG TIỂU HỌC' : data.schoolLevel === 'Cấp 2' ? 'TRƯỜNG THCS' : 'TRƯỜNG THPT'} SƠN HẠ SỐ I
+  ${data.schoolName
+  ? data.schoolName
+  : data.schoolLevel === 'Cấp 1'
+    ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
+    : data.schoolLevel === 'Cấp 2'
+      ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+      : 'TRƯỜNG THPT SƠN HẠ SỐ I'}
   ĐỀ KIỂM TRA
   NĂM HỌC 2025-2026
   MÔN: ${data.subject}
@@ -167,10 +181,10 @@ ${data.knowledgeContent}
   \`\`\`
 - **After the header, continue with sections like:**
 - **PART I. PHONETICS** (e.g., pronunciation, stress)
-- **PART II. VOCABULARY AND GRAMMAR** (e.g., MCQs covering word choice, phrasal verbs, collocations, tenses, conditionals, etc.)
+- **PART II. VOCABULARY AND GRAMMAR** (e.g., MCQs covering word choice, phrasal verbs, collocations, tenses, conditionals, etc. Ensure plausible distractors.)
 - **PART III. COMMUNICATION** (e.g., matching responses, choosing appropriate replies)
 - **PART IV. READING** (e.g., Cloze test, Reading comprehension with questions)
-- **PART V. WRITING** (e.g., Error identification, Sentence transformation/rewriting, Sentence building)
+- **PART V. WRITING** (e.g., Error identification, Sentence transformation/rewriting, Sentence building. Provide detailed model answers and grading rubrics.)
 
 **DETAILED REQUIREMENTS FOR OUTPUT PARTS:**
 - **PART 4: ANSWER KEY & GRADING GUIDE** (Must be a single markdown table)
@@ -201,69 +215,15 @@ Bạn là một chuyên gia giàu kinh nghiệm trong việc biên soạn đề 
     - ---
     - \`PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA\`
     - ---
-    - \`PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN\`
-3.  **Định dạng Tiêu đề (QUAN TRỌNG):** Các tiêu đề của 4 phần trên BẮT BUỘC phải là văn bản thuần túy (plain text). TUYỆT ĐỐI KHÔNG sử dụng markdown (ví dụ: không dùng \`**in đậm**\`, \`# heading\`). Viết chính xác các tiêu đề như đã chỉ định.
-4.  **Bỏ qua phân bổ chung:** Hoàn toàn KHÔNG sử dụng các thông số phân bổ câu hỏi chung. Chỉ tuân theo cấu trúc đặc thù của môn Ngữ văn được mô tả bên dưới.
-5.  **Định dạng bảng:**
-    - Kết quả của \`PHẦN 1\`, \`PHẦN 2\`, và \`PHẦN 4\` BẮT BUỘC CHỈ LÀ một bảng markdown duy nhất, sạch sẽ.
-    - TUYỆT ĐỐI KHÔNG thêm bất kỳ văn bản nào khác ngoài bảng trong các phần này.
-
-**THÔNG SỐ ĐỀ BÀI:**
-- **Cấp học:** ${data.schoolLevel}
-- **Lớp:** ${data.grade}
-- **Bộ sách:** ${data.textbook} (Lưu ý: Ngữ liệu Đọc hiểu phải nằm ngoài bộ sách này)
-- **Thời gian làm bài:** ${data.duration} phút
-- **Nội dung kiến thức trọng tâm:**
-${data.knowledgeContent}
-- **Yêu cầu bổ sung từ giáo viên:** ${data.additionalRequirements || 'Không có'}
+    - \`PHẦN 4: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM\`
+3.  **Định dạng bảng:** Các phần 1, 2, 3, 4 phải là bảng markdown sạch, không có ký tự thừa.
+4.  **Phần 3:** Mở đầu bằng khối tiêu đề chuẩn, sau đó là nội dung đề bài.
+5.  **Phần 4:** Bảng đáp án gồm 3 cột: Câu | Đáp án và Hướng dẫn chấm | Điểm. Đáp án mẫu và biểu điểm rõ ràng.
 
 ---
-
-**YÊU CẦU CHI TIẾT VỀ NỘI DUNG CÁC PHẦN:**
-
-**PHẦN 1: MA TRẬN ĐỀ KIỂM TRA** (Chỉ trả về bảng markdown)
-- Bảng phải thể hiện rõ sự phân bổ câu hỏi và điểm số theo 2 phần chính (Đọc hiểu, Viết) và 4 mức độ nhận thức (Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao).
-
-**PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT** (Chỉ trả về bảng markdown)
-- Bảng mô tả chi tiết yêu cầu cần đạt cho từng câu hỏi, gắn với đơn vị kiến thức/kỹ năng cụ thể trong chương trình.
-
-**PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA**
-- **Bắt buộc:** Mở đầu phần này phải là khối tiêu đề chuẩn sau, sau đó mới đến nội dung đề thi (I. ĐỌC HIỂU).
-  \`\`\`text
-  ${data.schoolLevel === 'Cấp 1' ? 'TRƯỜNG TIỂU HỌC' : data.schoolLevel === 'Cấp 2' ? 'TRƯỜNG THCS' : 'TRƯỜNG THPT'} SƠN HẠ SỐ I
-  ĐỀ KIỂM TRA
-  NĂM HỌC 2025-2026
-  MÔN: Ngữ văn
-  Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
-  \`\`\`
-- **I. ĐỌC HIỂU (4,0 điểm):**
-  - **Ngữ liệu:** Chọn một đoạn văn bản (văn xuôi hoặc thơ) nằm **ngoài sách giáo khoa**, phù hợp với lứa tuổi, có giá trị nghệ thuật, nội dung trong sáng, và tránh các chủ đề nhạy cảm, gây tranh cãi. Trích dẫn nguồn đầy đủ và chính xác.
-  - **Câu hỏi:** Xây dựng 4-5 câu hỏi đọc hiểu bám sát ngữ liệu, đánh giá các mức độ nhận thức.
-- **II. VIẾT (6,0 điểm):**
-  - **Câu 1 (2,0 điểm):** Viết một đoạn văn nghị luận (khoảng 200 chữ) về một vấn đề rút ra từ phần Đọc hiểu.
-  - **Câu 2 (4,0 điểm):** Viết một bài văn nghị luận. Đề bài có thể cho học sinh lựa chọn giữa nghị luận xã hội và nghị luận văn học (dựa trên các tác phẩm trong chương trình).
-
-**PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN** (Chỉ trả về MỘT bảng markdown duy nhất)
-- Bảng phải có 3 cột với các tiêu đề chính xác sau:
-    - Cột 1: \`Câu\`
-    - Cột 2: \`Đáp án và Hướng dẫn chấm\`
-    - Cột 3: \`Điểm\`
-- **Đối với các câu hỏi Đọc hiểu (trắc nghiệm/trả lời ngắn):** Cung cấp đáp án chính xác. Với câu trả lời ngắn, diễn giải câu trả lời đầy đủ.
-- **Đối với các câu hỏi phần Viết (cực kỳ quan trọng):** Nội dung trong cột "Đáp án và Hướng dẫn chấm" phải là một **biểu điểm chấm (rubric) cực kỳ chi tiết**.
-- Biểu điểm phải phân rã tổng điểm thành các tiêu chí cụ thể và rõ ràng:
-  - a. **Đảm bảo yêu cầu về hình thức:** (ví dụ: đúng cấu trúc đoạn văn/bài văn). Ghi rõ mức điểm.
-  - b. **Xác định đúng vấn đề nghị luận:** Ghi rõ mức điểm.
-  - c. **Triển khai vấn đề nghị luận:** Đây là phần quan trọng nhất.
-    - **BẮT BUỘC** phải gợi ý chi tiết các **luận điểm, luận cứ, dẫn chứng cốt lõi** mà học sinh cần trình bày để đạt được các mức điểm khác nhau (ví dụ: đạt mức điểm cơ bản cần có ý A, B; đạt mức điểm tốt cần có thêm ý C, D và phân tích sâu sắc).
-    - **KHÔNG** chỉ gạch đầu dòng, hãy diễn giải ngắn gọn nội dung của từng ý.
-  - d. **Chính tả, ngữ pháp:** Ghi rõ mức điểm.
-  - e. **Sáng tạo:** Ghi rõ mức điểm và gợi ý một số hướng sáng tạo (cách diễn đạt mới mẻ, liên hệ sâu sắc, góc nhìn độc đáo).
-
----
-Bây giờ, hãy tạo ra bộ đề thi môn Ngữ văn hoàn chỉnh, tuân thủ nghiêm ngặt mọi yêu cầu trên.
+Hãy tạo bộ đề kiểm tra hoàn chỉnh, tuân thủ nghiêm ngặt mọi yêu cầu trên.
 `;
-};
-
+}
 
 export const generateExam = async (data: ExamFormData): Promise<string> => {
     try {
@@ -282,7 +242,7 @@ export const generateExam = async (data: ExamFormData): Promise<string> => {
         }
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.5-pro',
             contents: prompt,
             config: {
                 systemInstruction: systemInstruction,
@@ -293,18 +253,15 @@ export const generateExam = async (data: ExamFormData): Promise<string> => {
         const text = response.text;
 
         if (!text) {
-            throw new Error('API returned an empty response.');
         }
 
         return text;
     } catch (error) {
         console.error('Error calling Gemini API:', error);
         if (error instanceof Error) {
-            if (error.message.includes('SAFETY')) {
                  throw new Error('Yêu cầu của bạn đã bị chặn vì lý do an toàn. Vui lòng điều chỉnh nội dung và thử lại.');
             }
             throw new Error(`Đã xảy ra lỗi khi tạo đề: ${error.message}`);
-        }
         throw new Error('An unknown error occurred while generating the exam.');
     }
 };
