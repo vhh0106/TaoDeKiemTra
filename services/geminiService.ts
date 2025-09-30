@@ -26,7 +26,8 @@ Bạn là một trợ lý AI chuyên gia cho giáo viên tiểu học, THCS, THP
 4.  **QUY TẮC PHÂN TÁCH NỘI DUNG (CỰC KỲ QUAN TRỌNG):** Mỗi phần phải chứa đúng và đủ nội dung được yêu cầu, không được lẫn lộn nội dung giữa các phần.
     - **PHẦN 1 (MA TRẬN):** Chỉ chứa MỘT bảng markdown duy nhất.
     - **PHẦN 2 (BẢN ĐẶC TẢ):** Chỉ chứa MỘT bảng markdown duy nhất.
-    - **PHẦN 3 (ĐỀ KIỂM TRA):** Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn. Khối tiêu đề này phải bao gồm các dòng sau đây, sau đó mới đến nội dung các câu hỏi của đề thi:
+    - **PHẦN 3 (ĐỀ KIỂM TRA):** NỘI DUNG ĐỀ KIỂM TRA tuyệt đối KHÔNG được trình bày dưới dạng bảng, KHÔNG dùng bảng markdown, KHÔNG dùng các ký tự phân chia dòng, KHÔNG dùng block code, KHÔNG dùng bảng HTML. Chỉ trình bày đề kiểm tra dưới dạng các câu hỏi, đoạn văn hoặc danh sách rõ ràng, khoa học. Nếu đề kiểm tra có bảng số liệu, hãy chuyển thành mô tả hoặc liệt kê từng dòng, tuyệt đối không dùng bảng.
+Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn. Khối tiêu đề này phải bao gồm các dòng sau đây, sau đó mới đến nội dung các câu hỏi của đề thi:
       \`\`\`text
             ${data.schoolName
     ? data.schoolName
@@ -140,13 +141,13 @@ You are an expert, a teacher of English teaching for primary, middle and high sc
 **CRITICAL INSTRUCTIONS:**
 1.  **Output Language:** The entire output, including all headers and content, MUST be 100% in English, **WITH ONE EXCEPTION:** The exam header in PART 3 must be in Vietnamese as specified below.
 2.  **Strict 4-Part Structure:** The output MUST strictly follow this 4-part structure, using the exact headers provided. Use '---' as a separator between parts.
-    - \`PART 1: EXAM MATRIX\`
+    - PART 1: EXAM MATRIX
     - ---
-    - \`PART 2: TEST SPECIFICATION GRID\`
+    - PART 2: TEST SPECIFICATION GRID
     - ---
-    - \`PART 3: EXAM PAPER\`
+    - PART 3: EXAM PAPER (IMPORTANT: The EXAM PAPER section MUST NOT be presented as a table, MUST NOT use markdown table, MUST NOT use any row/column separators, block code, or HTML table. If the exam requires a data table, convert it to a description or list each row as a separate line. Only use questions, paragraphs, or clear lists.)
     - ---
-    - \`PART 4: ANSWER KEY & GRADING GUIDE\`
+    - PART 4: ANSWER KEY & GRADING GUIDE
 3.  **Header Formatting (IMPORTANT):** The 4 part headers above MUST be plain text. DO NOT use markdown (e.g., no \`**bold**\`, no \`# heading\`). Write the headers exactly as specified.
 4.  **IGNORE Question Distribution:** The user has NOT provided a specific question distribution for this subject. You MUST create a balanced and pedagogically sound exam structure YOURSELF based on the illustrative model below. Do NOT refer to any question distribution numbers.
 5.  **Table Formatting (MANDATORY):** For Parts 1, 2, and 4, the output MUST be a single, clean, well-formed markdown table ONLY. Use standard markdown table syntax:
