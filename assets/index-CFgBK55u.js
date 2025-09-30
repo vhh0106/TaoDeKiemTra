@@ -205,7 +205,7 @@ Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn. Kh�
       ĐỀ KIỂM TRA
       NĂM HỌC 2025-2026
       MÔN: ${n.subject}
-      lỚP: ${n.grade}
+      LỚP: ${n.grade}
       Thời gian làm bài: ${n.duration} phút (không kể thời gian phát đề)
       \`\`\`
       Sau khối tiêu đề trên, chỉ chứa đề bài hoàn chỉnh cho học sinh. **TUYỆT ĐỐI KHÔNG** bao gồm bất kỳ đáp án, lời giải, hay hướng dẫn chấm nào trong phần này.
