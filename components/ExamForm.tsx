@@ -69,7 +69,7 @@ const QuestionTypeInput: React.FC<{
 const StepIndicator: React.FC<{ currentStep: number; totalSteps: number; setStep: (step: number) => void }> = ({ currentStep, totalSteps, setStep }) => {
     const steps = Array.from({ length: totalSteps }, (_, i) => i + 1);
     const stepLabels = totalSteps === 2 
-        ? ['Thông tin & Thời lượng', 'Nội dung & Yêu cầu']
+        ? ['Thông tin & Thời lượng', 'Nội dung chi tiết']
         : ['Thông tin chung', 'Cấu trúc đề', 'Nội dung chi tiết'];
 
     return (
