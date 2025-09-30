@@ -6,6 +6,7 @@ export interface QuestionTypeDistribution {
 
 export interface ExamFormData {
     schoolLevel: string;
+    schoolName?: string;
     subject: string;
     grade: string;
     textbook: string;

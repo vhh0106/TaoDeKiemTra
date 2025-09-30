@@ -30,7 +30,13 @@ Bạn là một trợ lý AI chuyên gia cho giáo viên Việt Nam, có chuyên
     - **PHẦN 2 (BẢN ĐẶC TẢ):** Chỉ chứa MỘT bảng markdown duy nhất.
     - **PHẦN 3 (ĐỀ KIỂM TRA):** Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn. Khối tiêu đề này phải bao gồm các dòng sau đây, sau đó mới đến nội dung các câu hỏi của đề thi:
       \`\`\`text
-      ${data.schoolLevel === 'Cấp 1' ? 'TRƯỜNG TIỂU HỌC' : data.schoolLevel === 'Cấp 2' ? 'TRƯỜNG THCS' : 'TRƯỜNG THPT'} SƠN HẠ SỐ I
+      ${data.schoolName
+  ? data.schoolName
+  : data.schoolLevel === 'Cấp 1'
+    ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
+    : data.schoolLevel === 'Cấp 2'
+      ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+      : 'TRƯỜNG THPT SƠN HẠ SỐ I'}
       ĐỀ KIỂM TRA
       NĂM HỌC 2025-2026
       MÔN: ${data.subject}

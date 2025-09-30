@@ -214,7 +214,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
     return (
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200/80">
             <div className="flex flex-col sm:flex-row items-center justify-between border-b border-slate-200 p-4 gap-4">
-                 <div className="w-full sm:w-auto flex flex-wrap p-1.5 bg-slate-100 rounded-xl">
+                 <div className="w-full sm:w-auto flex flex-wrap p-1.5 bg-slate-100 rounded-xl gap-4">
                     {tabConfig.map(({ id, label }) => (
                          <button
                             key={id}
