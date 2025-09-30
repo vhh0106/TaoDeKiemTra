@@ -1,13 +1,13 @@
-export const SCHOOL_LEVELS: string[] = ["Cấp 1", "Cấp 2", "Cấp 3"];
+export const SCHOOL_LEVELS: string[] = ["Tiểu học", "THCS", "THPT"];
 
 export const GRADES_BY_LEVEL: Record<string, string[]> = {
-    "Cấp 1": ["Lớp 1", "Lớp 2", "Lớp 3", "Lớp 4", "Lớp 5"],
-    "Cấp 2": ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"],
-    "Cấp 3": ["Lớp 10", "Lớp 11", "Lớp 12"],
+    "Tiểu học": ["Lớp 1", "Lớp 2", "Lớp 3", "Lớp 4", "Lớp 5"],
+    "THCS": ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"],
+    "THPT": ["Lớp 10", "Lớp 11", "Lớp 12"],
 };
 
 export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
-    "Cấp 1": [
+    "Tiểu học": [
         "Tiếng Việt",
         "Toán",
         "Ngoại ngữ 1 (Tiếng Anh)",
@@ -17,7 +17,7 @@ export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
         "Tin học",
         "Đạo đức",
     ],
-    "Cấp 2": [
+    "THCS": [
         "Công nghệ",
         "Địa lí",
         "Giáo dục công dân",
@@ -32,7 +32,7 @@ export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
         "Toán",
         "Vật lí",
     ],
-    "Cấp 3": [
+    "THPT": [
         "Công nghệ",
         "Địa lí",
         "Giáo dục công dân",

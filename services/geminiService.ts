@@ -1,7 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import type { ExamFormData } from '../types';
 
-// The API key is expected to be set as a Vite environment variable.
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 if (!apiKey) {
     throw new Error("API_KEY environment variable not set");
@@ -10,7 +9,7 @@ const ai = new GoogleGenAI({ apiKey });
 
 const createGeneralPrompt = (data: ExamFormData): string => {
     return `
-Bạn là một trợ lý AI chuyên gia cho giáo viên Việt Nam, có chuyên môn sâu về môn ${data.subject}. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, chính xác và khoa học, tuân thủ nghiêm ngặt các hướng dẫn và thông số được cung cấp.
+Bạn là một trợ lý AI chuyên gia cho giáo viên tiểu học, THCS, THPT Việt Nam, có chuyên môn sâu về môn ${data.subject}. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, chính xác và khoa học, tuân thủ nghiêm ngặt các hướng dẫn và thông số được cung cấp.
 
 **HƯỚNG DẪN TỐI QUAN TRỌNG (BẮT BUỘC TUÂN THỦ 100%):**
 
@@ -29,13 +28,13 @@ Bạn là một trợ lý AI chuyên gia cho giáo viên Việt Nam, có chuyên
     - **PHẦN 2 (BẢN ĐẶC TẢ):** Chỉ chứa MỘT bảng markdown duy nhất.
     - **PHẦN 3 (ĐỀ KIỂM TRA):** Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn. Khối tiêu đề này phải bao gồm các dòng sau đây, sau đó mới đến nội dung các câu hỏi của đề thi:
       \`\`\`text
-      ${data.schoolName
-  ? data.schoolName
-  : data.schoolLevel === 'Cấp 1'
-    ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
-    : data.schoolLevel === 'Cấp 2'
-      ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
-      : 'TRƯỜNG THPT SƠN HẠ SỐ I'}
+            ${data.schoolName
+    ? data.schoolName
+    : data.schoolLevel === 'Tiểu học'
+        ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
+        : data.schoolLevel === 'THCS'
+            ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+            : 'TRƯỜNG THPT SƠN HẠ SỐ I'}
       ĐỀ KIỂM TRA
       NĂM HỌC 2025-2026
       MÔN: ${data.subject}
@@ -131,14 +130,13 @@ Bây giờ, hãy tạo ra bộ đề kiểm tra hoàn chỉnh, tuân thủ nghi�
 const createEnglishPrompt = (data: ExamFormData): string => {
     const schoolHeader = data.schoolName
         ? data.schoolName
-        : (data.schoolLevel === 'Cấp 1'
+        : (data.schoolLevel === 'Tiểu học'
             ? 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I'
-            : data.schoolLevel === 'Cấp 2'
+            : data.schoolLevel === 'THCS'
                 ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
                 : 'TRƯỜNG THPT SƠN HẠ SỐ I');
     return `
-You are an expert English Language Teaching (ELT) specialist AI. Your task is to create a complete, high-quality English exam package for Vietnamese students based on the user's specifications.
-
+You are an expert, a teacher of English teaching for primary, middle and high schools. Your task is to create a complete, high-quality set of English test questions for Vietnamese students based on user requests.
 **CRITICAL INSTRUCTIONS:**
 1.  **Output Language:** The entire output, including all headers and content, MUST be 100% in English, **WITH ONE EXCEPTION:** The exam header in PART 3 must be in Vietnamese as specified below.
 2.  **Strict 4-Part Structure:** The output MUST strictly follow this 4-part structure, using the exact headers provided. Use '---' as a separator between parts.
@@ -162,7 +160,7 @@ You are an expert English Language Teaching (ELT) specialist AI. Your task is to
 8.  **Model Answers:** For all writing and open-ended tasks, provide a detailed, error-free model answer. Answers must be pedagogically sound and demonstrate best practices in English teaching.
 9.  **Grading Rubrics:** For writing tasks, provide a practical, easy-to-use grading rubric. Each criterion must be clear and directly related to the task. Example: grammar, vocabulary, coherence, spelling, punctuation.
 10. **Clarity & Pedagogy:** Ensure all content is concise, clear, and supports effective learning. Avoid unnecessary complexity or ambiguity.
-11. **Consistency Across Levels:** Regardless of school level (Cấp 1, Cấp 2, Cấp 3), ALWAYS use the same structure, table format, and section headers for all exam outputs. Do NOT change the output format based on level.
+11. **Consistency Across Levels:** Regardless of school level (Tiểu học, THCS, THPT), ALWAYS use the same structure, table format, and section headers for all exam outputs. Do NOT change the output format based on level.
 
 **EXAM SPECIFICATIONS:**
 - **Level:** ${data.schoolLevel}

@@ -173,7 +173,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
   isLoading,
 }) => {
   const isSpecialSubject = useMemo(
-  () => ["Ngoại ngữ 1 (Tiếng Anh)", "Ngữ văn", (formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt") ? "Tiếng Việt" : null].includes(formData.subject),
+  () => ["Ngoại ngữ 1 (Tiếng Anh)", "Ngữ văn", (formData.schoolLevel === "Tiểu học" && formData.subject === "Tiếng Việt") ? "Tiếng Việt" : null].includes(formData.subject),
     [formData.subject]
   );
   const totalSteps = isSpecialSubject ? 2 : 3;
@@ -545,7 +545,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
           <Section
             title={
               isSpecialSubject
-                ? ((formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt") ? "2. Nội dung và Yêu cầu (Tiếng Việt cấp 1)" : "2. Nội dung và Yêu cầu")
+                ? ((formData.schoolLevel === "Tiểu học" && formData.subject === "Tiếng Việt") ? "2. Nội dung và Yêu cầu (Tiếng Việt tiểu học)" : "2. Nội dung và Yêu cầu")
                 : "3. Nội dung và Yêu cầu"
             }
             description="Cung cấp nội dung kiến thức và các yêu cầu đặc biệt để AI tùy chỉnh đề bài tốt hơn."
