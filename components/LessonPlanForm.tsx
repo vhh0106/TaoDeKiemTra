@@ -64,12 +64,90 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
     });
   };
 
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const loadLessonPlanSample = (type: 'tinhoc4' | 'toan4' | 'tv4') => {
+    setFormError(null);
+    if (type === 'tinhoc4') {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'Tiểu học',
+        grade: 'Lớp 4',
+        subject: 'Tin học',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        lessonName: 'Bài 1: Phần cứng và phần mềm máy tính',
+        durationInPeriods: 1,
+        periodNumber: '1',
+        week: 'Tuần 1',
+        classesTaught: '4A, 4B',
+        schoolName: 'Trường Tiểu học',
+        teacherName: 'Giáo viên',
+        knowledgeContent: 'Nhận biết và phân biệt được phần cứng và phần mềm máy tính; nêu được mối quan hệ gắn bó giữa phần cứng và phần mềm qua ví dụ thực tế.',
+        integrateDigitalCompetence: true,
+        digitalDomains: [
+          'Miền 1: Khai thác dữ liệu và thông tin',
+          'Miền 4: An toàn số',
+          'Miền 6: Ứng dụng Trí tuệ nhân tạo (AI)'
+        ],
+        pedagogicalMethod: 'Dạy học khám phá và giải quyết vấn đề',
+        additionalRequirements: 'Có trò chơi tương tác khởi động, tích hợp câu hỏi liên hệ thực tế và hướng dẫn an toàn khi sử dụng thiết bị.'
+      }));
+    } else if (type === 'toan4') {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'Tiểu học',
+        grade: 'Lớp 4',
+        subject: 'Toán',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        lessonName: 'Bài 25: Tìm hai số khi biết tổng và hiệu của hai số đó (Tiết 1)',
+        durationInPeriods: 1,
+        periodNumber: '1',
+        week: 'Tuần 12',
+        classesTaught: '4A',
+        schoolName: 'Trường Tiểu học',
+        teacherName: 'Giáo viên',
+        knowledgeContent: 'Biết cách vẽ sơ đồ đoạn thẳng để biểu diễn bài toán; tìm được hai số khi biết tổng và hiệu của chúng bằng hai cách giải cơ bản.',
+        integrateDigitalCompetence: true,
+        digitalDomains: [
+          'Miền 1: Khai thác dữ liệu và thông tin',
+          'Miền 5: Giải quyết vấn đề'
+        ],
+        pedagogicalMethod: 'Dạy học phát hiện và giải quyết vấn đề',
+        additionalRequirements: 'Thiết kế hoạt động trải nghiệm thực tế với đồ dùng học tập trực quan.'
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'Tiểu học',
+        grade: 'Lớp 4',
+        subject: 'Tiếng Việt',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        lessonName: 'Luyện từ và câu: Luyện tập về từ đơn và từ phức',
+        durationInPeriods: 1,
+        periodNumber: '1',
+        week: 'Tuần 3',
+        classesTaught: '4A',
+        schoolName: 'Trường Tiểu học',
+        teacherName: 'Giáo viên',
+        knowledgeContent: 'Phân biệt được từ đơn và từ phức; nhận biết từ ghép và từ láy trong văn bản; vận dụng đặt câu với các từ ngữ đã học.',
+        integrateDigitalCompetence: true,
+        digitalDomains: [
+          'Miền 2: Giao tiếp và hợp tác số',
+          'Miền 3: Sáng tạo nội dung số'
+        ],
+        pedagogicalMethod: 'Dạy học hợp tác nhóm',
+        additionalRequirements: 'Tổ chức trò chơi ghép từ nhanh trên bảng nhóm tương tác.'
+      }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.lessonName.trim()) {
-      alert('Vui lòng nhập Tên bài học!');
+      setFormError('Vui lòng nhập Tên bài học trước khi tạo!');
       return;
     }
+    setFormError(null);
     onSubmit(formData);
   };
 
@@ -120,7 +198,7 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
 
       {/* Card 1: Thông tin hành chính & Bài học (Theo định dạng mẫu văn bản PDF) */}
       <section className="bg-white rounded-2xl shadow-md border border-slate-200/80 p-5 sm:p-7 space-y-5">
-        <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+        <div className="border-b border-slate-100 pb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg sm:text-xl font-bold text-indigo-700 flex items-center gap-2">
               <span>1. Thông tin bài dạy & Hành chính</span>
@@ -132,6 +210,39 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
           <span className="hidden sm:inline-block px-3 py-1 bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-full border border-indigo-100">
             Sách Kết nối tri thức
           </span>
+        </div>
+
+        {/* Thanh nạp bài mẫu nhanh */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 p-3.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 rounded-2xl border border-emerald-100 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🪄</span>
+            <span className="text-xs sm:text-sm font-bold text-emerald-950">
+              Thử nghiệm nhanh với giáo án mẫu chuẩn:
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => loadLessonPlanSample('tinhoc4')}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs transition active:scale-95"
+            >
+              💻 Tin học 4 (TT 02 & AI)
+            </button>
+            <button
+              type="button"
+              onClick={() => loadLessonPlanSample('toan4')}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 shadow-2xs transition active:scale-95"
+            >
+              📐 Toán 4 (Tổng - Hiệu)
+            </button>
+            <button
+              type="button"
+              onClick={() => loadLessonPlanSample('tv4')}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs transition active:scale-95"
+            >
+              📖 Tiếng Việt 4 (Từ đơn & Từ phức)
+            </button>
+          </div>
         </div>
 
         {/* Hàng 1: Trường, Tuần, Môn, Cấp học */}
@@ -473,6 +584,13 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
             />
           </div>
         </div>
+
+        {formError && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 font-semibold flex items-center gap-2 animate-shake">
+            <span>⚠️</span>
+            <span>{formError}</span>
+          </div>
+        )}
 
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-slate-100">
           <button

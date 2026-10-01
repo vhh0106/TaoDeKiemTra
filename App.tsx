@@ -28,6 +28,7 @@ import {
   clearAllLessonPlanHistory,
 } from './services/lessonPlanHistoryService';
 import { promptForNewApiKey } from './services/apiKeyHelper';
+import { trackPageView, trackInteraction } from './services/analyticsService';
 
 /* --------------------------- Header --------------------------- */
 const Header: React.FC<{
@@ -37,6 +38,8 @@ const Header: React.FC<{
   onHistoryClick: () => void;
   examHistoryCount: number;
   lessonPlanHistoryCount: number;
+  globalVisits: number;
+  globalInteractions: number;
 }> = ({
   activeMenu,
   setActiveMenu,
@@ -44,6 +47,8 @@ const Header: React.FC<{
   onHistoryClick,
   examHistoryCount,
   lessonPlanHistoryCount,
+  globalVisits,
+  globalInteractions,
 }) => (
   <header
     className="
@@ -77,6 +82,20 @@ const Header: React.FC<{
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Thống kê trực tuyến toàn quốc */}
+          <div
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-200/80 rounded-full text-xs font-semibold text-emerald-950 shadow-2xs"
+            title="Số liệu đồng bộ thời gian thực từ tất cả người dùng GitHub Pages toàn quốc"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>{globalVisits > 0 ? globalVisits.toLocaleString('vi-VN') : '---'} truy cập</span>
+            <span className="text-emerald-300">·</span>
+            <span className="text-indigo-700 font-bold">{globalInteractions > 0 ? globalInteractions.toLocaleString('vi-VN') : '---'} tương tác</span>
+          </div>
+
           {/* Nút Lịch sử theo menu hiện tại */}
           <button
             onClick={onHistoryClick}
@@ -125,7 +144,7 @@ const Header: React.FC<{
               bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80
               px-3 py-2 rounded-full transition shadow-xs
             "
-            title="Đổi hoặc cấu hình Gemini API Key"
+            title="Đổi hoặc cấu hình Gemini API Key riêng (tùy chọn)"
           >
             <span>🔑</span>
             <span className="hidden xs:inline sm:inline">API Key</span>
@@ -143,6 +162,19 @@ const Header: React.FC<{
             <span>VHH</span>
           </a>
         </div>
+      </div>
+
+      {/* Mobile Live Stats Row */}
+      <div className="flex md:hidden items-center justify-between text-[11px] font-semibold text-slate-600 bg-slate-50/80 rounded-lg px-2.5 py-1 mt-2.5 border border-slate-200/60">
+        <span className="flex items-center gap-1.5 text-emerald-800">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Toàn quốc:
+        </span>
+        <span className="flex items-center gap-2">
+          <span>{globalVisits > 0 ? globalVisits.toLocaleString('vi-VN') : '---'} truy cập</span>
+          <span>·</span>
+          <span className="text-indigo-700 font-bold">{globalInteractions > 0 ? globalInteractions.toLocaleString('vi-VN') : '---'} tạo thành công</span>
+        </span>
       </div>
 
       {/* 2 Navigation Menus */}
@@ -297,13 +329,16 @@ const Footer: React.FC<{ visits: number; clicks: number }> = ({ visits, clicks }
       </a>{' '}
       | Zalo: 0348554851
     </p>
-    {(visits > 0 || clicks > 0) && (
-      <p className="mt-2 text-slate-600 font-medium">
-        <span className="mx-1">📊</span>
-        {visits.toLocaleString('vi-VN')} lượt truy cập &{' '}
-        {clicks.toLocaleString('vi-VN')} lượt tương tác tạo nội dung
-      </p>
-    )}
+    <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-4 py-2 bg-slate-50 border border-slate-200/90 rounded-full text-slate-700 font-medium text-xs sm:text-sm shadow-2xs">
+      <span className="flex items-center gap-1.5 text-emerald-800 font-semibold">
+        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Trực tuyến toàn quốc (GitHub Pages)
+      </span>
+      <span className="text-slate-300 hidden sm:inline">|</span>
+      <span>👁️ <strong>{visits > 0 ? visits.toLocaleString('vi-VN') : '---'}</strong> lượt truy cập</span>
+      <span className="text-slate-300 hidden sm:inline">|</span>
+      <span>⚡ <strong>{clicks > 0 ? clicks.toLocaleString('vi-VN') : '---'}</strong> lượt tạo thành công</span>
+    </div>
   </footer>
 );
 
@@ -529,28 +564,12 @@ const App: React.FC = () => {
 
   const isCancelledRef = useRef(false);
 
-  const getStat = (key: string): number => {
-    try {
-      return parseInt(localStorage.getItem(key) || '0', 10);
-    } catch { return 0; }
-  };
-
-  const incrementStat = (key: string): number => {
-    const currentVal = getStat(key);
-    const newVal = currentVal + 1;
-    try {
-      localStorage.setItem(key, newVal.toString());
-    } catch (error) {
-      console.error(`Failed to update stat '${key}' in localStorage:`, error);
-    }
-    return newVal;
-  };
-
   useEffect(() => {
-    const newVisits = incrementStat('pageVisits');
-    setPageVisits(newVisits);
-    const currentClicks = getStat('generationClicks');
-    setGenerationClicks(currentClicks);
+    // Đồng bộ thống kê lượt truy cập & lượt tạo toàn cầu cho GitHub Pages
+    trackPageView().then(({ visits, interactions }) => {
+      setPageVisits(visits);
+      setGenerationClicks(interactions);
+    });
 
     // Load histories
     setSavedExams(getSavedExams());
@@ -575,8 +594,7 @@ const App: React.FC = () => {
   };
 
   const handleStartExamGeneration = async (data: ExamFormData) => {
-    const newClicks = incrementStat('generationClicks');
-    setGenerationClicks(newClicks);
+    trackInteraction().then((count) => setGenerationClicks(count));
 
     setIsLoading(true);
     setError(null);
@@ -693,8 +711,7 @@ const App: React.FC = () => {
 
   /* ---------- LESSON PLAN HANDLERS ---------- */
   const handleStartLessonPlanGeneration = async (data: LessonPlanFormData) => {
-    const newClicks = incrementStat('generationClicks');
-    setGenerationClicks(newClicks);
+    trackInteraction().then((count) => setGenerationClicks(count));
 
     setIsLessonPlanLoading(true);
     setLessonPlanError(null);
@@ -765,6 +782,8 @@ const App: React.FC = () => {
           }}
           examHistoryCount={savedExams.length}
           lessonPlanHistoryCount={savedLessonPlans.length}
+          globalVisits={pageVisits}
+          globalInteractions={generationClicks}
         />
 
         {/* ========================================================================= */}

@@ -257,6 +257,143 @@ const ExamForm: React.FC<ExamFormProps> = ({
     return { totalPercentage, totalScore };
   }, [formData, isSpecialSubject]);
 
+  // Nạp bài mẫu nhanh để kiểm tra và dùng ngay
+  const loadExamSample = (type: 'tieuhoc' | 'thcs' | 'thpt') => {
+    if (type === 'tieuhoc') {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'Tiểu học',
+        grade: 'Lớp 4',
+        subject: 'Toán',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        duration: 40,
+        multipleChoice: { questionCount: 6, percentage: 60, score: 6.0 },
+        trueFalse: { questionCount: 0, percentage: 0, score: 0 },
+        shortAnswer: { questionCount: 0, percentage: 0, score: 0 },
+        essay: { questionCount: 2, percentage: 40, score: 4.0 },
+        knowledgeContent: 'Chủ đề: Các phép tính với số tự nhiên (Cộng, trừ các số có nhiều chữ số; Nhân với số có một chữ số; Chia cho số có một chữ số; Tìm hai số khi biết tổng và hiệu của hai số đó).',
+        additionalRequirements: 'Tuân thủ Thông tư 27/2020/TT-BGDĐT. Cấu trúc 3 mức độ nhận thức (Mức 1, 2, 3), thang điểm 10 số nguyên. Có 1 bài toán thực tế áp dụng tìm hai số khi biết tổng và hiệu.',
+      }));
+    } else if (type === 'thcs') {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'THCS',
+        grade: 'Lớp 8',
+        subject: 'Khoa học tự nhiên',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        duration: 45,
+        multipleChoice: { questionCount: 8, percentage: 40, score: 4.0 },
+        trueFalse: { questionCount: 2, percentage: 20, score: 2.0 },
+        shortAnswer: { questionCount: 2, percentage: 20, score: 2.0 },
+        essay: { questionCount: 1, percentage: 20, score: 2.0 },
+        knowledgeContent: 'Chương 2: Một số hợp chất thông dụng (Oxide, Acid, Base, Thang pH, Muối, Phân bón hóa học).',
+        additionalRequirements: 'Tuân thủ Công văn 7991/BGDĐT-GDTrH. Ma trận & bản đặc tả 4 mức độ (Nhận biết 40%, Thông hiểu 30%, Vận dụng 20%, Vận dụng cao 10%).',
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        schoolLevel: 'THPT',
+        grade: 'Lớp 11',
+        subject: 'Lịch sử',
+        textbook: 'Kết nối tri thức với cuộc sống',
+        duration: 45,
+        multipleChoice: { questionCount: 12, percentage: 30, score: 3.0 },
+        trueFalse: { questionCount: 2, percentage: 40, score: 4.0 },
+        shortAnswer: { questionCount: 2, percentage: 10, score: 1.0 },
+        essay: { questionCount: 1, percentage: 20, score: 2.0 },
+        knowledgeContent: 'Chủ đề 2: Chiến tranh bảo vệ Tổ quốc và chiến tranh giải phóng dân tộc trong lịch sử Việt Nam (trước Cách mạng tháng Tám năm 1945).',
+        additionalRequirements: 'Cấu trúc đề kiểm tra đánh giá định kì theo định hướng phát triển phẩm chất và năng lực học sinh.',
+      }));
+    }
+  };
+
+  // Cấu hình mẫu phân bổ câu hỏi
+  const applyPresetDistribution = (preset: '15p' | 'cv7991' | '50-50' | 'tt27') => {
+    if (preset === '15p') {
+      setFormData((prev) => ({
+        ...prev,
+        duration: 15,
+        multipleChoice: { questionCount: 10, percentage: 100, score: 10.0 },
+        trueFalse: { questionCount: 0, percentage: 0, score: 0 },
+        shortAnswer: { questionCount: 0, percentage: 0, score: 0 },
+        essay: { questionCount: 0, percentage: 0, score: 0 },
+      }));
+    } else if (preset === 'cv7991') {
+      setFormData((prev) => ({
+        ...prev,
+        duration: 45,
+        multipleChoice: { questionCount: 8, percentage: 40, score: 4.0 },
+        trueFalse: { questionCount: 2, percentage: 20, score: 2.0 },
+        shortAnswer: { questionCount: 2, percentage: 20, score: 2.0 },
+        essay: { questionCount: 1, percentage: 20, score: 2.0 },
+      }));
+    } else if (preset === '50-50') {
+      setFormData((prev) => ({
+        ...prev,
+        duration: 45,
+        multipleChoice: { questionCount: 10, percentage: 50, score: 5.0 },
+        trueFalse: { questionCount: 0, percentage: 0, score: 0 },
+        shortAnswer: { questionCount: 0, percentage: 0, score: 0 },
+        essay: { questionCount: 2, percentage: 50, score: 5.0 },
+      }));
+    } else if (preset === 'tt27') {
+      setFormData((prev) => ({
+        ...prev,
+        duration: 40,
+        multipleChoice: { questionCount: 6, percentage: 60, score: 6.0 },
+        trueFalse: { questionCount: 0, percentage: 0, score: 0 },
+        shortAnswer: { questionCount: 0, percentage: 0, score: 0 },
+        essay: { questionCount: 2, percentage: 40, score: 4.0 },
+      }));
+    }
+  };
+
+  // Tự động cân bằng tỉ lệ 100% và 10.0 điểm
+  const handleAutoBalance = () => {
+    setFormData((prev) => {
+      const updated = { ...prev };
+      const types = ['multipleChoice', 'trueFalse', 'shortAnswer', 'essay'] as const;
+      const totalQ = types.reduce((s, t) => s + (updated[t].questionCount || 0), 0);
+      if (totalQ === 0) {
+        return {
+          ...updated,
+          multipleChoice: { questionCount: 8, percentage: 40, score: 4.0 },
+          trueFalse: { questionCount: 2, percentage: 20, score: 2.0 },
+          shortAnswer: { questionCount: 2, percentage: 20, score: 2.0 },
+          essay: { questionCount: 1, percentage: 20, score: 2.0 },
+        };
+      }
+      types.forEach((t) => {
+        updated[t].percentage = Math.round((updated[t].questionCount / totalQ) * 100);
+      });
+      let sumPct = types.reduce((s, t) => s + updated[t].percentage, 0);
+      if (sumPct !== 100) {
+        const maxT = types.reduce((a, b) => (updated[a].questionCount >= updated[b].questionCount ? a : b));
+        updated[maxT].percentage += 100 - sumPct;
+      }
+      if (updated.schoolLevel === 'Tiểu học') {
+        types.forEach((t) => {
+          updated[t].score = Math.round((updated[t].percentage / 100) * 10);
+        });
+        let sumScore = types.reduce((s, t) => s + updated[t].score, 0);
+        if (sumScore !== 10) {
+          const maxT = types.reduce((a, b) => (updated[a].questionCount >= updated[b].questionCount ? a : b));
+          updated[maxT].score += 10 - sumScore;
+        }
+      } else {
+        types.forEach((t) => {
+          updated[t].score = parseFloat(((updated[t].percentage / 100) * 10).toFixed(2));
+        });
+        let sumScore = parseFloat(types.reduce((s, t) => s + updated[t].score, 0).toFixed(2));
+        if (sumScore !== 10) {
+          const maxT = types.reduce((a, b) => (updated[a].questionCount >= updated[b].questionCount ? a : b));
+          updated[maxT].score = parseFloat((updated[maxT].score + (10 - sumScore)).toFixed(2));
+        }
+      }
+      return updated;
+    });
+  };
+
   const totalPercentageError = totalPercentage !== 100;
   const totalScoreError = totalScore !== 10.0;
 
@@ -310,6 +447,38 @@ const ExamForm: React.FC<ExamFormProps> = ({
             title="1. Thông tin chung"
             description="Thiết lập các thông tin cơ bản cho đề kiểm tra."
           >
+            {/* Thanh nạp bài mẫu nhanh */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 p-3.5 bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-2xl border border-indigo-100 shadow-2xs mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🪄</span>
+                <span className="text-xs sm:text-sm font-bold text-indigo-900">
+                  Thử nghiệm nhanh với dữ liệu mẫu:
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => loadExamSample('tieuhoc')}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs transition active:scale-95"
+                >
+                  🏫 Toán 4 (TT 27)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadExamSample('thcs')}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 shadow-2xs transition active:scale-95"
+                >
+                  🔬 KHTN 8 (CV 7991)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadExamSample('thpt')}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white hover:bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs transition active:scale-95"
+                >
+                  📜 Lịch sử 11 (2025)
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               <div className="transition-transform duration-300 md:hover:scale-105">
                 <label
@@ -475,11 +644,64 @@ const ExamForm: React.FC<ExamFormProps> = ({
             }
           >
             {formData.schoolLevel === 'Tiểu học' && (
-              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex items-center gap-2">
+              <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
                 <span className="font-bold shrink-0">📌 Lưu ý TT 27:</span>
                 <span>Ma trận và bản đặc tả tiểu học sẽ được hệ thống tự động phân bổ theo <strong>3 mức độ (Mức 1, Mức 2, Mức 3)</strong> và làm tròn điểm số nguyên.</span>
               </div>
             )}
+
+            {/* Khung cấu hình mẫu nhanh & nút cân bằng điểm */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50/90 rounded-2xl border border-slate-200 shadow-2xs mb-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                <span>⚡</span>
+                <span>Mẫu phân bổ câu hỏi:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => applyPresetDistribution('15p')}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition active:scale-95"
+                  title="10 câu trắc nghiệm 100% (10 điểm)"
+                >
+                  Đề 15p (10 TN)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPresetDistribution('cv7991')}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 transition active:scale-95"
+                  title="Chuẩn 70% TN (8 TN, 2 Đ/S, 2 TLN) - 30% TL (1 TL)"
+                >
+                  45p Chuẩn 70-30 (CV 7991)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPresetDistribution('50-50')}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition active:scale-95"
+                  title="50% Trắc nghiệm - 50% Tự luận"
+                >
+                  50% TN - 50% TL
+                </button>
+                {formData.schoolLevel === 'Tiểu học' && (
+                  <button
+                    type="button"
+                    onClick={() => applyPresetDistribution('tt27')}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 transition active:scale-95"
+                    title="Chuẩn TT 27 (6 TN 6đ + 2 TL 4đ)"
+                  >
+                    Tiểu học (TT 27)
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAutoBalance}
+                  className="px-3 py-1 text-xs font-bold rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-xs transition active:scale-95 flex items-center gap-1"
+                  title="Tự động tính lại tỉ lệ % và điểm để đạt chuẩn 100% và 10.0 điểm"
+                >
+                  <span>🎯</span>
+                  <span>Cân bằng tròn 10 điểm</span>
+                </button>
+              </div>
+            </div>
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-center text-xs sm:text-sm font-medium text-slate-500 px-1 sm:px-3">
                 <div className="col-span-2 sm:col-span-1">Dạng câu hỏi</div>
