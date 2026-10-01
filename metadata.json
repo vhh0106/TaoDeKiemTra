@@ -1,6 +1,6 @@
 {
-  "name": " Tạo đề kiểm tra theo CV7991",
-  "description": "Ứng dụng giúp giáo viên Việt Nam tự động tạo ra các bộ đề thi hoàn chỉnh (Ma trận, Quy định, Đề thi, Hướng dẫn chấm) theo cấu trúc và yêu cầu của Thông tư 7991/BGDĐT-GDTrH.\n",
+  "name": "EduAI - Trợ Lý Giáo Dục AI",
+  "description": "Nền tảng hỗ trợ giáo dục AI toàn diện: Tạo đề kiểm tra chuẩn CV7991 & TT27, Soạn Kế hoạch bài dạy chuẩn CV2345/CV5512 tích hợp Khung năng lực số TT02/2025 & CV3456.",
   "requestFramePermissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

@@ -159,7 +159,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
   // Fix: tính đúng và đủ deps + clear logic
   const isSpecialSubject = useMemo(() => {
     if (formData.subject === "Ngoại ngữ 1 (Tiếng Anh)" || formData.subject === "Ngữ văn") return true;
-    if (formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt") return true;
+    if (formData.schoolLevel === "Tiểu học" && formData.subject === "Tiếng Việt") return true;
     return false;
   }, [formData.subject, formData.schoolLevel]);
 
@@ -362,6 +362,45 @@ const ExamForm: React.FC<ExamFormProps> = ({
               </div>
             </div>
 
+            {/* Khung căn cứ quy định áp dụng: Thông tư 27/2020/TT-BGDĐT cho Tiểu học hoặc CV 7991 cho THCS/THPT */}
+            <div className={`p-4 rounded-xl border mb-6 flex items-start gap-3 transition-colors ${
+              formData.schoolLevel === 'Tiểu học'
+                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+                : 'bg-indigo-50/90 border-indigo-200 text-indigo-950'
+            }`}>
+              <div className={`p-2 rounded-lg text-white shrink-0 mt-0.5 ${
+                formData.schoolLevel === 'Tiểu học' ? 'bg-emerald-600' : 'bg-indigo-600'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="text-xs sm:text-sm">
+                {formData.schoolLevel === 'Tiểu học' ? (
+                  <>
+                    <p className="font-bold text-emerald-900 text-sm sm:text-base flex items-center gap-2">
+                      <span>Căn cứ pháp lý: Thông tư 27/2020/TT-BGDĐT</span>
+                      <span className="bg-emerald-200 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-semibold">Cấp Tiểu học</span>
+                    </p>
+                    <ul className="mt-1 space-y-1 text-emerald-800 list-disc list-inside">
+                      <li><strong>3 Mức độ nhận thức (Điều 7)</strong>: Mức 1 (Nhận biết/nhắc lại), Mức 2 (Kết nối/sắp xếp), Mức 3 (Vận dụng giải quyết vấn đề mới).</li>
+                      <li><strong>Thang điểm 10 không số thập phân</strong> theo Điều 7 TT 27/2020/TT-BGDĐT.</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-indigo-900 text-sm sm:text-base flex items-center gap-2">
+                      <span>Căn cứ pháp lý: Công văn 7991/BGDĐT-GDTrH</span>
+                      <span className="bg-indigo-200 text-indigo-800 text-[11px] px-2 py-0.5 rounded-full font-semibold">Cấp {formData.schoolLevel}</span>
+                    </p>
+                    <p className="mt-1 text-indigo-800">
+                      Đề kiểm tra biên soạn theo <strong>4 mức độ nhận thức</strong>: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <div>
                 <label htmlFor="grade" className="block text-sm font-medium text-slate-700 mb-1">
@@ -400,21 +439,13 @@ const ExamForm: React.FC<ExamFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="textbook" className="block text-sm font-medium text-slate-700 mb-1">
-                  Bộ sách
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Bộ sách áp dụng
                 </label>
-                <select
-                  id="textbook"
-                  value={formData.textbook}
-                  onChange={(e) => handleChange("textbook", e.target.value)}
-                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                >
-                  {textbooks.map((book) => (
-                    <option key={book} value={book}>
-                      {book}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2 px-3 py-2 min-h-11 border border-indigo-200 rounded-md bg-indigo-50/80 text-indigo-900 font-semibold text-sm">
+                  <span>📘</span>
+                  <span className="truncate">Kết nối tri thức với cuộc sống</span>
+                </div>
               </div>
 
               <div>
@@ -437,8 +468,18 @@ const ExamForm: React.FC<ExamFormProps> = ({
         {step === 2 && !isSpecialSubject && (
           <Section
             title="2. Phân bổ câu hỏi và điểm"
-            description="Điều chỉnh số lượng câu hỏi, tỉ lệ % và điểm số cho từng dạng. Tổng điểm phải là 10."
+            description={
+              formData.schoolLevel === 'Tiểu học'
+                ? "Thiết lập cấu trúc câu hỏi theo Thông tư 27/2020/TT-BGDĐT. Tổng điểm toàn bài là 10 (không dùng điểm thập phân)."
+                : "Điều chỉnh số lượng câu hỏi, tỉ lệ % và điểm số cho từng dạng theo CV 7991. Tổng điểm phải là 10."
+            }
           >
+            {formData.schoolLevel === 'Tiểu học' && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex items-center gap-2">
+                <span className="font-bold shrink-0">📌 Lưu ý TT 27:</span>
+                <span>Ma trận và bản đặc tả tiểu học sẽ được hệ thống tự động phân bổ theo <strong>3 mức độ (Mức 1, Mức 2, Mức 3)</strong> và làm tròn điểm số nguyên.</span>
+              </div>
+            )}
             <div className="space-y-3">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 items-center text-xs sm:text-sm font-medium text-slate-500 px-1 sm:px-3">
                 <div className="col-span-2 sm:col-span-1">Dạng câu hỏi</div>
