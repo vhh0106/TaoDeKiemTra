@@ -27,6 +27,7 @@ import {
   deleteLessonPlanFromHistory,
   clearAllLessonPlanHistory,
 } from './services/lessonPlanHistoryService';
+import { promptForNewApiKey } from './services/apiKeyHelper';
 
 /* --------------------------- Header --------------------------- */
 const Header: React.FC<{
@@ -111,6 +112,23 @@ const Header: React.FC<{
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <span className="hidden sm:inline">Hướng dẫn</span>
+          </button>
+
+          {/* Nút Đổi API Key */}
+          <button
+            onClick={() => {
+              promptForNewApiKey('Cấu hình hoặc thay đổi Gemini API Key');
+            }}
+            className="
+              inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold
+              text-emerald-700 hover:text-emerald-900
+              bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80
+              px-3 py-2 rounded-full transition shadow-xs
+            "
+            title="Đổi hoặc cấu hình Gemini API Key"
+          >
+            <span>🔑</span>
+            <span className="hidden xs:inline sm:inline">API Key</span>
           </button>
 
           {/* Avatar link */}
@@ -375,32 +393,79 @@ const LoadingIndicator: React.FC<{ onCancel: () => void; isLessonPlan?: boolean 
 };
 
 /* ------------------------- Error Message ------------------------- */
-const ErrorMessage: React.FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => (
-  <div className="p-5 sm:p-6 bg-red-50/90 border border-red-200 border-l-4 border-l-red-500 text-red-900 rounded-xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-    <div className="flex items-start gap-3 sm:gap-4 min-w-0">
-      <div className="shrink-0 mt-0.5">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={2} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
+const ErrorMessage: React.FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => {
+  const isLeaked =
+    message.toLowerCase().includes("leaked") ||
+    message.toLowerCase().includes("use another api key") ||
+    message.toLowerCase().includes("permission_denied");
+
+  const displayMessage = isLeaked
+    ? 'Khóa API này đã bị Google vô hiệu hóa vì lý do bảo mật (bị lộ lên GitHub công khai - Leaked API Key). Vui lòng tạo một khóa API mới hoàn toàn miễn phí tại Google AI Studio và bấm nút "🔑 Đổi API Key" bên cạnh để tiếp tục.'
+    : message.startsWith("{") && message.includes("message")
+    ? (() => {
+        try {
+          const parsed = JSON.parse(message);
+          return parsed.error?.message || message;
+        } catch {
+          return message;
+        }
+      })()
+    : message;
+
+  const handleChangeKeyAndRetry = () => {
+    const newKey = promptForNewApiKey("Khóa API hiện tại đã bị Google vô hiệu hóa vì bị lộ công khai.");
+    if (newKey && onRetry) {
+      onRetry();
+    }
+  };
+
+  return (
+    <div className="p-5 sm:p-6 bg-red-50/90 border border-red-200 border-l-4 border-l-red-500 text-red-900 rounded-xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+        <div className="shrink-0 mt-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={2} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-base sm:text-lg text-red-800">
+            {isLeaked ? "⚠️ Khóa API bị Google thu hồi (Leaked API Key)" : "Thông báo từ hệ thống AI"}
+          </p>
+          <p className="mt-1 text-sm sm:text-base break-words text-slate-700 leading-relaxed">
+            {displayMessage}
+          </p>
+          {isLeaked && (
+            <p className="mt-2 text-xs text-red-700 font-semibold">
+              👉 Thầy/cô chỉ cần bấm nút <strong>"🔑 Đổi API Key"</strong> để dán key mới và tiếp tục ngay lập tức!
+            </p>
+          )}
+        </div>
       </div>
-      <div className="min-w-0">
-        <p className="font-bold text-base sm:text-lg text-red-800">Thông báo từ hệ thống AI</p>
-        <p className="mt-1 text-sm sm:text-base break-words text-slate-700">{message}</p>
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
+        {isLeaked && (
+          <button
+            onClick={handleChangeKeyAndRetry}
+            className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-4 py-2.5 rounded-lg shadow-sm transition active:scale-95"
+          >
+            <span>🔑</span>
+            <span>Đổi API Key</span>
+          </button>
+        )}
+        {onRetry && (
+          <button
+            onClick={onRetry}
+            className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow-sm transition active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Thử lại ngay
+          </button>
+        )}
       </div>
     </div>
-    {onRetry && (
-      <button
-        onClick={onRetry}
-        className="shrink-0 inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow-sm transition active:scale-95"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Thử lại ngay
-      </button>
-    )}
-  </div>
-);
+  );
+};
 
 /* ------------------------------ App ------------------------------ */
 const App: React.FC = () => {

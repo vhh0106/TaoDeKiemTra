@@ -1,6 +1,6 @@
 import type { LessonPlanFormData } from '../types';
 import { createLessonPlanPrompt } from './promptBuilder';
-import { isStaticHosting, ensureClientApiKey } from './apiKeyHelper';
+import { isStaticHosting, ensureClientApiKey, markApiKeyAsLeaked } from './apiKeyHelper';
 import { GoogleGenAI } from '@google/genai';
 
 async function generateLessonPlanClientDirect(data: LessonPlanFormData, apiKey: string): Promise<string> {
@@ -43,6 +43,19 @@ async function generateLessonPlanClientDirect(data: LessonPlanFormData, apiKey: 
         const msg = String(err?.message || err || '').toLowerCase();
         console.warn(`[Gemini Client] Model ${model} attempt ${attempt} failed: ${msg}`);
 
+        // Xử lý đặc biệt nếu khóa API bị lộ (leaked)
+        if (msg.includes('leaked') || msg.includes('use another api key')) {
+          markApiKeyAsLeaked(apiKey);
+          throw new Error(
+            'Khóa API này đã bị Google vô hiệu hóa vì lý do bảo mật (bị lộ lên GitHub công khai - Leaked API key). Vui lòng nhấn nút "Đổi API Key" để nhập khóa mới.'
+          );
+        }
+
+        if (msg.includes('api_key_invalid') || msg.includes('api key not valid')) {
+          markApiKeyAsLeaked(apiKey);
+          throw new Error('Khóa API không hợp lệ. Vui lòng kiểm tra lại API Key hoặc nhập khóa mới.');
+        }
+
         if (msg.includes('safety') || msg.includes('block')) {
           throw new Error('Nội dung bài học bị bộ lọc an toàn AI từ chối. Vui lòng điều chỉnh lại thông tin.');
         }
@@ -79,7 +92,7 @@ export const generateLessonPlan = async (data: LessonPlanFormData): Promise<stri
       const apiKey = ensureClientApiKey();
       if (!apiKey) {
         throw new Error(
-          'Chưa có Gemini API Key. Khi triển khai trên GitHub Pages, bạn cần cấu hình Secret VITE_GEMINI_API_KEY trong GitHub repository hoặc nhập API Key khi được yêu cầu.'
+          'Chưa có Gemini API Key. Khi triển khai trên GitHub Pages, bạn cần cung cấp một Gemini API Key (tạo miễn phí tại aistudio.google.com/app/apikey).'
         );
       }
       return await generateLessonPlanClientDirect(data, apiKey);
