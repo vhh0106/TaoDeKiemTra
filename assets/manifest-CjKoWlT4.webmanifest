@@ -1,0 +1,16 @@
+{
+  "name": "EduAI - Trợ Lý Giáo Dục AI",
+  "short_name": "EduAI",
+  "description": "Tạo đề kiểm tra chuẩn CV 7991 & TT 27, soạn kế hoạch bài dạy chuẩn CV 2345 & Khung NLS TT 02/2025",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4338ca",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234338ca'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>📚</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
