@@ -7,8 +7,9 @@
     "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "tsx server.ts",
-    "lint": "tsc --noEmit"
+    "start": "node server.ts",
+    "lint": "tsc --noEmit",
+    "encode-key": "node scripts/encodeKey.js"
   },
   "dependencies": {
     "@google/genai": "^1.20.0",
