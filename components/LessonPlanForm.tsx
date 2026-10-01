@@ -8,6 +8,7 @@ import {
   DIGITAL_LEVEL_BY_GRADE,
   PEDAGOGICAL_METHODS,
 } from '../constants';
+import DocumentUploadModal from './DocumentUploadModal';
 
 interface LessonPlanFormProps {
   formData: LessonPlanFormData;
@@ -28,6 +29,7 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
 }) => {
   const [grades, setGrades] = useState<string[]>(GRADES_BY_LEVEL[formData.schoolLevel]);
   const [subjects, setSubjects] = useState<string[]>(SUBJECTS_BY_LEVEL[formData.schoolLevel]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     const newGrades = GRADES_BY_LEVEL[formData.schoolLevel] || [];
@@ -543,9 +545,20 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-            Nội dung bài học / Kiến thức trọng tâm / Yêu cầu cần đạt
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-sm font-semibold text-slate-700">
+              Nội dung bài học / Kiến thức trọng tâm / Yêu cầu cần đạt
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsUploadModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 shadow-2xs transition active:scale-95"
+              title="Trích xuất văn bản từ file Word .docx hoặc .txt"
+            >
+              <span>📎</span>
+              <span>Tải file Word / Text</span>
+            </button>
+          </div>
           <textarea
             rows={4}
             value={formData.knowledgeContent}
@@ -617,6 +630,13 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
           </button>
         </div>
       </section>
+
+      <DocumentUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onApplyText={(text) => handleChange('knowledgeContent', text)}
+        targetFieldTitle="Nội dung bài học"
+      />
     </form>
   );
 };

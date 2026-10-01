@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { ExamResult } from '../types';
+import ExamShuffleModal from './ExamShuffleModal';
 
 declare const JSZip: any;
 
@@ -121,6 +122,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
     const [activeTab, setActiveTab] = useState<Tab>('matrix');
     const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isZipping, setIsZipping] = useState<boolean>(false);
+    const [isShuffleModalOpen, setIsShuffleModalOpen] = useState<boolean>(false);
 
     const contentToDisplay = result[activeTab];
 
@@ -239,6 +241,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">{copyButtonIcon[copyStatus]}</svg>
                         <span>{copyButtonText[copyStatus]}</span>
                     </button>
+                    <button
+                        onClick={() => setIsShuffleModalOpen(true)}
+                        className="flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition duration-300 shadow-sm font-bold text-xs sm:text-sm active:scale-95"
+                        title="Trộn đề thành 4 mã đề (101, 102, 103, 104) kèm ma trận đáp án"
+                    >
+                        <span>🔀</span>
+                        <span>Trộn đề (4 Mã)</span>
+                    </button>
                     <button onClick={handleExportDocx} className="flex items-center space-x-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition duration-300 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         <span>.Docx</span>
@@ -274,6 +284,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                     </p>
                 </div>
             </div>
+
+            <ExamShuffleModal
+                isOpen={isShuffleModalOpen}
+                onClose={() => setIsShuffleModalOpen(false)}
+                examContent={result.exam}
+                answerKeyContent={result.answerKey}
+                subject="Đề kiểm tra"
+            />
         </div>
     );
 };

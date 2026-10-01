@@ -8,6 +8,7 @@ import {
   TEXTBOOKS_BY_SUBJECT,
 } from "../constants";
 import ConfigManagementModal from "./ConfigManagementModal";
+import DocumentUploadModal from "./DocumentUploadModal";
 
 interface ExamFormProps {
   formData: ExamFormData;
@@ -170,6 +171,7 @@ const ExamForm: React.FC<ExamFormProps> = ({
   const [subjects, setSubjects] = useState<string[]>(SUBJECTS_BY_LEVEL[formData.schoolLevel]);
   const [textbooks, setTextbooks] = useState<string[]>(GENERAL_TEXTBOOKS);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [configurations, setConfigurations] = useState<Record<string, ExamFormData>>(() => {
     try {
       const saved = localStorage.getItem("examConfigurations");
@@ -767,9 +769,20 @@ const ExamForm: React.FC<ExamFormProps> = ({
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 flex-grow">
               <div className="flex flex-col">
-                <label htmlFor="knowledgeContent" className="block text-sm font-medium text-slate-700 mb-2">
-                  Nội dung kiến thức
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label htmlFor="knowledgeContent" className="block text-sm font-medium text-slate-700">
+                    Nội dung kiến thức
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsUploadModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 shadow-2xs transition active:scale-95"
+                    title="Trích xuất văn bản từ file Word .docx hoặc .txt"
+                  >
+                    <span>📎</span>
+                    <span>Tải file Word / Text</span>
+                  </button>
+                </div>
                 <textarea
                   id="knowledgeContent"
                   value={formData.knowledgeContent}
@@ -864,6 +877,13 @@ const ExamForm: React.FC<ExamFormProps> = ({
         onSave={handleSaveConfig}
         onLoad={handleLoadConfig}
         onDelete={handleDeleteConfig}
+      />
+
+      <DocumentUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onApplyText={(text) => handleChange("knowledgeContent", text)}
+        targetFieldTitle="Nội dung kiến thức"
       />
     </form>
   );

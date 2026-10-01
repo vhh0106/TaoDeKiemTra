@@ -129,9 +129,9 @@ export const promptForNewApiKey = (reason?: string): string => {
   return '';
 };
 
-export const ensureClientApiKey = (): string => {
+export const ensureClientApiKey = (reason?: string): string => {
   const existing = getClientApiKey();
   if (existing) return existing;
 
-  return promptForNewApiKey();
+  return promptForNewApiKey(reason);
 };

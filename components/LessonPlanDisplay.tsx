@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { LessonPlanFormData } from '../types';
+import { generateStudentTeachingSlides } from '../services/slideGeneratorService';
+import { exportTeachingSlidesToPowerPoint } from '../services/pptExportService';
+import WorksheetRubricModal from './WorksheetRubricModal';
 
 interface LessonPlanDisplayProps {
   content: string;
@@ -251,6 +254,9 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
   onEditParameters,
 }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isPptExporting, setIsPptExporting] = useState<boolean>(false);
+  const [pptStatusText, setPptStatusText] = useState<string>('');
+  const [isWorksheetModalOpen, setIsWorksheetModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (copyStatus !== 'idle') {
@@ -264,6 +270,22 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
       () => setCopyStatus('success'),
       () => setCopyStatus('error')
     );
+  };
+
+  const handleExportPowerPoint = async () => {
+    setIsPptExporting(true);
+    setPptStatusText('AI Gemini đang chuyển hóa giáo án thành Slide bài giảng trên lớp cho học sinh...');
+    try {
+      const slideData = await generateStudentTeachingSlides(formData, content);
+      setPptStatusText('Đang kết xuất và đóng gói file PowerPoint (.pptx)...');
+      await exportTeachingSlidesToPowerPoint(slideData, formData.lessonName);
+    } catch (err: any) {
+      console.error('Failed to export PowerPoint:', err);
+      alert(err instanceof Error ? err.message : 'Không thể tạo file PowerPoint. Vui lòng thử lại!');
+    } finally {
+      setIsPptExporting(false);
+      setPptStatusText('');
+    }
   };
 
   const handleExportDoc = () => {
@@ -354,6 +376,37 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
           </button>
 
           <button
+            onClick={handleExportPowerPoint}
+            disabled={isPptExporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs sm:text-sm font-bold rounded-lg shadow-xs transition active:scale-95 disabled:opacity-50"
+            title="Tự động tạo bộ Slide trình chiếu bài dạy mở bằng PowerPoint"
+          >
+            {isPptExporting ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Đang tạo Slide...</span>
+              </>
+            ) : (
+              <>
+                <span>📊</span>
+                <span>Xuất Slide (.pptx)</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setIsWorksheetModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition active:scale-95"
+            title="Xem và tải Phiếu học tập & Bảng tiêu chí đánh giá năng lực Rubric"
+          >
+            <span>📝</span>
+            <span>Phiếu học tập & Rubric</span>
+          </button>
+
+          <button
             onClick={handleExportDoc}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition"
           >
@@ -375,6 +428,20 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
         </div>
       </div>
 
+      {/* Banner tiến trình chuyển hóa Slide bằng Gemini */}
+      {isPptExporting && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-b border-amber-200 px-6 py-3.5 flex items-center gap-3 text-amber-900 text-xs sm:text-sm font-semibold animate-pulse">
+          <svg className="animate-spin h-5 w-5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+            <span>✨ <strong>Gemini AI đang làm việc:</strong></span>
+            <span>{pptStatusText || 'Đang chuyển hóa giáo án thành Slide bài giảng tương tác cho học sinh...'}</span>
+          </div>
+        </div>
+      )}
+
       {/* Lesson Plan Content Sheet matching the user's PDF */}
       <div id="lesson-plan-print" className="p-6 sm:p-10 font-sans max-w-none text-slate-800 leading-relaxed overflow-x-auto">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -390,6 +457,12 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
           </p>
         </div>
       </div>
+
+      <WorksheetRubricModal
+        isOpen={isWorksheetModalOpen}
+        onClose={() => setIsWorksheetModalOpen(false)}
+        formData={formData}
+      />
     </div>
   );
 };

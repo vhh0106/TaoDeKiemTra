@@ -494,3 +494,164 @@ export const getExamPromptAndInstruction = (
     }
   }
 };
+
+/* ==========================================================================
+   PROMPT TẠO SLIDE BÀI GIẢNG ĐIỆN TỬ DÀNH CHO HỌC SINH TỪ KẾ HOẠCH BÀI DẠY
+   ========================================================================== */
+export const createSlidePresentationPrompt = (
+  formData: LessonPlanFormData,
+  lessonPlanContent: string
+): { prompt: string; systemInstruction: string } => {
+  const systemInstruction = `Bạn là chuyên gia sư phạm hàng đầu và chuyên gia thiết kế bài giảng điện tử tương tác (Interactive Presentation Designer) cho giáo viên Việt Nam.
+Nhiệm vụ của bạn là đọc bản Kế hoạch bài dạy (Giáo án) được cung cấp, sau đó chuyển hóa toàn bộ nội dung thành BỘ SLIDE BÀI GIẢNG ĐIỆN TỬ THỰC THỤ DÙNG ĐỂ CHIẾU CHO HỌC SINH HỌC TRÊN LỚP.
+
+QUY TẮC CỐT LÕI (BẮT BUỘC):
+1. ĐỐI TƯỢNG XEM SLIDE LÀ HỌC SINH (Học sinh nhìn lên máy chiếu/tivi tương tác):
+   - TUYỆT ĐỐI KHÔNG sao chép nguyên văn ngôn từ hành chính giáo án (như "Giáo viên chuyển giao nhiệm vụ", "Học sinh báo cáo sản phẩm", "Tiêu chí cần đạt phẩm chất...").
+   - Mọi câu chữ phải hướng đến học sinh: Ngắn gọn, súc tích, sinh động, dễ hiểu, font chữ to rõ.
+2. CẤU TRÚC BÀI GIẢNG PHẢI ĐẦY ĐỦ 4 HOẠT ĐỘNG SƯ PHẠM VÀ TÍNH TƯƠNG TÁC CAO:
+   - Slide Khởi động: Phải là một trò chơi hoặc câu đố, hình ảnh tình huống kích thích tò mò của học sinh.
+   - Slide Khám phá: Tóm lược kiến thức trọng tâm thành các từ khóa nổi bật, gạch đầu dòng ngắn gọn (15-20 từ/bullet), có hộp "Ghi nhớ" cốt lõi.
+   - Slide Luyện tập: Bài tập thảo luận nhóm, câu hỏi tình huống có hướng dẫn rõ ràng.
+   - Slide Trò chơi trắc nghiệm (Củng cố): Có câu hỏi trắc nghiệm tương tác với 4 phương án A, B, C, D để giáo viên tổ chức cho cả lớp tham gia chọn đáp án.
+   - Slide Vận dụng & Dặn dò: Thử thách sáng tạo và lời dặn dò thân thiện.
+3. SPEAKER NOTES (LỜI THOẠI CỦA GIÁO VIÊN):
+   - Mỗi slide phải có trường "speakerNotes": Gợi ý chi tiết lời dẫn dắt, câu hỏi gợi mở của giáo viên khi đang chiếu slide này trên lớp.
+4. ĐỊNH DẠNG ĐẦU RA:
+   - BẮT BUỘC trả về DUY NHẤT một khối JSON hợp lệ nằm trong \`\`\`json ... \`\`\`.
+   - TUYỆT ĐỐI không có bất kỳ văn bản nào ngoài khối JSON.`;
+
+  const prompt = `Dưới đây là thông tin và bản Kế hoạch bài dạy đã soạn:
+
+- MÔN HỌC: ${formData.subject}
+- KHỐI LỚP: ${formData.grade} (Cấp: ${formData.schoolLevel})
+- TÊN BÀI HỌC: ${formData.lessonName}
+- GIÁO VIÊN: ${formData.teacherName || 'Thầy/Cô giáo'}
+- TRƯỜNG: ${formData.schoolName || 'Trường học'}
+- BỘ SÁCH: Kết nối tri thức với cuộc sống
+- THỜI LƯỢNG: ${formData.durationInPeriods || 1} tiết
+- NĂNG LỰC SỐ TÍCH HỢP (TT 02/2025): ${(formData.digitalDomains || []).join(', ') || 'Khai thác dữ liệu, an toàn số'}
+
+NỘI DUNG KẾ HOẠCH BÀI DẠY (GIÁO ÁN GỐC):
+"""
+${lessonPlanContent}
+"""
+
+HÃY THIẾT KẾ BỘ SLIDE BÀI GIẢNG TRÊN LỚP DÀNH CHO HỌC SINH VÀ TRẢ VỀ THEO CẤU TRÚC JSON SAU:
+\`\`\`json
+{
+  "lessonTitle": "${formData.lessonName}",
+  "subject": "${formData.subject}",
+  "grade": "${formData.grade}",
+  "slides": [
+    {
+      "type": "cover",
+      "tag": "BÀI GIẢNG ĐIỆN TỬ",
+      "title": "${formData.lessonName}",
+      "subtitle": "${formData.subject} - ${formData.grade}",
+      "meta": "Giáo viên: ${formData.teacherName || 'Thầy/Cô giáo'} | ${formData.schoolName || ''}",
+      "speakerNotes": "Chào mừng các em học sinh đến với tiết học hôm nay!"
+    },
+    {
+      "type": "goals",
+      "tag": "MỤC TIÊU BÀI HỌC",
+      "title": "Sau bài học này, chúng mình sẽ:",
+      "bullets": [
+        "Mục tiêu cụ thể 1 học sinh sẽ làm được (dễ hiểu, không dùng từ ngữ hành chính)",
+        "Mục tiêu cụ thể 2",
+        "Mục tiêu cụ thể 3 (Kỹ năng số hoặc ứng dụng thực tế)"
+      ],
+      "highlightBox": "🌟 Cùng nhau tích cực thảo luận để nhận được nhiều sao học tập nhé!",
+      "speakerNotes": "Giáo viên giới thiệu ngắn gọn các điều thú vị các em sẽ khám phá trong bài học."
+    },
+    {
+      "type": "warmup",
+      "tag": "HOẠT ĐỘNG 1: KHỞI ĐỘNG",
+      "title": "🎮 [Tên trò chơi khởi động hấp dẫn]",
+      "bullets": [
+        "Câu hỏi hoặc tình huống khơi gợi sự tò mò của học sinh",
+        "Gợi ý trả lời hoặc quy luật trò chơi"
+      ],
+      "highlightBox": "❓ Thử thách: [Câu hỏi mở màn để dẫn vào bài mới]",
+      "speakerNotes": "Tổ chức cho học sinh chơi trò chơi hoặc quan sát hình ảnh để dẫn vào bài mới."
+    },
+    {
+      "type": "knowledge",
+      "tag": "HOẠT ĐỘNG 2: KHÁM PHÁ KIẾN THỨC",
+      "title": "🔍 [Tên nội dung kiến thức trọng tâm 1]",
+      "bullets": [
+        "Kiến thức cốt lõi 1 (viết ngắn gọn, có từ khóa nổi bật)",
+        "Kiến thức cốt lõi 2",
+        "Ví dụ minh họa cụ thể, gần gũi với học sinh"
+      ],
+      "highlightBox": "💡 Ghi nhớ: [Quy tắc, công thức hoặc định nghĩa quan trọng nhất cần ghi vở]",
+      "speakerNotes": "Giáo viên phân tích ví dụ, hướng dẫn học sinh rút ra ghi nhớ."
+    },
+    {
+      "type": "knowledge",
+      "tag": "HOẠT ĐỘNG 2: KHÁM PHÁ KIẾN THỨC (TIẾP THEO)",
+      "title": "🔍 [Tên nội dung kiến thức trọng tâm 2 hoặc Ứng dụng số]",
+      "bullets": [
+        "Nội dung kiến thức tiếp theo hoặc thao tác thực hành",
+        "Điểm cần lưu ý để tránh sai sót",
+        "Liên hệ thực tế"
+      ],
+      "highlightBox": "🌐 Kỹ năng số: [Hướng dẫn an toàn số hoặc sử dụng công cụ]",
+      "speakerNotes": "Hướng dẫn học sinh thảo luận nhóm để làm rõ kiến thức."
+    },
+    {
+      "type": "practice",
+      "tag": "HOẠT ĐỘNG 3: LUYỆN TẬP & THỰC HÀNH",
+      "title": "⚡ [Thực hành: Tên thử thách luyện tập]",
+      "bullets": [
+        "Nhiệm vụ 1: Bài tập cụ thể trong SGK hoặc phiếu bài tập",
+        "Nhiệm vụ 2: Thảo luận nhóm đôi hoặc nhóm 4",
+        "Thời gian thực hiện: 5 - 7 phút"
+      ],
+      "highlightBox": "👥 Hoạt động nhóm: Cùng bạn bàn thảo luận và ghi kết quả vào bảng nhóm!",
+      "speakerNotes": "Giáo viên phát lệnh thảo luận nhóm, đi quanh lớp quan sát và hỗ trợ."
+    },
+    {
+      "type": "quiz",
+      "tag": "CỦNG CỐ KIẾN THỨC",
+      "title": "🏆 Thử Tài Nhanh Mắt Nhanh Trí",
+      "question": "[Nội dung một câu hỏi trắc nghiệm tương tác hay về bài học]?",
+      "options": [
+        "A. [Phương án A]",
+        "B. [Phương án B]",
+        "C. [Phương án C]",
+        "D. [Phương án D]"
+      ],
+      "correctAnswer": "A",
+      "explanation": "[Lời giải thích súc tích khen ngợi học sinh khi trả lời đúng]",
+      "speakerNotes": "Mời học sinh giơ tay chọn đáp án hoặc dùng thẻ A, B, C, D để biểu quyết."
+    },
+    {
+      "type": "application",
+      "tag": "HOẠT ĐỘNG 4: VẬN DỤNG & SÁNG TẠO",
+      "title": "🌟 Em Là Nhà Sáng Tạo Nhí",
+      "bullets": [
+        "Nhiệm vụ vận dụng kiến thức vào thực tế đời sống gia đình hoặc trường học",
+        "Cách thực hiện sản phẩm hoặc hành động cụ thể"
+      ],
+      "highlightBox": "🎯 Thử thách tuần này: [Hành động thực tế học sinh cần làm sau bài học]",
+      "speakerNotes": "Khuyến khích học sinh vận dụng kiến thức để giải quyết vấn đề thực tế."
+    },
+    {
+      "type": "homework",
+      "tag": "DẶN DÒ VỀ NHÀ",
+      "title": "🏡 Dặn Dò & Chuẩn Bị Cho Tiết Tới",
+      "bullets": [
+        "1. Ôn lại nội dung bài học trong SGK",
+        "2. Hoàn thành phiếu học tập / Vở bài tập",
+        "3. Chuẩn bị trước bài học cho tiết sau"
+      ],
+      "highlightBox": "🎉 Khen ngợi cả lớp đã có một tiết học rất sôi nổi và hiệu quả!",
+      "speakerNotes": "Nhận xét tinh thần học tập của cả lớp và chào tạm biệt học sinh."
+    }
+  ]
+}
+\`\`\``;
+
+  return { prompt, systemInstruction };
+};

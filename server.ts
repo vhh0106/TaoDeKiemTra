@@ -7,6 +7,7 @@ import type { ExamFormData, LessonPlanFormData } from './types.ts';
 import {
   getExamPromptAndInstruction,
   createLessonPlanPrompt,
+  createSlidePresentationPrompt,
 } from './services/promptBuilder.ts';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -210,6 +211,38 @@ app.post('/api/generate-lesson-plan', async (req, res) => {
     }
 
     return res.status(500).json({ error: `Đã xảy ra lỗi khi soạn giáo án: ${parsedMessage}` });
+  }
+});
+
+app.post('/api/generate-slides', async (req, res) => {
+  try {
+    const { data, lessonPlanContent } = req.body as {
+      data: LessonPlanFormData;
+      lessonPlanContent: string;
+    };
+    if (!data || !lessonPlanContent) {
+      return res.status(400).json({ error: 'Dữ liệu không hợp lệ. Cần có kế hoạch bài dạy để tạo slide.' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: 'Chưa cấu hình GEMINI_API_KEY trên máy chủ. Vui lòng kiểm tra Settings > Secrets.',
+      });
+    }
+
+    const { prompt, systemInstruction } = createSlidePresentationPrompt(data, lessonPlanContent);
+
+    const text = await generateExamWithRetryAndFallback({
+      contents: prompt,
+      systemInstruction,
+      temperature: 0.6,
+    });
+
+    return res.json({ text });
+  } catch (error: any) {
+    console.error('Error in /api/generate-slides:', error);
+    const rawMsg = String(error?.message || error || '');
+    return res.status(500).json({ error: `Lỗi khi tạo slide bài giảng: ${rawMsg}` });
   }
 });
 
