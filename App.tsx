@@ -118,15 +118,11 @@ const Header: React.FC<{
             href="https://www.facebook.com/vhh0106/"
             target="_blank"
             rel="noopener noreferrer"
-            className="ring-2 ring-offset-1 ring-indigo-300 rounded-full focus:outline-none"
-            aria-label="Trang Facebook tác giả"
+            className="h-9 w-9 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-offset-1 ring-indigo-300 shadow-sm transition-transform hover:scale-110 focus:outline-none"
+            title="Tác giả: Vũ Hoàng Hiệp (Facebook)"
+            aria-label="Trang Facebook tác giả Vũ Hoàng Hiệp"
           >
-            <img
-              src="https://scontent.fsgn5-10.fna.fbcdn.net/v/t39.30808-6/543117120_4112665879051174_5463830652082981920_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=UVFebXqE6DoQ7kNvwFowOHQ&_nc_oc=AdmhktLbevr1HwLq1ht2moviLk2zVcWIB2m7KnbFDyjM7V8tdclS40bSW9EwXfKC700&_nc_zt=23&_nc_ht=scontent.fsgn5-10.fna&_nc_gid=KDlMF5jWrA3zBsxQviGygQ&oh=00_AfYEa6uqpXpHC-CoX3Ucp23saX44j7BpCJPnMQ5VltNtJQ&oe=68E00E10"
-              alt="Vũ Hoàng Hiệp"
-              className="h-9 w-9 rounded-full object-cover transition-transform hover:scale-110"
-              loading="lazy"
-            />
+            <span>VHH</span>
           </a>
         </div>
       </div>
