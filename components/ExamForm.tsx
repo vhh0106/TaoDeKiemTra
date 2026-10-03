@@ -193,6 +193,9 @@ const ExamForm: React.FC<ExamFormProps> = ({
   const [textbooks, setTextbooks] = useState<string[]>(GENERAL_TEXTBOOKS);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [showLegalDetails, setShowLegalDetails] = useState(false);
+  const [showEnglishFormatDetails, setShowEnglishFormatDetails] = useState(false);
+  const [showEnglishSkillsDetail, setShowEnglishSkillsDetail] = useState(false);
   const [configurations, setConfigurations] = useState<Record<string, ExamFormData>>(() => {
     try {
       const saved = localStorage.getItem("examConfigurations");
@@ -603,20 +606,20 @@ const ExamForm: React.FC<ExamFormProps> = ({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-              <div className="transition-transform duration-300 md:hover:scale-105">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-4">
+              <div>
                 <label
                   htmlFor="schoolLevel"
-                  className="block font-medium mb-1 text-indigo-700 flex items-center gap-2"
+                  className="block font-medium mb-1 text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 text-xs sm:text-sm"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /></svg>
                   Cấp học
                 </label>
                 <select
                   id="schoolLevel"
                   value={formData.schoolLevel}
                   onChange={(e) => handleChange("schoolLevel", e.target.value)}
-                  className="block w-full px-3 py-2 min-h-11 border border-indigo-300 dark:border-slate-700 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 text-base bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all duration-300"
+                  className="block w-full px-3 py-2 min-h-10 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
                   required
                 >
                   {SCHOOL_LEVELS.map((level) => (
@@ -625,18 +628,14 @@ const ExamForm: React.FC<ExamFormProps> = ({
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 17l4 4 4-4m-4-5v9" /></svg>
-                  Chọn cấp học phù hợp với đề kiểm tra.
-                </p>
               </div>
 
-              <div className="transition-transform duration-300 md:hover:scale-105">
+              <div>
                 <label
                   htmlFor="schoolName"
-                  className="block font-medium mb-1 text-indigo-700 dark:text-indigo-400 flex items-center gap-2"
+                  className="block font-medium mb-1 text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 text-xs sm:text-sm"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v4a1 1 0 001 1h3m10-5v4a1 1 0 01-1 1h-3m-4 0h4" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v4a1 1 0 001 1h3m10-5v4a1 1 0 01-1 1h-3m-4 0h4" /></svg>
                   Tên trường
                 </label>
                 <input
@@ -645,53 +644,54 @@ const ExamForm: React.FC<ExamFormProps> = ({
                   type="text"
                   value={formData.schoolName || ""}
                   onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                  className="block w-full px-3 py-2 min-h-11 border border-indigo-300 dark:border-slate-700 rounded-lg shadow focus:ring-2 focus:ring-indigo-400 focus:border-indigo-500 text-base bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 transition-all duration-300"
-                  placeholder="Nhập tên trường"
+                  className="block w-full px-3 py-2 min-h-10 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  placeholder="VD: Trường Tiểu học số 1..."
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" /></svg>
-                  Nhập tên trường đầy đủ, ví dụ: Trường tiểu học số 1 Trương Quang Trọng.
-                </p>
               </div>
             </div>
 
-            {/* Khung căn cứ quy định áp dụng: Thông tư 27/2020/TT-BGDĐT cho Tiểu học hoặc CV 7991 cho THCS/THPT */}
-            <div className={`p-4 rounded-xl border mb-6 flex items-start gap-3 transition-colors ${
+            {/* Thanh căn cứ quy định: Tinh gọn, click để xem chi tiết khi cần */}
+            <div className={`rounded-xl border mb-4 transition-colors ${
               formData.schoolLevel === 'Tiểu học'
-                ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-300'
-                : 'bg-indigo-50/90 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-300'
+                ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60'
+                : 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800/60'
             }`}>
-              <div className={`p-2 rounded-lg text-white shrink-0 mt-0.5 ${
-                formData.schoolLevel === 'Tiểu học' ? 'bg-emerald-600' : 'bg-indigo-600'
-              }`}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="flex items-center justify-between p-2.5 sm:p-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base shrink-0">⚖️</span>
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
+                    <span className="font-bold text-slate-800 dark:text-slate-100">
+                      {formData.schoolLevel === 'Tiểu học' ? 'Thông tư 27/2020/TT-BGDĐT' : 'Công văn 7991/BGDĐT-GDTrH'}
+                    </span>
+                    <span className="text-slate-500 dark:text-slate-400 text-xs hidden sm:inline">
+                      • {formData.schoolLevel === 'Tiểu học' ? '3 mức độ nhận thức, điểm số nguyên' : '4 mức độ nhận thức'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowLegalDetails(!showLegalDetails)}
+                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer flex items-center gap-1 shrink-0"
+                >
+                  <span>{showLegalDetails ? 'Thu gọn' : 'Xem quy định'}</span>
+                  <span>{showLegalDetails ? '▴' : '▾'}</span>
+                </button>
               </div>
-              <div className="text-xs sm:text-sm">
-                {formData.schoolLevel === 'Tiểu học' ? (
-                  <>
-                    <p className="font-bold text-emerald-900 dark:text-emerald-300 text-sm sm:text-base flex items-center gap-2">
-                      <span>Căn cứ pháp lý: Thông tư 27/2020/TT-BGDĐT</span>
-                      <span className="bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 text-[11px] px-2 py-0.5 rounded-full font-semibold">Cấp Tiểu học</span>
-                    </p>
-                    <ul className="mt-1 space-y-1 text-emerald-800 dark:text-emerald-300 list-disc list-inside">
+
+              {showLegalDetails && (
+                <div className="px-3.5 pb-3 pt-1 border-t border-slate-200/60 dark:border-slate-800 text-xs space-y-1.5">
+                  {formData.schoolLevel === 'Tiểu học' ? (
+                    <ul className="space-y-1 text-emerald-800 dark:text-emerald-300 list-disc list-inside">
                       <li><strong>3 Mức độ nhận thức (Điều 7)</strong>: Mức 1 (Nhận biết/nhắc lại), Mức 2 (Kết nối/sắp xếp), Mức 3 (Vận dụng giải quyết vấn đề mới).</li>
                       <li><strong>Thang điểm 10 không số thập phân</strong> theo Điều 7 TT 27/2020/TT-BGDĐT.</li>
                     </ul>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-bold text-indigo-900 dark:text-indigo-300 text-sm sm:text-base flex items-center gap-2">
-                      <span>Căn cứ pháp lý: Công văn 7991/BGDĐT-GDTrH</span>
-                      <span className="bg-indigo-200 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-[11px] px-2 py-0.5 rounded-full font-semibold">Cấp {formData.schoolLevel}</span>
-                    </p>
-                    <p className="mt-1 text-indigo-800 dark:text-indigo-300">
+                  ) : (
+                    <p className="text-indigo-800 dark:text-indigo-300">
                       Đề kiểm tra biên soạn theo <strong>4 mức độ nhận thức</strong>: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao.
                     </p>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -756,30 +756,31 @@ const ExamForm: React.FC<ExamFormProps> = ({
               </div>
             </div>
 
-            {/* Menu Chọn Dạng Đề Môn Tiếng Anh */}
+            {/* Menu Chọn Dạng Đề Môn Tiếng Anh - Tinh gọn */}
             {isEnglish && (
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-50 via-red-50/50 to-amber-50 dark:from-slate-850 dark:via-rose-950/20 dark:to-slate-850 border border-rose-200/80 dark:border-rose-900/60 shadow-xs mt-4 sm:mt-6 animate-scale-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2.5 border-b border-rose-200/60 dark:border-rose-900/40">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-50/70 via-red-50/40 to-amber-50/40 dark:from-slate-850 dark:via-rose-950/20 dark:to-slate-850 border border-rose-200/80 dark:border-rose-900/60 shadow-xs mt-3 sm:mt-5 animate-scale-in">
+                <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-rose-200/60 dark:border-rose-900/40">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🇬🇧</span>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-bold text-rose-950 dark:text-rose-200 flex items-center gap-2">
-                        <span>Menu Chọn Dạng Đề Môn Tiếng Anh (Exam Format)</span>
-                        <span className="text-[10px] bg-rose-200 dark:bg-rose-900/80 text-rose-900 dark:text-rose-200 font-bold px-2 py-0.5 rounded-full">
-                          Mới
-                        </span>
-                      </h3>
-                      <p className="text-[11px] sm:text-xs text-rose-700 dark:text-rose-300">
-                        Chọn cấu trúc đề chuẩn. Bạn hoàn toàn có thể điều chỉnh lại số câu, tỉ lệ % và điểm số ở <strong>Bước 2 (Cấu trúc đề)</strong>.
-                      </p>
-                    </div>
+                    <span className="text-lg">🇬🇧</span>
+                    <h3 className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-200">
+                      Dạng đề Tiếng Anh (Exam Format)
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-600 text-white shadow-2xs">
+                      {ENGLISH_EXAM_FORMATS.find(f => f.id === formData.examFormat)?.badge || "Chuẩn 4 kỹ năng"}
+                    </span>
                   </div>
-                  <span className="self-start sm:self-auto text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-600 text-white shadow-xs">
-                    {ENGLISH_EXAM_FORMATS.find(f => f.id === formData.examFormat)?.badge || "Chuẩn 4 kỹ năng ELT"}
-                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowEnglishFormatDetails(!showEnglishFormatDetails)}
+                    className="px-2 py-0.5 text-xs text-rose-800 dark:text-rose-300 font-semibold hover:bg-rose-100 dark:hover:bg-slate-750 rounded-lg transition cursor-pointer flex items-center gap-1"
+                  >
+                    <span>{showEnglishFormatDetails ? 'Thu gọn' : 'Chi tiết'}</span>
+                    <span>{showEnglishFormatDetails ? '▴' : '▾'}</span>
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   {ENGLISH_EXAM_FORMATS.map((format) => {
                     const isSelected = (formData.examFormat || 'four_skills') === format.id;
                     return (
@@ -787,34 +788,32 @@ const ExamForm: React.FC<ExamFormProps> = ({
                         key={format.id}
                         type="button"
                         onClick={() => handleSelectEnglishFormat(format.id)}
-                        className={`p-3 sm:p-3.5 rounded-xl text-left border transition-all duration-200 relative flex flex-col justify-between cursor-pointer ${
+                        className={`p-2 sm:p-2.5 rounded-xl text-left border transition-all duration-150 flex flex-col justify-between cursor-pointer ${
                           isSelected
-                            ? 'bg-white dark:bg-slate-800 border-rose-500 dark:border-rose-400 shadow-md ring-2 ring-rose-200 dark:ring-rose-900/50'
-                            : 'bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 border-rose-200/70 dark:border-slate-700 hover:border-rose-300 dark:hover:border-slate-600 shadow-2xs'
+                            ? 'bg-white dark:bg-slate-800 border-rose-500 dark:border-rose-400 shadow-sm ring-2 ring-rose-200 dark:ring-rose-900/50'
+                            : 'bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 border-rose-200/60 dark:border-slate-700'
                         }`}
+                        title={format.description}
                       >
                         <div>
-                          <div className="flex items-center justify-between gap-1 mb-1.5">
-                            <span className="text-lg">{format.icon}</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              isSelected ? 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                            }`}>
-                              {format.defaultDuration} phút
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-base">{format.icon}</span>
+                            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                              {format.defaultDuration}p
                             </span>
                           </div>
-                          <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight line-clamp-2">
                             {format.label}
                           </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                            {format.description}
-                          </p>
+                          {showEnglishFormatDetails && (
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-tight">
+                              {format.description}
+                            </p>
+                          )}
                         </div>
-                        <div className="mt-2.5 pt-1.5 border-t border-rose-100/80 dark:border-slate-700/80 flex items-center justify-between text-[11px]">
-                          <span className={`font-semibold ${isSelected ? 'text-rose-700 dark:text-rose-300 font-bold' : 'text-slate-500 dark:text-slate-400'}`}>
-                            {isSelected ? '✓ Đang áp dụng' : 'Chọn dạng đề này'}
-                          </span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {format.distribution.multipleChoice.questionCount} TN • {format.distribution.essay.questionCount} TL
+                        <div className="mt-1.5 pt-1 border-t border-slate-100 dark:border-slate-700 text-[10px] flex items-center justify-between">
+                          <span className={isSelected ? 'text-rose-600 font-bold' : 'text-slate-400'}>
+                            {isSelected ? '✓ Đã chọn' : 'Chọn'}
                           </span>
                         </div>
                       </button>
@@ -973,64 +972,67 @@ const ExamForm: React.FC<ExamFormProps> = ({
               />
             </div>
 
-            {/* Cấu hình chi tiết các dạng bài cho từng kỹ năng (Nghe, Nói, Đọc, Viết) */}
+            {/* Cấu hình chi tiết các dạng bài cho từng kỹ năng (Nghe, Nói, Đọc, Viết) - Thu gọn mặc định */}
             {isEnglish && (
-              <div className="mt-6 p-4 sm:p-5 bg-gradient-to-br from-rose-50/70 via-white to-amber-50/60 dark:from-slate-850 dark:via-slate-900 dark:to-slate-850 rounded-2xl border border-rose-200 dark:border-rose-900/60 shadow-xs animate-scale-in">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-rose-200/80 dark:border-rose-900/40">
-                  <div className="flex items-start gap-2.5">
-                    <span className="text-2xl p-2 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 shadow-2xs">🎧</span>
+              <div className="mt-4 p-3.5 sm:p-4 bg-gradient-to-br from-rose-50/70 via-white to-amber-50/60 dark:from-slate-850 dark:via-slate-900 dark:to-slate-850 rounded-2xl border border-rose-200 dark:border-rose-900/60 shadow-xs animate-scale-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🎧</span>
                     <div>
-                      <h3 className="text-sm sm:text-base font-bold text-rose-950 dark:text-rose-200 flex flex-wrap items-center gap-2">
-                        <span>Đa dạng hóa các dạng bài cho từng kỹ năng (Listening, Speaking, Reading, Writing)</span>
-                        <span className="text-[10px] bg-rose-600 text-white font-bold px-2 py-0.5 rounded-full">
-                          Chuẩn GDPT 2018
-                        </span>
+                      <h3 className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-200 flex items-center gap-2">
+                        <span>Dạng bài kỹ năng (Listening, Speaking, Reading, Writing)</span>
                       </h3>
-                      <p className="text-[11px] sm:text-xs text-rose-800/90 dark:text-rose-300/90 mt-0.5 leading-relaxed">
-                        Mỗi kỹ năng được tích hợp nhiều dạng bài phong phú (nghe điền từ, nghe chọn A/B/C/D, đọc cloze test, viết lại câu...). Đề thi và ma trận sẽ tự động phân bổ theo các dạng đã tick chọn dưới đây.
+                      <p className="text-[11px] text-rose-700 dark:text-rose-300">
+                        {(formData.englishSkillsConfig?.listeningTypes?.length || 0) +
+                          (formData.englishSkillsConfig?.readingTypes?.length || 0) +
+                          (formData.englishSkillsConfig?.writingTypes?.length || 0) +
+                          (formData.englishSkillsConfig?.languageFocusTypes?.length || 0) +
+                          (formData.englishSkillsConfig?.includeSpeaking
+                            ? formData.englishSkillsConfig?.speakingTypes?.length || 0
+                            : 0)}{" "}
+                        dạng bài đã chọn
                       </p>
                     </div>
                   </div>
 
-                  <div className="self-start sm:self-auto shrink-0 flex items-center gap-1.5 px-3 py-1 bg-rose-600 text-white text-xs font-bold rounded-full shadow-2xs">
-                    <span>✨</span>
-                    <span>
-                      {(formData.englishSkillsConfig?.listeningTypes?.length || 0) +
-                        (formData.englishSkillsConfig?.readingTypes?.length || 0) +
-                        (formData.englishSkillsConfig?.writingTypes?.length || 0) +
-                        (formData.englishSkillsConfig?.languageFocusTypes?.length || 0) +
-                        (formData.englishSkillsConfig?.includeSpeaking
-                          ? formData.englishSkillsConfig?.speakingTypes?.length || 0
-                          : 0)}{" "}
-                      dạng bài đã chọn
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEnglishSkillsDetail(!showEnglishSkillsDetail)}
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-slate-700 hover:bg-rose-50 dark:hover:bg-slate-750 transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                    >
+                      <span>{showEnglishSkillsDetail ? 'Thu gọn' : 'Tùy chỉnh dạng bài'}</span>
+                      <span>{showEnglishSkillsDetail ? '▴' : '▾'}</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Thanh Mẫu cấu hình nhanh dạng bài theo cấp học */}
-                <div className="mt-3.5 mb-4 p-3 bg-white/90 dark:bg-slate-800/90 rounded-xl border border-rose-200/80 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                    <span>⚡</span>
-                    <span>Mẫu cấu hình dạng bài nhanh:</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {ENGLISH_SKILL_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleApplySkillPreset(p.id)}
-                        className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-slate-650 text-rose-900 dark:text-rose-200 border border-rose-200 dark:border-slate-600 transition active:scale-95 flex items-center gap-1"
-                        title={p.label}
-                      >
-                        <span>{p.icon}</span>
-                        <span>{p.badge}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                {showEnglishSkillsDetail && (
+                  <div className="mt-3 pt-3 border-t border-rose-200/80 dark:border-rose-900/40 space-y-3 animate-fadeIn">
+                    {/* Thanh Mẫu cấu hình nhanh dạng bài theo cấp học */}
+                    <div className="p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl border border-rose-200/80 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+                      <div className="flex items-center gap-1 text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <span>⚡</span>
+                        <span>Mẫu nhanh:</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {ENGLISH_SKILL_PRESETS.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => handleApplySkillPreset(p.id)}
+                            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-slate-650 text-rose-900 dark:text-rose-200 border border-rose-200 dark:border-slate-600 transition active:scale-95 flex items-center gap-1"
+                            title={p.label}
+                          >
+                            <span>{p.icon}</span>
+                            <span>{p.badge}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                {/* Danh sách từng kỹ năng */}
-                <div className="space-y-4">
+                    {/* Danh sách từng kỹ năng */}
+                    <div className="space-y-3">
                   {ENGLISH_SKILL_CATEGORIES.map((category) => {
                     const configKey =
                       category.id === "listening"
@@ -1143,7 +1145,9 @@ const ExamForm: React.FC<ExamFormProps> = ({
                       </div>
                     );
                   })}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

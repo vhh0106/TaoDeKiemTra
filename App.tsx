@@ -70,86 +70,44 @@ const Header: React.FC<{
       {/* Top Header Row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-blue-600 p-2.5 rounded-xl text-white shadow-md shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" strokeWidth={2}>
+          <div className="bg-gradient-to-br from-indigo-600 to-blue-600 p-2 sm:p-2.5 rounded-xl text-white shadow-md shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
           <div>
-            <h1 className="text-lg sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
-              <span>EduAI</span>
-              <span className="text-xs sm:text-sm font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800/80 px-2 py-0.5 rounded-lg">
-                Trợ Lý Giáo Dục AI
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                EduAI
+              </h1>
+              <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+                Trợ lý Soạn Đề &amp; Giáo án Chuẩn GD
               </span>
-            </h1>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-              Hỗ trợ giáo viên: Tạo đề kiểm tra (CV 7991 & TT 27) • Soạn kế hoạch bài dạy (CV 2345 & Khung NLS TT 02/2025)
-            </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Thống kê trực tuyến toàn quốc */}
-          <div
-            className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 dark:from-slate-850 dark:via-slate-800 dark:to-slate-850 border border-emerald-200/80 dark:border-slate-700 rounded-full text-xs font-semibold text-emerald-950 dark:text-emerald-300 shadow-2xs"
-            title="Số liệu đồng bộ thời gian thực từ tất cả người dùng GitHub Pages toàn quốc"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>{globalVisits > 0 ? globalVisits.toLocaleString('vi-VN') : '---'} truy cập</span>
-            <span className="text-emerald-300 dark:text-slate-600">·</span>
-            <span className="text-indigo-700 dark:text-indigo-400 font-bold">{globalInteractions > 0 ? globalInteractions.toLocaleString('vi-VN') : '---'} tương tác</span>
-          </div>
-
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Nút Chế độ tối / sáng (Dark Mode) */}
           <button
             onClick={onToggleDarkMode}
-            className={`
-              inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
-              px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full transition shadow-xs border cursor-pointer
-              ${isDarkMode
-                ? 'bg-slate-800 hover:bg-slate-750 text-amber-300 border-slate-700 hover:border-slate-600 ring-1 ring-amber-400/20'
-                : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
-              }
-            `}
-            title={isDarkMode ? 'Chuyển sang chế độ sáng (Light Mode)' : 'Chuyển sang chế độ tối (Dark Mode - Giảm mỏi mắt)'}
+            className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-xs font-medium flex items-center gap-1.5"
+            title={isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
             aria-label={isDarkMode ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
           >
-            {isDarkMode ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span className="hidden sm:inline">Chế độ sáng</span>
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-                <span className="hidden sm:inline">Chế độ tối</span>
-              </>
-            )}
+            {isDarkMode ? '☀️' : '🌙'}
+            <span className="hidden md:inline">{isDarkMode ? 'Sáng' : 'Tối'}</span>
           </button>
 
-          {/* Nút Lịch sử theo menu hiện tại */}
+          {/* Nút Lịch sử */}
           <button
             onClick={onHistoryClick}
-            className="
-              inline-flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-semibold
-              text-indigo-700 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100
-              bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-slate-750 border border-indigo-200/80 dark:border-slate-700
-              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition shadow-xs
-            "
+            className="px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 transition cursor-pointer text-xs sm:text-sm font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700"
             title="Xem lại lịch sử nội dung đã tạo"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <span>🕒</span>
             <span className="hidden sm:inline">Lịch sử</span>
-            <span className="bg-indigo-600 dark:bg-indigo-500 text-white text-[11px] font-bold px-1.5 py-0.2 rounded-full min-w-5 text-center leading-tight">
+            <span className="bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
               {activeMenu === 'exam' ? examHistoryCount : lessonPlanHistoryCount}
             </span>
           </button>
@@ -157,34 +115,20 @@ const Header: React.FC<{
           {/* Nút Hướng dẫn */}
           <button
             onClick={onGuideClick}
-            className="
-              inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
-              text-slate-700 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-300
-              bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-750 border border-transparent dark:border-slate-700
-              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition cursor-pointer
-            "
-            aria-label="Xem hướng dẫn sử dụng"
+            className="px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer text-xs sm:text-sm font-semibold flex items-center gap-1 border border-slate-200 dark:border-slate-700"
             title="Hướng dẫn sử dụng"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-600 dark:text-slate-400 shrink-0" viewBox="0 0 24 24" stroke="currentColor" fill="none" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+            <span>💡</span>
             <span className="hidden sm:inline">Hướng dẫn</span>
           </button>
 
           {/* Nút Góp ý */}
           <button
             onClick={onFeedbackClick}
-            className="
-              inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
-              text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-200
-              bg-purple-50 dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-slate-750 border border-purple-200/80 dark:border-slate-700
-              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition shadow-xs cursor-pointer
-            "
-            title="Góp ý & phản hồi cho tác giả (vhh0106@gmail.com)"
-            aria-label="Góp ý cho tác giả"
+            className="px-2.5 py-1.5 rounded-lg text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-800 transition cursor-pointer text-xs sm:text-sm font-semibold flex items-center gap-1 border border-indigo-200 dark:border-slate-700"
+            title="Góp ý cho tác giả (vhh0106@gmail.com)"
           >
-            <span className="shrink-0">💬</span>
+            <span>💬</span>
             <span className="hidden sm:inline">Góp ý</span>
           </button>
 
@@ -193,16 +137,11 @@ const Header: React.FC<{
             onClick={() => {
               promptForNewApiKey('Cấu hình hoặc thay đổi Gemini API Key');
             }}
-            className="
-              inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
-              text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-200
-              bg-emerald-50 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-slate-750 border border-emerald-200/80 dark:border-slate-700
-              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition shadow-xs
-            "
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-slate-800 transition cursor-pointer text-xs sm:text-sm font-semibold flex items-center gap-1 border border-emerald-200 dark:border-slate-700"
             title="Đổi hoặc cấu hình Gemini API Key riêng (tùy chọn)"
           >
-            <span className="shrink-0">🔑</span>
-            <span className="hidden sm:inline">API Key</span>
+            <span>🔑</span>
+            <span className="hidden md:inline">API Key</span>
           </button>
 
           {/* Avatar link */}
@@ -210,61 +149,38 @@ const Header: React.FC<{
             href="https://www.facebook.com/vhh0106/"
             target="_blank"
             rel="noopener noreferrer"
-            className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-offset-1 ring-indigo-300 dark:ring-offset-slate-900 shadow-sm transition-transform hover:scale-110 focus:outline-none shrink-0"
-            title="Tác giả: Vũ Hoàng Hiệp (Facebook)"
-            aria-label="Trang Facebook tác giả Vũ Hoàng Hiệp"
+            className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs transition hover:scale-105 shrink-0"
+            title="Tác giả: Vũ Hoàng Hiệp"
           >
             <span>VHH</span>
           </a>
         </div>
       </div>
 
-      {/* Mobile Live Stats Row */}
-      <div className="flex lg:hidden items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-850 rounded-lg px-2.5 py-1 mt-2.5 border border-slate-200/60 dark:border-slate-800">
-        <span className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-400">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          Toàn quốc:
-        </span>
-        <span className="flex items-center gap-2">
-          <span>{globalVisits > 0 ? globalVisits.toLocaleString('vi-VN') : '---'} truy cập</span>
-          <span>·</span>
-          <span className="text-indigo-700 dark:text-indigo-400 font-bold">{globalInteractions > 0 ? globalInteractions.toLocaleString('vi-VN') : '---'} tạo thành công</span>
-        </span>
-      </div>
-
       {/* 2 Navigation Menus */}
-      <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+      <div className="mt-2.5 pt-2.5 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
         <button
           onClick={() => setActiveMenu('exam')}
-          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
             activeMenu === 'exam'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none scale-[1.01]'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750 hover:text-slate-800 dark:hover:text-white'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
           }`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span className="sm:hidden">1. Tạo Đề Thi</span>
-          <span className="hidden sm:inline">1. Tạo Đề Kiểm Tra</span>
+          <span>📝</span>
+          <span>1. Tạo Đề Kiểm Tra</span>
         </button>
 
         <button
           onClick={() => setActiveMenu('lessonPlan')}
-          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+          className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
             activeMenu === 'lessonPlan'
-              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200 dark:shadow-none scale-[1.01]'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-750 hover:text-slate-800 dark:hover:text-white'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
           }`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          <span className="sm:hidden">2. Soạn Giáo Án</span>
-          <span className="hidden sm:inline">2. Soạn Kế Hoạch Bài Dạy</span>
-          <span className="hidden md:inline bg-emerald-700 dark:bg-emerald-800 text-emerald-100 text-[10px] px-1.5 py-0.5 rounded-md uppercase font-semibold">
-            TT 02 • QĐ 2422 • TT 08
-          </span>
+          <span>📖</span>
+          <span>2. Soạn Kế Hoạch Bài Dạy</span>
         </button>
       </div>
     </div>
