@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import type { ExamResult } from '../types';
 import ExamShuffleModal from './ExamShuffleModal';
+import RichTextEditor, { isHtmlContent } from './RichTextEditor';
 
 declare const JSZip: any;
 
@@ -50,12 +51,16 @@ const parseMarkdownTable = (content: string): ParsedTable | null => {
 
 
 const convertContentToHtml = (content: string): string => {
+    if (!content) return '';
+    if (isHtmlContent(content)) {
+        return `<div style="font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${content}</div>`;
+    }
     const parsedTable = parseMarkdownTable(content);
     if (!parsedTable) {
-        return `<div style="white-space: pre-wrap; font-family: Times New Roman, serif; font-size: 12pt; line-height: 1.5;">${content.replace(/\n/g, '<br>')}</div>`;
+        return `<div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${content.replace(/\n/g, '<br>')}</div>`;
     }
     const { headers, rows } = parsedTable;
-    let html = '<table border="1" style="border-collapse: collapse; width: 100%; font-family: Times New Roman, serif; font-size: 12pt;">';
+    let html = '<table border="1" style="border-collapse: collapse; width: 100%; font-family: \'Times New Roman\', serif; font-size: 12pt;">';
     if (headers.length > 0) {
         html += '<thead><tr style="background-color: #f2f2f2; font-weight: bold;">';
         headers.forEach(cell => { html += `<th style="padding: 8px; text-align: left; vertical-align: top; border: 1px solid #ccc;">${cell}</th>`; });
@@ -81,6 +86,15 @@ const convertContentToHtml = (content: string): string => {
 
 
 const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
+    if (isHtmlContent(content)) {
+        return (
+            <div 
+                className="font-serif text-slate-800 dark:text-slate-100 text-sm sm:text-base leading-relaxed bg-white dark:bg-slate-900 select-text transition-colors p-2"
+                dangerouslySetInnerHTML={{ __html: content }}
+            />
+        );
+    }
+
     const parsedTable = parseMarkdownTable(content);
     if (!parsedTable) {
         const lines = content.split('\n');
@@ -196,11 +210,33 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate }) => {
     const [activeTab, setActiveTab] = useState<Tab>('matrix');
+    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [editedResults, setEditedResults] = useState<ExamResult>(result);
     const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isZipping, setIsZipping] = useState<boolean>(false);
     const [isShuffleModalOpen, setIsShuffleModalOpen] = useState<boolean>(false);
 
-    const contentToDisplay = result[activeTab];
+    useEffect(() => {
+        setEditedResults(result);
+    }, [result]);
+
+    const contentToDisplay = editedResults[activeTab];
+
+    const handleContentChange = (newHtml: string) => {
+        setEditedResults(prev => ({
+            ...prev,
+            [activeTab]: newHtml,
+        }));
+    };
+
+    const handleResetCurrentTab = () => {
+        if (window.confirm(`Khôi phục nội dung gốc cho mục "${tabConfig.find(t => t.id === activeTab)?.label}"?`)) {
+            setEditedResults(prev => ({
+                ...prev,
+                [activeTab]: result[activeTab],
+            }));
+        }
+    };
 
     useEffect(() => {
         if (copyStatus !== 'idle') {
@@ -210,7 +246,19 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
     }, [copyStatus]);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText(contentToDisplay).then(() => {
+        let textToCopy = contentToDisplay;
+        if (isHtmlContent(contentToDisplay)) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = contentToDisplay
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n')
+                .replace(/<\/div>/gi, '\n')
+                .replace(/<\/tr>/gi, '\n')
+                .replace(/<\/li>/gi, '\n');
+            textToCopy = tmp.innerText || tmp.textContent || '';
+        }
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
             setCopyStatus('success');
         }, () => {
             setCopyStatus('error');
@@ -235,7 +283,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
     };
 
     const handleDownloadZip = async () => {
-        if (!result) return;
+        if (!editedResults) return;
         setIsZipping(true);
 
         try {
@@ -248,10 +296,10 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
             };
 
             const files = [
-                { name: '01_Ma-tran-de.doc', title: 'Ma trận đề', content: result.matrix },
-                { name: '02_Ban-dac-ta.doc', title: 'Bản đặc tả', content: result.specification },
-                { name: '03_De-kiem-tra.doc', title: 'Đề kiểm tra', content: result.exam },
-                { name: '04_Dap-an.doc', title: 'Đáp án & Hướng dẫn chấm', content: result.answerKey },
+                { name: '01_Ma-tran-de.doc', title: 'Ma trận đề', content: editedResults.matrix },
+                { name: '02_Ban-dac-ta.doc', title: 'Bản đặc tả', content: editedResults.specification },
+                { name: '03_De-kiem-tra.doc', title: 'Đề kiểm tra', content: editedResults.exam },
+                { name: '04_Dap-an.doc', title: 'Đáp án & Hướng dẫn chấm', content: editedResults.answerKey },
             ];
 
             for (const file of files) {
@@ -311,6 +359,21 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
 
                 {/* Responsive Action Buttons */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-start lg:justify-end">
+                    {/* Nút Chuyển chế độ Soạn thảo / Xem trước */}
+                    <button
+                        onClick={() => setIsEditing(!isEditing)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl transition shadow-xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer ${
+                            isEditing
+                                ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        }`}
+                        title={isEditing ? 'Lưu và xem trước văn bản' : 'Mở trình soạn thảo Rich Text để chỉnh sửa câu hỏi, đáp án, ma trận'}
+                    >
+                        <span>{isEditing ? '👁️' : '✏️'}</span>
+                        <span className="hidden sm:inline">{isEditing ? 'Xem trước' : 'Soạn thảo (Rich Text)'}</span>
+                        <span className="sm:hidden">{isEditing ? 'Xem' : 'Sửa'}</span>
+                    </button>
+
                     <button
                         onClick={() => setIsShuffleModalOpen(true)}
                         className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition shadow-xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer"
@@ -364,23 +427,56 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                 </div>
             </div>
             
-            <div id="print-area" className="p-3.5 sm:p-6 bg-white dark:bg-slate-900 transition-colors">
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 print:block hidden">{tabConfig.find(t=>t.id === activeTab)?.label}</h2>
-                 <div className="prose max-w-none">
-                    <ContentRenderer content={contentToDisplay} />
-                 </div>
-                 <div className="mt-6 pt-4 border-t border-dashed border-slate-300 dark:border-slate-700">
-                    <p className="italic font-bold text-red-600 dark:text-red-400 text-sm text-center">
-                        Lưu ý: Giáo viên cần kiểm tra nội dung trước khi sử dụng nội dung này !
-                    </p>
+            {isEditing ? (
+                <div className="p-3 sm:p-5 bg-slate-50 dark:bg-slate-950">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 rounded-lg text-xs font-bold">
+                                ✏️ Đang soạn thảo: {tabConfig.find(t => t.id === activeTab)?.label}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+                                (Mọi chỉnh sửa tự động đồng bộ khi xuất file .Docx hoặc Tải ZIP)
+                            </span>
+                        </div>
+                        {editedResults[activeTab] !== result[activeTab] && (
+                            <button
+                                onClick={handleResetCurrentTab}
+                                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+                            >
+                                🔄 Khôi phục nội dung gốc mục này
+                            </button>
+                        )}
+                    </div>
+                    <RichTextEditor
+                        key={activeTab}
+                        initialContent={editedResults[activeTab]}
+                        onChange={handleContentChange}
+                        onSave={() => setIsEditing(false)}
+                        onReset={editedResults[activeTab] !== result[activeTab] ? handleResetCurrentTab : undefined}
+                        title={tabConfig.find(t => t.id === activeTab)?.label}
+                        minHeight="540px"
+                        placeholder={`Chỉnh sửa ${tabConfig.find(t => t.id === activeTab)?.label} tại đây...`}
+                    />
                 </div>
-            </div>
+            ) : (
+                <div id="print-area" className="p-3.5 sm:p-6 bg-white dark:bg-slate-900 transition-colors">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 print:block hidden">{tabConfig.find(t=>t.id === activeTab)?.label}</h2>
+                    <div className="prose max-w-none">
+                        <ContentRenderer content={contentToDisplay} />
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-dashed border-slate-300 dark:border-slate-700">
+                        <p className="italic font-bold text-red-600 dark:text-red-400 text-sm text-center">
+                            Lưu ý: Giáo viên cần kiểm tra nội dung trước khi sử dụng nội dung này !
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <ExamShuffleModal
                 isOpen={isShuffleModalOpen}
                 onClose={() => setIsShuffleModalOpen(false)}
-                examContent={result.exam}
-                answerKeyContent={result.answerKey}
+                examContent={editedResults.exam}
+                answerKeyContent={editedResults.answerKey}
                 subject="Đề kiểm tra"
             />
         </div>

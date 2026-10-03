@@ -43,10 +43,26 @@ function shuffleArray<T>(array: T[], seedOffset: number = 0): T[] {
 /**
  * Trích xuất danh sách câu hỏi trắc nghiệm từ văn bản đề thi và đáp án
  */
-export function parseExamQuestions(examText: string, answerKeyText: string): {
+export function parseExamQuestions(rawExamText: string, rawAnswerKeyText: string): {
   mcQuestions: MultipleChoiceQuestion[];
   essayPart: string;
 } {
+  // Chuyển HTML sang văn bản thuần nếu đã qua RichTextEditor
+  const stripHtml = (str: string): string => {
+    if (!str) return '';
+    if (!/<[a-z][\s\S]*>/i.test(str)) return str;
+    return str
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/tr>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]+>/g, '');
+  };
+
+  const examText = stripHtml(rawExamText);
+  const answerKeyText = stripHtml(rawAnswerKeyText);
+
   const mcQuestions: MultipleChoiceQuestion[] = [];
   let essayPart = '';
 

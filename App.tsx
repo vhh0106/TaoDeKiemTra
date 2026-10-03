@@ -29,6 +29,7 @@ import {
 } from './services/lessonPlanHistoryService';
 import { promptForNewApiKey } from './services/apiKeyHelper';
 import { trackPageView, trackInteraction } from './services/analyticsService';
+import FeedbackModal from './components/FeedbackModal';
 
 /* --------------------------- Header --------------------------- */
 const Header: React.FC<{
@@ -36,6 +37,7 @@ const Header: React.FC<{
   setActiveMenu: (menu: 'exam' | 'lessonPlan') => void;
   onGuideClick: () => void;
   onHistoryClick: () => void;
+  onFeedbackClick: () => void;
   examHistoryCount: number;
   lessonPlanHistoryCount: number;
   globalVisits: number;
@@ -47,6 +49,7 @@ const Header: React.FC<{
   setActiveMenu,
   onGuideClick,
   onHistoryClick,
+  onFeedbackClick,
   examHistoryCount,
   lessonPlanHistoryCount,
   globalVisits,
@@ -158,7 +161,7 @@ const Header: React.FC<{
               inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
               text-slate-700 dark:text-slate-200 hover:text-indigo-700 dark:hover:text-indigo-300
               bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-750 border border-transparent dark:border-slate-700
-              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition
+              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition cursor-pointer
             "
             aria-label="Xem hướng dẫn sử dụng"
             title="Hướng dẫn sử dụng"
@@ -167,6 +170,22 @@ const Header: React.FC<{
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <span className="hidden sm:inline">Hướng dẫn</span>
+          </button>
+
+          {/* Nút Góp ý */}
+          <button
+            onClick={onFeedbackClick}
+            className="
+              inline-flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold
+              text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-200
+              bg-purple-50 dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-slate-750 border border-purple-200/80 dark:border-slate-700
+              px-2 sm:px-3 py-1.5 sm:py-2 rounded-full transition shadow-xs cursor-pointer
+            "
+            title="Góp ý & phản hồi cho tác giả (vhh0106@gmail.com)"
+            aria-label="Góp ý cho tác giả"
+          >
+            <span className="shrink-0">💬</span>
+            <span className="hidden sm:inline">Góp ý</span>
           </button>
 
           {/* Nút Đổi API Key */}
@@ -253,20 +272,25 @@ const Header: React.FC<{
 );
 
 /* ------------------------ User Guide Modal ------------------------ */
-const UserGuideModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+const UserGuideModal: React.FC<{ isOpen: boolean; onClose: () => void; onOpenFeedback: () => void }> = ({
+  isOpen,
+  onClose,
+  onOpenFeedback,
+}) => {
   if (!isOpen) return null;
 
   const examSteps = [
     { title: "1. Chọn Cấp học & Quy định", description: "Tiểu học áp dụng Thông tư 27/2020/TT-BGDĐT (3 mức độ nhận thức 1, 2, 3; điểm số không thập phân); THCS & THPT áp dụng Công văn 7991/BGDĐT-GDTrH (4 mức độ nhận thức)." },
     { title: "2. Cấu trúc Đề thi & Ma trận", description: "Thiết lập phân bổ câu hỏi: TNKQ, Đúng/Sai, Trả lời ngắn, Tự luận. Hệ thống tự động cân đối điểm số và %." },
-    { title: "3. Xuất file & Lưu trữ", description: "Xuất file Word (.docx), file ZIP, sao chép hoặc xem lại bất cứ lúc nào trong 'Lịch sử đề'." }
+    { title: "3. Trình soạn thảo Rich Text & Xuất file", description: "Bấm nút 'Soạn thảo (Rich Text)' ngay tại màn hình kết quả để chỉnh sửa trực tiếp câu hỏi, thay đổi đáp án, định dạng phông Times New Roman chuẩn, kẻ thêm bảng trước khi xuất Word (.docx) hoặc Tải ZIP." }
   ];
 
   const lessonPlanSteps = [
     { title: "1. Quy chuẩn Kế hoạch bài dạy", description: "Tiểu học chuẩn hóa theo Công văn 2345/BGDĐT-GDTH (Phụ lục 3); THCS/THPT theo Công văn 5512/BGDĐT-GDTrH." },
     { title: "2. Tích hợp Năng Lực Số (TT 02/2025) & Giáo Dục AI (QĐ 2422)", description: "Tích hợp Thông tư 02/2025/TT-BGDĐT, Công văn 3456/BGDĐT-GDPT và Quyết định 2422/QĐ-BGDĐT ban hành Khung nội dung giáo dục Trí tuệ nhân tạo (AI) cho học sinh phổ thông với 4 mạch kiến thức (Tư duy lấy con người làm trung tâm, Đạo đức AI, Kỹ thuật & Ứng dụng, Thiết kế hệ thống AI) kèm mã định danh chuẩn hóa." },
     { title: "3. Lồng ghép Giáo dục Quốc phòng và An ninh (TT 08/2024/TT-BGDĐT)", description: "Quy định theo Điều 2, Điều 3, Điều 4 Thông tư số 08/2024/TT-BGDĐT ngày 15/05/2024 của Bộ GD&ĐT (có hiệu lực từ 01/07/2024): Lồng ghép tự nhiên, ngắn gọn vào Mục I.4 (Phẩm chất yêu nước & trách nhiệm), Mục II (Đồ dùng dạy học: tranh ảnh, bản đồ, video tư liệu) và Mục III (Bảng hoạt động dạy học của GV & HS) với chủ đề chuẩn theo từng khối lớp (tình yêu Tổ quốc, hình ảnh người lính, chủ quyền biển đảo Hoàng Sa - Trường Sa, an toàn số)." },
-    { title: "4. 4 Hoạt động dạy học chuẩn", description: "Soạn thảo chi tiết 4 hoạt động: Mở đầu/Khởi động, Hình thành kiến thức mới, Luyện tập/Thực hành, Vận dụng/Trải nghiệm (rõ mục tiêu, nội dung, sản phẩm, tổ chức thực hiện GV & HS)." }
+    { title: "4. 4 Hoạt động dạy học chuẩn", description: "Soạn thảo chi tiết 4 hoạt động: Mở đầu/Khởi động, Hình thành kiến thức mới, Luyện tập/Thực hành, Vận dụng/Trải nghiệm (rõ mục tiêu, nội dung, sản phẩm, tổ chức thực hiện GV & HS)." },
+    { title: "5. Trình soạn thảo Rich Text & Xuất Slide / Word", description: "Tích hợp sẵn Trình soạn thảo trực quan (Rich Text Editor) cho phép thầy/cô chỉnh sửa, định dạng lại giáo án, thêm bảng hoạt động trước khi xuất Word (.docx), In hoặc chuyển hóa thành Slide bài giảng PowerPoint." }
   ];
 
   useEffect(() => {
@@ -342,6 +366,41 @@ const UserGuideModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
               ))}
             </div>
           </div>
+
+          {/* Section 3: Góp ý & Phản hồi cho tác giả */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-purple-200 dark:border-purple-900/60 bg-gradient-to-r from-purple-50/90 via-indigo-50/50 to-slate-50 dark:from-slate-850 dark:via-purple-950/20 dark:to-slate-850">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-purple-900 dark:text-purple-300 flex items-center gap-2">
+                  <span>💬</span>
+                  <span>3. Góp ý &amp; Hỗ trợ trực tiếp từ Tác giả</span>
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1">
+                  Mọi ý kiến đóng góp, đề xuất tính năng, báo lỗi hoặc yêu cầu định dạng, xin thầy/cô gửi về email tác giả:
+                </p>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <a
+                    href="mailto:vhh0106@gmail.com?subject=[EduAI]%20Góp%20ý%20phần%20mềm"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-400 font-mono text-xs sm:text-sm font-bold rounded-lg border border-indigo-200 dark:border-slate-700 hover:underline"
+                  >
+                    <span>✉️</span>
+                    <span>vhh0106@gmail.com</span>
+                  </a>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">• Zalo: 0348554851</span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenFeedback();
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition active:scale-95 shrink-0 cursor-pointer"
+              >
+                <span>📝</span>
+                <span>Gửi Góp Ý Ngay</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 text-center">
@@ -355,7 +414,7 @@ const UserGuideModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ is
 };
 
 /* --------------------------- Footer --------------------------- */
-const Footer: React.FC<{ visits: number; clicks: number }> = ({ visits, clicks }) => (
+const Footer: React.FC<{ visits: number; clicks: number; onOpenFeedback: () => void }> = ({ visits, clicks, onOpenFeedback }) => (
   <footer className="text-center py-8 mt-10 sm:mt-12 border-t border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
     <p>
       Phát triển bởi:{' '}
@@ -367,8 +426,24 @@ const Footer: React.FC<{ visits: number; clicks: number }> = ({ visits, clicks }
       >
         Vũ Hoàng Hiệp
       </a>{' '}
+      | Email:{' '}
+      <a
+        href="mailto:vhh0106@gmail.com"
+        className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold font-mono"
+      >
+        vhh0106@gmail.com
+      </a>{' '}
       | Zalo: 0348554851
     </p>
+    <div className="mt-2 flex items-center justify-center gap-2">
+      <button
+        onClick={onOpenFeedback}
+        className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold inline-flex items-center gap-1 cursor-pointer"
+      >
+        <span>💬</span>
+        <span>Gửi góp ý &amp; phản hồi cho tác giả</span>
+      </button>
+    </div>
     <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-full text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm shadow-2xs">
       <span className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-400 font-semibold">
         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -610,6 +685,7 @@ const App: React.FC = () => {
   const [pageVisits, setPageVisits] = useState<number>(0);
   const [generationClicks, setGenerationClicks] = useState<number>(0);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
 
   // Dark Mode Theme State (sử dụng class CSS của Tailwind)
@@ -858,6 +934,7 @@ const App: React.FC = () => {
             if (activeMenu === 'exam') setIsHistoryOpen(true);
             else setIsLessonPlanHistoryOpen(true);
           }}
+          onFeedbackClick={() => setIsFeedbackOpen(true)}
           examHistoryCount={savedExams.length}
           lessonPlanHistoryCount={savedLessonPlans.length}
           globalVisits={pageVisits}
@@ -1093,8 +1170,34 @@ const App: React.FC = () => {
         }}
       />
 
-      <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      <Footer visits={pageVisits} clicks={generationClicks} />
+      {/* Floating Feedback Button ở góc dưới (Bottom-Left) */}
+      <button
+        onClick={() => setIsFeedbackOpen(true)}
+        className="fixed bottom-5 left-5 z-40 bg-white/95 dark:bg-slate-900/95 hover:bg-indigo-50 dark:hover:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200/90 dark:border-indigo-900/80 shadow-lg hover:shadow-xl backdrop-blur-md px-3.5 py-2 rounded-full text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-indigo-500/20"
+        title="Góp ý & phản hồi cho tác giả (vhh0106@gmail.com)"
+        aria-label="Góp ý cho tác giả"
+      >
+        <span className="text-sm sm:text-base">💬</span>
+        <span>Góp ý</span>
+      </button>
+
+      <UserGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
+      />
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        authorEmail="vhh0106@gmail.com"
+      />
+
+      <Footer
+        visits={pageVisits}
+        clicks={generationClicks}
+        onOpenFeedback={() => setIsFeedbackOpen(true)}
+      />
     </div>
   );
 };

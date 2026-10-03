@@ -3,6 +3,7 @@ import type { LessonPlanFormData } from '../types';
 import { isEnglishSubject } from '../constants';
 import WorksheetRubricModal from './WorksheetRubricModal';
 import TeachingSlidesModal from './TeachingSlidesModal';
+import RichTextEditor, { isHtmlContent } from './RichTextEditor';
 
 interface LessonPlanDisplayProps {
   content: string;
@@ -13,6 +14,28 @@ interface LessonPlanDisplayProps {
 
 // Convert markdown text + tables into professional HTML for Word export (.doc)
 const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormData): string => {
+  if (!content) return '';
+  if (isHtmlContent(content)) {
+    return `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>KHBD - ${formData.lessonName}</title>
+        <style>
+          body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.45; color: #000; }
+          h1, h2, h3 { font-family: 'Times New Roman', serif; }
+          table { border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 15px; }
+          th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; }
+          th { background-color: #f1f5f9; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        ${content}
+      </body>
+      </html>
+    `;
+  }
+
   const lines = content.split('\n');
   let html = '';
   let inTable = false;
@@ -121,6 +144,15 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
 
 // Render on screen with interactive tables and formatting
 const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content }) => {
+  if (isHtmlContent(content)) {
+    return (
+      <div 
+        className="font-serif text-slate-800 dark:text-slate-100 text-sm sm:text-base leading-relaxed bg-white dark:bg-slate-900 select-text transition-colors p-2"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
 
@@ -298,9 +330,15 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
   onRegenerate,
   onEditParameters,
 }) => {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedContent, setEditedContent] = useState<string>(content);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isSlidesModalOpen, setIsSlidesModalOpen] = useState<boolean>(false);
   const [isWorksheetModalOpen, setIsWorksheetModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setEditedContent(content);
+  }, [content]);
 
   useEffect(() => {
     if (copyStatus !== 'idle') {
@@ -310,7 +348,18 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
   }, [copyStatus]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(content).then(
+    let textToCopy = editedContent;
+    if (isHtmlContent(editedContent)) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = editedContent
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/tr>/gi, '\n')
+        .replace(/<\/li>/gi, '\n');
+      textToCopy = tmp.innerText || tmp.textContent || '';
+    }
+    navigator.clipboard.writeText(textToCopy).then(
       () => setCopyStatus('success'),
       () => setCopyStatus('error')
     );
@@ -318,7 +367,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
 
   const handleExportDoc = () => {
     const filename = `KHBD_${formData.subject.replace(/\s+/g, '_')}_${formData.grade.replace(/\s+/g, '_')}_${formData.lessonName.slice(0, 30).replace(/\s+/g, '_')}.doc`;
-    const sourceHTML = convertLessonPlanToWordHtml(content, formData);
+    const sourceHTML = convertLessonPlanToWordHtml(editedContent, formData);
 
     const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
     const link = document.createElement('a');
@@ -380,9 +429,24 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto justify-start lg:justify-end">
+          {/* Nút Chuyển chế độ Soạn thảo / Xem trước */}
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl transition shadow-xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer ${
+              isEditing
+                ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+            title={isEditing ? 'Lưu và xem trước kế hoạch bài dạy' : 'Mở trình soạn thảo Rich Text để chỉnh sửa giáo án trực tiếp'}
+          >
+            <span>{isEditing ? '👁️' : '✏️'}</span>
+            <span className="hidden sm:inline">{isEditing ? 'Xem trước' : 'Soạn thảo (Rich Text)'}</span>
+            <span className="sm:hidden">{isEditing ? 'Xem' : 'Sửa'}</span>
+          </button>
+
           <button
             onClick={() => setIsSlidesModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
             title="Gemini AI chuyển hóa thành Slide bài giảng trên lớp cho học sinh kèm file PowerPoint (.pptx)"
           >
             <span>📊</span>
@@ -391,7 +455,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
 
           <button
             onClick={handleExportDoc}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95 cursor-pointer"
             title="Tải kế hoạch bài dạy chuẩn Word"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -403,7 +467,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
 
           <button
             onClick={() => setIsWorksheetModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95"
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95 cursor-pointer"
             title="Xem và tải Phiếu học tập & Bảng tiêu chí đánh giá năng lực Rubric"
           >
             <span>📝</span>
@@ -413,7 +477,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
 
           <button
             onClick={handleCopy}
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95 ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95 cursor-pointer ${
               copyStatus === 'success'
                 ? 'bg-emerald-600 text-white'
                 : copyStatus === 'error'
@@ -437,7 +501,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
           <button
             onClick={onEditParameters}
             title="Chỉnh sửa thông số bài dạy"
-            className="inline-flex items-center gap-1 px-2.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
+            className="inline-flex items-center gap-1 px-2.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95 cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
             <span className="hidden sm:inline">Sửa</span>
@@ -446,7 +510,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
           <button
             onClick={onRegenerate}
             title="Soạn lại giáo án này"
-            className="p-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
+            className="p-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95 cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v.001" />
@@ -455,7 +519,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
 
           <button
             onClick={handlePrint}
-            className="p-2 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
+            className="p-2 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95 cursor-pointer"
             title="In kế hoạch bài dạy"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -465,21 +529,57 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
         </div>
       </div>
 
-      {/* Lesson Plan Content Sheet matching the user's PDF */}
-      <div id="lesson-plan-print" className="p-3.5 sm:p-8 font-sans max-w-none text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-hidden">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <FormattedLessonPlanRenderer content={content} />
+      {isEditing ? (
+        <div className="p-3 sm:p-5 bg-slate-50 dark:bg-slate-950">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 rounded-lg text-xs font-bold">
+                ✏️ Đang soạn thảo: {formData.lessonName}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
+                (Thầy/cô có thể định dạng bảng, chữ đậm/nghiêng, chèn mục hoạt động trước khi xuất Word)
+              </span>
+            </div>
+            {editedContent !== content && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Khôi phục lại kế hoạch bài dạy ban đầu do AI tạo?')) {
+                    setEditedContent(content);
+                  }
+                }}
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+              >
+                🔄 Khôi phục giáo án gốc
+              </button>
+            )}
+          </div>
+          <RichTextEditor
+            initialContent={editedContent}
+            onChange={setEditedContent}
+            onSave={() => setIsEditing(false)}
+            onReset={editedContent !== content ? () => setEditedContent(content) : undefined}
+            title="Soạn thảo KHBD"
+            minHeight="600px"
+            placeholder="Soạn thảo hoặc chỉnh sửa kế hoạch bài dạy tại đây..."
+          />
         </div>
+      ) : (
+        /* Lesson Plan Content Sheet matching the user's PDF */
+        <div id="lesson-plan-print" className="p-3.5 sm:p-8 font-sans max-w-none text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-hidden">
+          <div className="max-w-4xl mx-auto space-y-4">
+            <FormattedLessonPlanRenderer content={editedContent} />
+          </div>
 
-        <div className="mt-8 pt-6 border-t border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
-          <p className="font-semibold text-slate-700 dark:text-slate-300">
-            Kế hoạch bài dạy chuẩn hóa theo mẫu văn bản thực tế Bộ GD&amp;ĐT • Bộ sách Kết nối tri thức với cuộc sống
-          </p>
-          <p className="mt-0.5">
-            Tích hợp Khung năng lực số (Thông tư 02/2025/TT-BGDĐT, Công văn 3456/BGDĐT-GDPT) &amp; Tích hợp AI có gắn mã chuẩn
-          </p>
+          <div className="mt-8 pt-6 border-t border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+            <p className="font-semibold text-slate-700 dark:text-slate-300">
+              Kế hoạch bài dạy chuẩn hóa theo mẫu văn bản thực tế Bộ GD&amp;ĐT • Bộ sách Kết nối tri thức với cuộc sống
+            </p>
+            <p className="mt-0.5">
+              Tích hợp Khung năng lực số (Thông tư 02/2025/TT-BGDĐT, Công văn 3456/BGDĐT-GDPT) &amp; Tích hợp AI có gắn mã chuẩn
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       <WorksheetRubricModal
         isOpen={isWorksheetModalOpen}
@@ -491,7 +591,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
         isOpen={isSlidesModalOpen}
         onClose={() => setIsSlidesModalOpen(false)}
         formData={formData}
-        lessonPlanContent={content}
+        lessonPlanContent={editedContent}
       />
     </div>
   );
