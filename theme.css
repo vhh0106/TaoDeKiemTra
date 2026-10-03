@@ -1,56 +1,101 @@
 /* Global theme overrides for enhanced UI/UX */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 body {
-  font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e0e7ff 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #1e293b;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
-
-
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
-  font-weight: 700;
-  color: #312e81;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-button, input, select, textarea {
-  font-family: inherit;
-  border-radius: 0.5rem;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-button {
-  background: linear-gradient(90deg, #6366f1 0%, #818cf8 100%);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.08);
-  border: none;
-  padding: 0.5rem 1.5rem;
-  cursor: pointer;
-}
-
-button:hover {
-  background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
-  transform: scale(1.04);
-  box-shadow: 0 4px 16px rgba(99,102,241,0.12);
-}
-
-.card {
-  background: #fff;
-  border-radius: 1rem;
-  box-shadow: 0 2px 16px rgba(30,41,59,0.06);
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  background: #e0e7ff;
+  width: 6px;
+  height: 6px;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #6366f1;
-  border-radius: 8px;
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode scrollbars */
+.dark ::-webkit-scrollbar {
+  background: #0f172a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Dark mode default component resets for maximum legibility */
+.dark body {
+  background-color: #0b1120;
+  color: #f1f5f9;
+}
+
+.dark .card {
+  background-color: rgba(15, 23, 42, 0.95);
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #818cf8;
+  outline: none;
+}
+
+.dark ::placeholder {
+  color: #64748b;
+}
+
+/* Hide scrollbar utility for clean horizontal tab rows on mobile */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Print styles: Always force light background and black text on physical paper */
+@media print {
+  body,
+  .dark body,
+  html.dark,
+  html.dark body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  #exam-print,
+  #lesson-plan-print,
+  .dark #exam-print,
+  .dark #lesson-plan-print {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+

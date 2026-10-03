@@ -4,6 +4,15 @@ export interface QuestionTypeDistribution {
     questionCount: number;
 }
 
+export interface EnglishSkillsConfig {
+    listeningTypes?: string[];
+    speakingTypes?: string[];
+    readingTypes?: string[];
+    writingTypes?: string[];
+    languageFocusTypes?: string[];
+    includeSpeaking?: boolean;
+}
+
 export interface ExamFormData {
     schoolLevel: string;
     schoolName?: string;
@@ -17,6 +26,8 @@ export interface ExamFormData {
     shortAnswer: QuestionTypeDistribution;
     essay: QuestionTypeDistribution;
     additionalRequirements: string;
+    examFormat?: string;
+    englishSkillsConfig?: EnglishSkillsConfig;
 }
 
 export interface ExamResult {
@@ -39,6 +50,8 @@ export interface SavedExamItem {
    Format chuẩn hóa theo mẫu văn bản người dùng cung cấp
    Áp dụng Bộ sách Kết nối tri thức với cuộc sống
    Tích hợp Khung năng lực số (TT 02/2025/TT-BGDĐT, CV 3456/BGDĐT-GDPT)
+   Tích hợp Khung nội dung giáo dục Trí tuệ nhân tạo AI (Quyết định số 2422/QĐ-BGDĐT)
+   Tích hợp Lồng ghép Giáo dục Quốc phòng và An ninh (Thông tư số 08/2024/TT-BGDĐT)
    Kèm bộ mã chuẩn: NLS (VD: NLS 1.1.CB1a) & AI (VD: 4.A1.3; 4.C2.3)
    ========================================================= */
 
@@ -61,6 +74,13 @@ export interface LessonPlanFormData {
     knowledgeContent: string;
     integrateDigitalCompetence: boolean;
     digitalDomains: string[]; // Các miền năng lực số từ TT 02/2025
+    integrateAi2422?: boolean; // Tích hợp Khung nội dung giáo dục Trí tuệ nhân tạo theo QĐ 2422/QĐ-BGDĐT
+    aiStrands?: string[]; // 4 mạch kiến thức AI theo QĐ 2422 (Mạch A, Mạch B, Mạch C, Mạch D)
+    suggestedAiTools?: string[]; // Công cụ AI đề xuất (Canva Magic, AutoDraw, Teachable Machine, Gemini/ChatGPT Edu...)
+    aiPedagogyFocus?: string; // Trọng tâm sư phạm AI (Đạo đức AI, kiểm chứng thông tin, con người làm chủ)
+    integrateQpan08?: boolean; // Tích hợp GDQP&AN theo Thông tư số 08/2024/TT-BGDĐT
+    qpanThemes?: string[]; // Chủ đề lồng ghép GDQP&AN theo TT 08
+    qpanMethods?: string[]; // Hình thức/phương pháp lồng ghép (kể chuyện, tranh ảnh tư liệu, video, liên hệ...)
     pedagogicalMethod?: string; // Dạy học giải quyết vấn đề, STEM, Trạm, Mảnh ghép, Trò chơi...
     additionalRequirements?: string;
 }

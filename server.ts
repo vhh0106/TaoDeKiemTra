@@ -9,6 +9,7 @@ import {
   createLessonPlanPrompt,
   createSlidePresentationPrompt,
 } from './services/promptBuilder.ts';
+import { isEnglishSubject } from './constants.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +31,7 @@ async function generateExamWithRetryAndFallback(options: {
   contents: string;
   systemInstruction: string;
   temperature?: number;
+  responseMimeType?: string;
 }): Promise<string> {
   const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
   let lastError: any = null;
@@ -38,13 +40,18 @@ async function generateExamWithRetryAndFallback(options: {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         console.log(`[Gemini] Calling model ${model} (attempt ${attempt}/2)...`);
+        const config: any = {
+          systemInstruction: options.systemInstruction,
+          temperature: options.temperature ?? 0.5,
+        };
+        if (options.responseMimeType) {
+          config.responseMimeType = options.responseMimeType;
+        }
+
         const response = await ai.models.generateContent({
           model,
           contents: options.contents,
-          config: {
-            systemInstruction: options.systemInstruction,
-            temperature: options.temperature ?? 0.5,
-          },
+          config,
         });
 
         const text = response.text || '';
@@ -163,9 +170,11 @@ app.post('/api/generate-lesson-plan', async (req, res) => {
     }
 
     const prompt = createLessonPlanPrompt(data);
-    const systemInstruction = data.schoolLevel === 'Tiểu học'
-      ? "You are an expert Vietnamese primary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 2345/BGDĐT-GDTH and Digital Competence Framework Circular 02/2025/TT-BGDĐT."
-      : "You are an expert Vietnamese secondary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 5512/BGDĐT-GDTrH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.";
+    const systemInstruction = isEnglishSubject(data.subject)
+      ? "You are an expert English Language Teaching (ELT) educational specialist AI creating high-quality English lesson plans strictly adhering to Vietnam General Education Program 2018 (GDPT 2018) and the textbook 'Tiếng Anh - Global Success' (Bộ sách Kết nối tri thức với cuộc sống của NXBGDVN). You output the lesson plan 100% in English following the authentic lesson plan template."
+      : data.schoolLevel === 'Tiểu học'
+        ? "You are an expert Vietnamese primary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 2345/BGDĐT-GDTH and Digital Competence Framework Circular 02/2025/TT-BGDĐT."
+        : "You are an expert Vietnamese secondary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 5512/BGDĐT-GDTrH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.";
 
     const text = await generateExamWithRetryAndFallback({
       contents: prompt,
@@ -235,7 +244,8 @@ app.post('/api/generate-slides', async (req, res) => {
     const text = await generateExamWithRetryAndFallback({
       contents: prompt,
       systemInstruction,
-      temperature: 0.6,
+      temperature: 0.5,
+      responseMimeType: 'application/json',
     });
 
     return res.json({ text });

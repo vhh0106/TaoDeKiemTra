@@ -6,29 +6,102 @@
 import PptxGenJS from 'pptxgenjs';
 import type { SlidePresentationData, SlideItem } from './slideGeneratorService';
 
+export type PresentationTheme = 'mint' | 'ocean' | 'purple' | 'amber';
+
 export async function exportTeachingSlidesToPowerPoint(
   slideData: SlidePresentationData,
-  fileNamePrefix: string = 'BaiGiang'
+  fileNamePrefix: string = 'BaiGiang',
+  themeName: PresentationTheme = 'mint'
 ): Promise<void> {
   const pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_16x9';
   pptx.author = 'EduAI - Trợ Lý Giáo Dục AI';
   pptx.title = slideData.lessonTitle;
 
-  // Bảng màu hiện đại cho slide giảng dạy
-  const THEME = {
-    coverBg: 'F0FDF4', // Soft mint
-    cardBg: 'FFFFFF',
-    textDark: '0F172A', // Slate 900
-    textMuted: '475569', // Slate 600
-    primary: '1E3A8A', // Deep Indigo / Navy
-    warmup: 'D97706', // Warm Amber
-    knowledge: '2563EB', // Royal Blue
-    practice: '059669', // Emerald
-    quiz: '7C3AED', // Purple
-    application: '0D9488', // Teal
-    homework: '4338CA', // Indigo
+  // Bảng màu hiện đại cho slide giảng dạy theo chủ đề
+  const PALETTES: Record<PresentationTheme, {
+    coverBg: string;
+    cardBg: string;
+    textDark: string;
+    textMuted: string;
+    primary: string;
+    headerBanner: string;
+    badgeBg: string;
+    badgeLine: string;
+    warmup: string;
+    knowledge: string;
+    practice: string;
+    quiz: string;
+    application: string;
+    homework: string;
+  }> = {
+    mint: {
+      coverBg: 'F0FDF4',
+      cardBg: 'FFFFFF',
+      textDark: '0F172A',
+      textMuted: '475569',
+      primary: '059669',
+      headerBanner: '047857',
+      badgeBg: 'DCFCE7',
+      badgeLine: '86EFAC',
+      warmup: 'D97706',
+      knowledge: '2563EB',
+      practice: '059669',
+      quiz: '7C3AED',
+      application: '0D9488',
+      homework: '4338CA',
+    },
+    ocean: {
+      coverBg: 'EFF6FF',
+      cardBg: 'FFFFFF',
+      textDark: '0F172A',
+      textMuted: '475569',
+      primary: '1D4ED8',
+      headerBanner: '1E40AF',
+      badgeBg: 'DBEAFE',
+      badgeLine: '93C5FD',
+      warmup: 'D97706',
+      knowledge: '2563EB',
+      practice: '0284C7',
+      quiz: '6366F1',
+      application: '0EA5E9',
+      homework: '3B82F6',
+    },
+    purple: {
+      coverBg: 'FAF5FF',
+      cardBg: 'FFFFFF',
+      textDark: '0F172A',
+      textMuted: '475569',
+      primary: '6D28D9',
+      headerBanner: '581C87',
+      badgeBg: 'F3E8FF',
+      badgeLine: 'D8B4FE',
+      warmup: 'D97706',
+      knowledge: '7C3AED',
+      practice: '9333EA',
+      quiz: 'A855F7',
+      application: '7E22CE',
+      homework: '6B21A8',
+    },
+    amber: {
+      coverBg: 'FFFBEB',
+      cardBg: 'FFFFFF',
+      textDark: '0F172A',
+      textMuted: '475569',
+      primary: 'D97706',
+      headerBanner: 'B45309',
+      badgeBg: 'FEF3C7',
+      badgeLine: 'FCD34D',
+      warmup: 'D97706',
+      knowledge: 'EA580C',
+      practice: '059669',
+      quiz: '7C3AED',
+      application: 'CA8A04',
+      homework: '4338CA',
+    },
   };
+
+  const THEME = PALETTES[themeName] || PALETTES.mint;
 
   const getSlideThemeColor = (type: SlideItem['type']): string => {
     switch (type) {
@@ -45,7 +118,7 @@ export async function exportTeachingSlidesToPowerPoint(
       case 'homework':
         return THEME.homework;
       default:
-        return THEME.primary;
+        return THEME.headerBanner;
     }
   };
 

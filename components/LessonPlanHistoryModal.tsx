@@ -80,11 +80,11 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
       aria-labelledby="lesson-plan-history-modal-title"
     >
       <div
-        className="relative bg-white w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-scale-in"
+        className="relative bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-scale-in text-slate-900 dark:text-slate-100 transition-colors"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/40">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-indigo-50/40 dark:from-slate-850 dark:to-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,14 +93,14 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 id="lesson-plan-history-modal-title" className="text-xl sm:text-2xl font-bold text-slate-800">
+                <h2 id="lesson-plan-history-modal-title" className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
                   Lịch sử Kế hoạch bài dạy
                 </h2>
-                <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                <span className="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800">
                   {historyList.length} giáo án
                 </span>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 Xem lại giáo án đã soạn hoặc nạp lại thông số để chỉnh sửa nhanh
               </p>
             </div>
@@ -108,7 +108,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition"
+            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition"
             aria-label="Đóng cửa sổ"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,7 +118,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
         </div>
 
         {/* Search Bar */}
-        <div className="px-5 sm:px-6 py-3 border-b border-slate-100 bg-white">
+        <div className="px-5 sm:px-6 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -130,12 +130,12 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm kiếm theo tên bài học, môn, lớp, bộ sách..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 hover:bg-white transition"
+              className="w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 hover:bg-white dark:hover:bg-slate-750 transition"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 text-xs font-semibold"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-xs font-semibold"
               >
                 Xóa
               </button>
@@ -147,15 +147,15 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 max-h-[60vh]">
           {filteredList.length === 0 ? (
             <div className="text-center py-12 px-4">
-              <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
-              <h3 className="text-base sm:text-lg font-semibold text-slate-700">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-700 dark:text-slate-200">
                 {searchTerm ? 'Không tìm thấy giáo án phù hợp' : 'Chưa có kế hoạch bài dạy nào được lưu'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
                 Khi bạn bấm "Soạn Kế Hoạch Bài Dạy Ngay", toàn bộ nội dung giáo án và thông số cấu hình sẽ tự động được lưu lại tại đây.
               </p>
             </div>
@@ -167,44 +167,44 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-indigo-200 transition flex flex-col justify-between gap-4"
+                  className="bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800 transition flex flex-col justify-between gap-4"
                 >
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 font-bold rounded-lg text-xs sm:text-sm border border-indigo-100">
+                        <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold rounded-lg text-xs sm:text-sm border border-indigo-100 dark:border-indigo-900/60">
                           {formData.subject}
                         </span>
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-700 font-medium rounded-md text-xs">
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium rounded-md text-xs">
                           {formData.grade}
                         </span>
-                        <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-xs">
+                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md text-xs">
                           {formData.textbook}
                         </span>
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+                        <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium">
                           {formData.durationInPeriods} tiết
                         </span>
                         {formData.integrateDigitalCompetence && (
-                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[11px] font-semibold">
+                          <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-md text-[11px] font-semibold">
                             Tích hợp NLS
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-slate-400">{formatDateTime(item.createdAt)}</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">{formatDateTime(item.createdAt)}</span>
                     </div>
 
-                    <h4 className="text-base font-bold text-slate-800">
+                    <h4 className="text-base font-bold text-slate-800 dark:text-slate-100">
                       {formData.lessonName}
                     </h4>
 
                     {formData.schoolName && (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         🏫 {formData.schoolName} {formData.teacherName ? `• GV: ${formData.teacherName}` : ''}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => onViewPlan(item)}
@@ -219,9 +219,9 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
 
                       <button
                         onClick={() => onApplyParameters(item)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 rounded-lg text-xs sm:text-sm font-semibold transition active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 rounded-lg text-xs sm:text-sm font-semibold transition active:scale-95"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                         <span>Dùng lại thông số</span>
@@ -230,7 +230,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
 
                     {isConfirming ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-red-600 font-medium">Xác nhận xóa?</span>
+                        <span className="text-xs text-red-600 dark:text-red-400 font-medium">Xác nhận xóa?</span>
                         <button
                           onClick={() => {
                             onDeleteItem(item.id);
@@ -242,7 +242,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
                         </button>
                         <button
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-xs"
+                          className="px-2.5 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-md text-xs"
                         >
                           Hủy
                         </button>
@@ -250,7 +250,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
                     ) : (
                       <button
                         onClick={() => setConfirmDeleteId(item.id)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                        className="p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition"
                         title="Xóa giáo án này khỏi lịch sử"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -266,11 +266,11 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+        <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between gap-3">
           {historyList.length > 0 && (
             showClearConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-red-600 font-medium">Xác nhận xóa {historyList.length} giáo án?</span>
+                <span className="text-xs text-red-600 dark:text-red-400 font-medium">Xác nhận xóa {historyList.length} giáo án?</span>
                 <button
                   onClick={() => {
                     onClearAll();
@@ -282,7 +282,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
                 </button>
                 <button
                   onClick={() => setShowClearConfirm(false)}
-                  className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs rounded-lg"
+                  className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs rounded-lg"
                 >
                   Hủy
                 </button>
@@ -290,7 +290,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
             ) : (
               <button
                 onClick={() => setShowClearConfirm(true)}
-                className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline"
+                className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:underline"
               >
                 Xóa toàn bộ lịch sử giáo án
               </button>
@@ -300,7 +300,7 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
           <div className="ml-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-sm font-semibold rounded-lg shadow-sm transition"
+              className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-lg shadow-sm transition"
             >
               Đóng
             </button>

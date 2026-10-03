@@ -33,25 +33,32 @@ export interface SlidePresentationData {
 function cleanAndParseJson(rawText: string): SlidePresentationData {
   let cleaned = rawText.trim();
 
-  // Bỏ khối code fence ```json ... ```
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  // Bỏ khối code fence ```json ... ``` hoặc ``` ... ```
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    cleaned = codeBlockMatch[1].trim();
   }
 
   // Tìm vị trí mở ngoặc { đầu tiên và đóng ngoặc } cuối cùng
   const firstBrace = cleaned.indexOf('{');
   const lastBrace = cleaned.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1) {
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     cleaned = cleaned.substring(firstBrace, lastBrace + 1);
   }
 
+  // Loại bỏ các dấu phẩy thừa trước dấu đóng ngoặc ] hoặc }
+  cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
+
   try {
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.slides || !Array.isArray(parsed.slides)) {
+      throw new Error('Dữ liệu slide trả về không đúng danh sách');
+    }
+    return parsed as SlidePresentationData;
   } catch (err) {
     console.error('Failed to parse AI slides JSON:', err, 'Raw text:', rawText);
-    throw new Error('Mô hình AI trả về cấu trúc slide không đúng định dạng. Vui lòng bấm thử lại!');
+    // Thử trích xuất dự phòng nếu có cấu trúc
+    throw new Error('Mô hình AI chưa trả về cấu trúc slide đúng định dạng. Vui lòng bấm "Thử lại"!');
   }
 }
 
@@ -85,7 +92,8 @@ async function generateSlidesClientDirect(
           contents: prompt,
           config: {
             systemInstruction,
-            temperature: 0.6,
+            temperature: 0.5,
+            responseMimeType: 'application/json',
           },
         });
 

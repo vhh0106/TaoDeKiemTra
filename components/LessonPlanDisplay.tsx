@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { LessonPlanFormData } from '../types';
-import { generateStudentTeachingSlides } from '../services/slideGeneratorService';
-import { exportTeachingSlidesToPowerPoint } from '../services/pptExportService';
+import { isEnglishSubject } from '../constants';
 import WorksheetRubricModal from './WorksheetRubricModal';
+import TeachingSlidesModal from './TeachingSlidesModal';
 
 interface LessonPlanDisplayProps {
   content: string;
@@ -71,12 +71,20 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
       continue;
     }
 
+    const isSectionHeading = line.startsWith('## ') ||
+      /^[A-D]\.\s+[A-Z\s]+:?/i.test(line);
+
+    const isSubHeading = line.startsWith('### ') ||
+      /^[1-5]\.\s+(Knowledge|Competences|Attitudes|Qualities|Warm-up|Presentation|Practice|Production|Fun corner|Activity)/i.test(line);
+
     if (line.startsWith('# ')) {
       html += `<h1 style="color: #1e3a8a; font-size: 16pt; text-align: center; font-weight: bold; margin-top: 12px; margin-bottom: 6px;">${line.replace('# ', '')}</h1>`;
-    } else if (line.startsWith('## ')) {
-      html += `<h2 style="color: #1e40af; font-size: 13pt; font-weight: bold; margin-top: 14px; margin-bottom: 6px; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px;">${line.replace('## ', '')}</h2>`;
-    } else if (line.startsWith('### ')) {
-      html += `<h3 style="color: #0f172a; font-size: 12pt; font-weight: bold; margin-top: 10px; margin-bottom: 4px;">${line.replace('### ', '')}</h3>`;
+    } else if (isSectionHeading) {
+      const headingText = line.replace(/^##\s*/, '');
+      html += `<h2 style="color: #1e40af; font-size: 13pt; font-weight: bold; margin-top: 14px; margin-bottom: 6px; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px;">${headingText}</h2>`;
+    } else if (isSubHeading) {
+      const headingText = line.replace(/^###\s*/, '');
+      html += `<h3 style="color: #0f172a; font-size: 12pt; font-weight: bold; margin-top: 10px; margin-bottom: 4px;">${headingText}</h3>`;
     } else if (line.startsWith('```')) {
       // code block boundaries, skip or format
       continue;
@@ -120,51 +128,72 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
   let tableHeaders: string[] = [];
   let tableRows: string[][] = [];
 
+  const formatText = (text: string) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/(NLS\s+[0-9a-zA-Z\.\-]+)/g, '<span class="inline-block bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
+      .replace(/(QĐ\s*2422(?:\/QĐ-BGDĐT)?(?::\s*Mã\s+[\d\.A-D\;\s]+)?)/g, '<span class="inline-block bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
+      .replace(/(Mã\s+\d+\.[A-D]\d+\.\d+(?:;\s*\d+\.[A-D]\d+\.\d+)*)/g, '<span class="inline-block bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
+      .replace(/(Thông tư\s*(?:số\s*)?08\/2024(?:\/TT-BGDĐT)?)/g, '<span class="inline-block bg-red-100 dark:bg-red-950/70 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
+      .replace(/(Lồng ghép GDQP&AN[^\.\:\;\*]*)/g, '<span class="inline-block bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-sans text-[11px] px-1.5 py-0.5 rounded font-semibold">$1</span>')
+      .replace(/(QPAN\s+\d+\.\d+)/g, '<span class="inline-block bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>');
+  };
+
   const flushTable = (keyPrefix: number) => {
     if (tableHeaders.length === 0 && tableRows.length === 0) return;
     elements.push(
-      <div key={`table-${keyPrefix}`} className="my-5 overflow-x-auto rounded-xl border border-slate-300 shadow-xs">
-        <table className="min-w-full border-collapse text-xs sm:text-sm">
-          {tableHeaders.length > 0 && (
-            <thead className="bg-slate-100 border-b border-slate-300">
-              <tr>
-                {tableHeaders.map((header, hIdx) => (
-                  <th
-                    key={hIdx}
-                    className={`p-3 text-left font-bold text-slate-800 border-r last:border-r-0 border-slate-300 ${
-                      hIdx === 0 ? 'w-[55%]' : 'w-[45%]'
-                    }`}
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-          )}
-          <tbody className="divide-y divide-slate-200 bg-white">
-            {tableRows.map((row, rIdx) => (
-              <tr key={rIdx} className="hover:bg-slate-50/70 transition-colors">
-                {row.map((cell, cIdx) => (
-                  <td
-                    key={cIdx}
-                    className={`p-3 align-top text-slate-700 leading-relaxed border-r last:border-r-0 border-slate-200 ${
-                      cIdx === 0 ? 'w-[55%]' : 'w-[45%]'
-                    }`}
-                  >
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: cell
-                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                          .replace(/<br\s*\/?>/gi, '<br/>'),
-                      }}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div key={`table-${keyPrefix}`} className="my-4 sm:my-6 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-xs overflow-hidden">
+        {/* Mobile Swipe Hint */}
+        <div className="sm:hidden bg-gradient-to-r from-indigo-50 to-emerald-50 dark:from-slate-800 dark:to-slate-850 border-b border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[11px] text-indigo-900 dark:text-indigo-300 font-semibold flex items-center justify-between">
+          <span className="flex items-center gap-1">
+            <span>👉</span>
+            <span>Vuốt ngang để xem đủ các cột tiến trình</span>
+          </span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold">Bảng hoạt động</span>
+        </div>
+
+        <div className="overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
+          <table className="min-w-[560px] sm:min-w-full border-collapse text-xs sm:text-sm">
+            {tableHeaders.length > 0 && (
+              <thead className="bg-slate-100/90 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700">
+                <tr>
+                  {tableHeaders.map((header, hIdx) => (
+                    <th
+                      key={hIdx}
+                      className={`p-2.5 sm:p-3 text-left font-bold text-slate-800 dark:text-slate-200 border-r last:border-r-0 border-slate-300 dark:border-slate-700 ${
+                        hIdx === 0 ? 'w-[52%]' : 'w-[48%]'
+                      }`}
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              {tableRows.map((row, rIdx) => (
+                <tr key={rIdx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors">
+                  {row.map((cell, cIdx) => (
+                    <td
+                      key={cIdx}
+                      className={`p-2.5 sm:p-3.5 align-top text-slate-700 dark:text-slate-300 leading-relaxed border-r last:border-r-0 border-slate-200 dark:border-slate-800 ${
+                        cIdx === 0 ? 'w-[52%]' : 'w-[48%]'
+                      }`}
+                    >
+                      <div
+                        className="break-words"
+                        dangerouslySetInnerHTML={{
+                          __html: formatText(cell).replace(/<br\s*\/?>/gi, '<br/>'),
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
     tableHeaders = [];
@@ -195,45 +224,61 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
     }
 
     if (!line) {
-      elements.push(<div key={`br-${i}`} className="h-2" />);
+      elements.push(<div key={`br-${i}`} className="h-1.5" />);
       continue;
     }
 
+    const isSectionHeading = line.startsWith('## ') ||
+      /^[A-D]\.\s+[A-Z\s]+:?/i.test(line);
+
+    const isSubHeading = line.startsWith('### ') ||
+      /^[1-5]\.\s+(Knowledge|Competences|Attitudes|Qualities|Warm-up|Presentation|Practice|Production|Fun corner|Activity)/i.test(line);
+
     if (line.startsWith('# ')) {
       elements.push(
-        <h1 key={`h1-${i}`} className="text-xl sm:text-2xl font-black text-indigo-900 text-center uppercase tracking-tight my-4">
+        <h1 key={`h1-${i}`} className="text-lg sm:text-2xl font-black text-indigo-950 text-center uppercase tracking-tight my-3 sm:my-4 break-words">
           {line.replace('# ', '')}
         </h1>
       );
-    } else if (line.startsWith('## ')) {
+    } else if (isSectionHeading) {
       elements.push(
-        <h2 key={`h2-${i}`} className="text-base sm:text-lg font-bold text-indigo-800 uppercase tracking-tight mt-6 mb-2 border-b border-indigo-100 pb-1 flex items-center gap-2">
-          <span>{line.replace('## ', '')}</span>
+        <h2 key={`h2-${i}`} className="text-sm sm:text-lg font-bold text-indigo-900 uppercase tracking-tight mt-5 mb-2 border-b border-indigo-100 pb-1 flex items-center gap-2 break-words">
+          <span>{line.replace(/^##\s*/, '')}</span>
         </h2>
       );
-    } else if (line.startsWith('### ')) {
+    } else if (isSubHeading) {
       elements.push(
-        <h3 key={`h3-${i}`} className="text-sm sm:text-base font-bold text-slate-800 mt-3 mb-1">
-          {line.replace('### ', '')}
+        <h3 key={`h3-${i}`} className="text-xs sm:text-base font-bold text-slate-800 mt-3 mb-1 break-words">
+          <span>{line.replace(/^###\s*/, '')}</span>
         </h3>
       );
     } else if (line.startsWith('```')) {
       // Ignore raw code fence
       continue;
+    } else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('+ ')) {
+      // List items with nice indentation
+      elements.push(
+        <div key={`li-${i}`} className="flex items-start gap-2 pl-1.5 sm:pl-3 py-0.5 text-xs sm:text-sm text-slate-700 leading-relaxed">
+          <span className="text-emerald-600 font-bold shrink-0 mt-0.5">•</span>
+          <span
+            className="break-words"
+            dangerouslySetInnerHTML={{
+              __html: formatText(line.substring(2)),
+            }}
+          />
+        </div>
+      );
     } else {
-      const isBold = line.startsWith('**') && line.endsWith('**');
-      const isHeaderBox = line.includes('KHBD') || line.includes('TUẦN') || line.includes('Ngày soạn');
+      const isHeaderBox = line.includes('KHBD') || line.includes('TUẦN') || line.includes('Ngày soạn') || line.includes('Lesson plan') || line.includes('Preparing date:') || line.includes('Teaching date:') || line.startsWith('***');
 
       elements.push(
         <p
           key={`p-${i}`}
-          className={`text-xs sm:text-sm text-slate-700 leading-relaxed my-1 ${
-            isHeaderBox ? 'font-mono text-slate-800 font-semibold' : ''
+          className={`text-xs sm:text-sm text-slate-700 leading-relaxed my-1 break-words ${
+            isHeaderBox ? 'font-mono text-slate-800 font-semibold bg-slate-50 p-2 rounded-lg border border-slate-200' : ''
           }`}
           dangerouslySetInnerHTML={{
-            __html: line
-              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\*(.*?)\*/g, '<em>$1</em>'),
+            __html: formatText(line),
           }}
         />
       );
@@ -244,7 +289,7 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
     flushTable(lines.length);
   }
 
-  return <div className="space-y-1">{elements}</div>;
+  return <div className="space-y-0.5">{elements}</div>;
 };
 
 const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
@@ -254,8 +299,7 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
   onEditParameters,
 }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [isPptExporting, setIsPptExporting] = useState<boolean>(false);
-  const [pptStatusText, setPptStatusText] = useState<string>('');
+  const [isSlidesModalOpen, setIsSlidesModalOpen] = useState<boolean>(false);
   const [isWorksheetModalOpen, setIsWorksheetModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -270,22 +314,6 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
       () => setCopyStatus('success'),
       () => setCopyStatus('error')
     );
-  };
-
-  const handleExportPowerPoint = async () => {
-    setIsPptExporting(true);
-    setPptStatusText('AI Gemini đang chuyển hóa giáo án thành Slide bài giảng trên lớp cho học sinh...');
-    try {
-      const slideData = await generateStudentTeachingSlides(formData, content);
-      setPptStatusText('Đang kết xuất và đóng gói file PowerPoint (.pptx)...');
-      await exportTeachingSlidesToPowerPoint(slideData, formData.lessonName);
-    } catch (err: any) {
-      console.error('Failed to export PowerPoint:', err);
-      alert(err instanceof Error ? err.message : 'Không thể tạo file PowerPoint. Vui lòng thử lại!');
-    } finally {
-      setIsPptExporting(false);
-      setPptStatusText('');
-    }
   };
 
   const handleExportDoc = () => {
@@ -306,150 +334,145 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-scale-in">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-scale-in transition-colors">
       {/* Top Toolbar */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-200 px-5 sm:px-6 py-4 gap-4 bg-gradient-to-r from-slate-50 to-emerald-50/40">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
-              KẾ HOẠCH BÀI DẠY HOÀN CHỈNH
-            </span>
-            <span className="text-xs text-indigo-700 font-semibold bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-              Sách: Kết nối tri thức với cuộc sống
-            </span>
-            <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-              Tích hợp NLS &amp; AI
-            </span>
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 px-3.5 sm:px-6 py-3 sm:py-4 gap-3 bg-gradient-to-r from-slate-50 via-emerald-50/20 to-slate-50 dark:from-slate-850 dark:via-slate-800 dark:to-slate-850">
+        <div className="min-w-0 w-full lg:w-auto">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            {isEnglishSubject(formData.subject) ? (
+              <>
+                <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900 text-[10px] sm:text-xs font-bold rounded-full">
+                  LESSON PLAN - ENGLISH
+                </span>
+                <span className="text-[10px] sm:text-xs text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-md">
+                  Global Success
+                </span>
+                <span className="text-[10px] sm:text-xs text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                  Kết nối tri thức
+                </span>
+                <span className="text-[10px] sm:text-xs text-blue-700 dark:text-blue-300 font-semibold bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-md">
+                  GDPT 2018
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900 text-[10px] sm:text-xs font-bold rounded-full">
+                  KẾ HOẠCH BÀI DẠY
+                </span>
+                <span className="text-[10px] sm:text-xs text-indigo-700 dark:text-indigo-300 font-semibold bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-md">
+                  Kết nối tri thức
+                </span>
+                <span className="text-[10px] sm:text-xs text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                  NLS TT 02/2025
+                </span>
+                <span className="text-[10px] sm:text-xs text-purple-700 dark:text-purple-300 font-semibold bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-md">
+                  AI QĐ 2422
+                </span>
+                <span className="text-[10px] sm:text-xs text-rose-700 dark:text-rose-300 font-semibold bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded-md">
+                  GDQP-AN TT 08/2024
+                </span>
+              </>
+            )}
           </div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-800 mt-1 truncate">
+          <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-100 mt-1 truncate">
             {formData.lessonName} - {formData.subject} {formData.grade}
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto justify-end">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto justify-start lg:justify-end">
+          <button
+            onClick={() => setIsSlidesModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95"
+            title="Gemini AI chuyển hóa thành Slide bài giảng trên lớp cho học sinh kèm file PowerPoint (.pptx)"
+          >
+            <span>📊</span>
+            <span>Xuất Slide (.pptx)</span>
+          </button>
+
+          <button
+            onClick={handleExportDoc}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition active:scale-95"
+            title="Tải kế hoạch bài dạy chuẩn Word"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span className="hidden sm:inline">Tải Word (.docx)</span>
+            <span className="sm:hidden">Word</span>
+          </button>
+
+          <button
+            onClick={() => setIsWorksheetModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95"
+            title="Xem và tải Phiếu học tập & Bảng tiêu chí đánh giá năng lực Rubric"
+          >
+            <span>📝</span>
+            <span className="hidden sm:inline">Phiếu học tập</span>
+            <span className="sm:hidden">Phiếu</span>
+          </button>
+
+          <button
+            onClick={handleCopy}
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition active:scale-95 ${
+              copyStatus === 'success'
+                ? 'bg-emerald-600 text-white'
+                : copyStatus === 'error'
+                ? 'bg-red-600 text-white'
+                : 'bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            {copyStatus === 'success' ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                <span>Đã chép!</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span className="hidden sm:inline">Sao chép</span>
+              </>
+            )}
+          </button>
+
           <button
             onClick={onEditParameters}
             title="Chỉnh sửa thông số bài dạy"
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg shadow-xs transition"
+            className="inline-flex items-center gap-1 px-2.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span>Sửa thông số</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            <span className="hidden sm:inline">Sửa</span>
           </button>
 
           <button
             onClick={onRegenerate}
             title="Soạn lại giáo án này"
-            className="p-2 text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg shadow-xs transition"
+            className="p-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v.001" />
             </svg>
           </button>
 
           <button
-            onClick={handleCopy}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition ${
-              copyStatus === 'success'
-                ? 'bg-emerald-600'
-                : copyStatus === 'error'
-                ? 'bg-red-600'
-                : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
-          >
-            {copyStatus === 'success' ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Đã sao chép!</span>
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <span>Sao chép</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleExportPowerPoint}
-            disabled={isPptExporting}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs sm:text-sm font-bold rounded-lg shadow-xs transition active:scale-95 disabled:opacity-50"
-            title="Tự động tạo bộ Slide trình chiếu bài dạy mở bằng PowerPoint"
-          >
-            {isPptExporting ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Đang tạo Slide...</span>
-              </>
-            ) : (
-              <>
-                <span>📊</span>
-                <span>Xuất Slide (.pptx)</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={() => setIsWorksheetModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition active:scale-95"
-            title="Xem và tải Phiếu học tập & Bảng tiêu chí đánh giá năng lực Rubric"
-          >
-            <span>📝</span>
-            <span>Phiếu học tập & Rubric</span>
-          </button>
-
-          <button
-            onClick={handleExportDoc}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>Tải .Docx (Mẫu chuẩn)</span>
-          </button>
-
-          <button
             onClick={handlePrint}
-            className="p-2 text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg shadow-xs transition"
+            className="p-2 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xs transition active:scale-95"
             title="In kế hoạch bài dạy"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Banner tiến trình chuyển hóa Slide bằng Gemini */}
-      {isPptExporting && (
-        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-b border-amber-200 px-6 py-3.5 flex items-center gap-3 text-amber-900 text-xs sm:text-sm font-semibold animate-pulse">
-          <svg className="animate-spin h-5 w-5 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <span>✨ <strong>Gemini AI đang làm việc:</strong></span>
-            <span>{pptStatusText || 'Đang chuyển hóa giáo án thành Slide bài giảng tương tác cho học sinh...'}</span>
-          </div>
-        </div>
-      )}
-
       {/* Lesson Plan Content Sheet matching the user's PDF */}
-      <div id="lesson-plan-print" className="p-6 sm:p-10 font-sans max-w-none text-slate-800 leading-relaxed overflow-x-auto">
+      <div id="lesson-plan-print" className="p-3.5 sm:p-8 font-sans max-w-none text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-hidden">
         <div className="max-w-4xl mx-auto space-y-4">
           <FormattedLessonPlanRenderer content={content} />
         </div>
 
-        <div className="mt-10 pt-6 border-t border-dashed border-slate-300 text-center text-xs text-slate-500">
-          <p className="font-semibold text-slate-700">
+        <div className="mt-8 pt-6 border-t border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500 dark:text-slate-400">
+          <p className="font-semibold text-slate-700 dark:text-slate-300">
             Kế hoạch bài dạy chuẩn hóa theo mẫu văn bản thực tế Bộ GD&amp;ĐT • Bộ sách Kết nối tri thức với cuộc sống
           </p>
           <p className="mt-0.5">
@@ -462,6 +485,13 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
         isOpen={isWorksheetModalOpen}
         onClose={() => setIsWorksheetModalOpen(false)}
         formData={formData}
+      />
+
+      <TeachingSlidesModal
+        isOpen={isSlidesModalOpen}
+        onClose={() => setIsSlidesModalOpen(false)}
+        formData={formData}
+        lessonPlanContent={content}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import type { LessonPlanFormData } from '../types';
 import { createLessonPlanPrompt } from './promptBuilder';
+import { isEnglishSubject } from '../constants';
 import { isStaticHosting, ensureClientApiKey, markApiKeyAsLeaked } from './apiKeyHelper';
 import { GoogleGenAI } from '@google/genai';
 
@@ -14,8 +15,9 @@ async function generateLessonPlanClientDirect(data: LessonPlanFormData, apiKey: 
   });
 
   const prompt = createLessonPlanPrompt(data);
-  const systemInstruction =
-    data.schoolLevel === 'Tiểu học'
+  const systemInstruction = isEnglishSubject(data.subject)
+    ? 'You are an expert English Language Teaching (ELT) educational specialist AI creating high-quality English lesson plans strictly adhering to Vietnam General Education Program 2018 (GDPT 2018) and the textbook "Tiếng Anh - Global Success" (Bộ sách Kết nối tri thức với cuộc sống của NXBGDVN). You output the lesson plan 100% in English following the authentic lesson plan template.'
+    : data.schoolLevel === 'Tiểu học'
       ? 'You are an expert Vietnamese primary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 2345/BGDĐT-GDTH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.'
       : 'You are an expert Vietnamese secondary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 5512/BGDĐT-GDTrH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.';
 

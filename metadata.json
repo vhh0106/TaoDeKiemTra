@@ -1,6 +1,6 @@
 {
   "name": "EduAI - Trợ Lý Giáo Dục AI",
-  "description": "Nền tảng hỗ trợ giáo dục AI toàn diện: Tạo đề kiểm tra chuẩn CV7991 & TT27, Soạn Kế hoạch bài dạy chuẩn CV2345/CV5512 tích hợp Khung năng lực số TT02/2025 & CV3456.",
+  "description": "Nền tảng hỗ trợ giáo dục AI toàn diện: Tạo đề kiểm tra chuẩn CV7991 & TT27, Soạn Kế hoạch bài dạy chuẩn CV2345/CV5512 tích hợp Khung năng lực số TT02/2025 & Giáo dục AI QĐ 2422/QĐ-BGDĐT.",
   "requestFramePermissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
