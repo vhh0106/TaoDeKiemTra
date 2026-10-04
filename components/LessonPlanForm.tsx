@@ -834,6 +834,17 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
                     );
                   })}
                 </div>
+
+                {formData.digitalDomains.length === 0 && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      ✓ Đã bỏ chọn tất cả miền năng lực số
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Kế hoạch bài dạy sẽ không tích hợp mục Năng lực số (Thông tư 02/2025/TT-BGDĐT).
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -938,6 +949,17 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
                     </div>
                   </div>
                 )}
+
+                {formData.integrateAi2422 === false && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      ✓ Đã tắt tích hợp Giáo dục Trí tuệ nhân tạo (Quyết định 2422/QĐ-BGDĐT)
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Kế hoạch bài dạy sẽ không chứa nội dung hay bộ mã giáo dục AI.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -965,6 +987,17 @@ const LessonPlanForm: React.FC<LessonPlanFormProps> = ({
                     </span>
                   </label>
                 </div>
+
+                {formData.integrateQpan08 === false && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-1">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      ✓ Đã tắt tích hợp Giáo dục Quốc phòng &amp; An ninh (Thông tư 08/2024/TT-BGDĐT)
+                    </p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Kế hoạch bài dạy sẽ không chứa bất kỳ nội dung, mục tiêu hay chú thích lồng ghép GDQP-AN nào.
+                    </p>
+                  </div>
+                )}
 
                 {formData.integrateQpan08 !== false && (
                   <div className="space-y-3">

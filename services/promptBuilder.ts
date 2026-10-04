@@ -53,12 +53,33 @@ export const createEnglishLessonPlanPrompt = (data: LessonPlanFormData): string 
     ? data.qpanThemes.join('; ')
     : 'Love for hometown, pride in sea and islands, friendly school environment and public discipline';
 
+  const isDigitalGeneralEnabled = data.integrateDigitalCompetence !== false;
+  const isQpanEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    data.integrateQpan08 !== false &&
+    data.qpanThemes &&
+    data.qpanThemes.length > 0
+  );
+  const isAiEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    (data.integrateAi2422 ?? true)
+  );
+  const isNlsEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    data.digitalDomains &&
+    data.digitalDomains.length > 0
+  );
+
   return `
 You are an expert English Language Teaching (ELT) educational specialist in Vietnam, with profound expertise in:
 1. The national English textbook **"Tiếng Anh - Global Success" (Bộ sách Kết nối tri thức với cuộc sống của Nhà xuất bản Giáo dục Việt Nam)**.
 2. Vietnam's **General Education Program 2018 (Chương trình GDPT 2018)** for English.
-3. Decision No. 2422/QĐ-BGDĐT on AI education framework and Circular No. 02/2025/TT-BGDĐT on digital competence.
-4. Circular No. 08/2024/TT-BGDĐT on integrating National Defense and Security Education into school subjects.
+3. Decision No. 2422/QĐ-BGDĐT on AI education framework and Circular No. 02/2025/TT-BGDĐT on digital competence.${isQpanEnabled ? `
+4. Circular No. 08/2024/TT-BGDĐT on integrating National Defense and Security Education into school subjects.` : ''}
+
+${!isQpanEnabled ? `**CRITICAL INSTRUCTION - NO NATIONAL DEFENSE INTEGRATION:**
+The teacher has explicitly TURNED OFF National Defense & Security Education (Circular 08/2024/TT-BGDĐT).
+YOU MUST NOT include any national defense, military, border/island sovereignty, or security integration tasks, aims, or notes in any section of this lesson plan. The lesson plan must focus purely on standard English language communicative learning.` : ''}
 
 TASK: Prepare a complete, highly detailed, pedagogical **LESSON PLAN - ENGLISH (KẾ HOẠCH BÀI DẠY MÔN TIẾNG ANH)** written entirely in English, following the EXACT format, sections, procedures, and styling of the provided authentic lesson plan from the user's document.
 
@@ -80,12 +101,12 @@ CRITICAL FORMATTING & CONTENT RULES:
        - Communication and collaboration: work in pairs and groups to complete the learning tasks.
        - Self-control and independent learning: perform pronunciation and speaking tasks.
        - Critical thinking and creativity: learn how to ask and answer questions about personal information correctly and fluently.
-       ${data.integrateDigitalCompetence || data.integrateAi2422 ? `- Digital competence & AI literacy (Decision 2422/QĐ-BGDĐT & Circular 02/2025): identify and use educational tools (${suggestedToolsText}, hoclieu.vn) safely, verify information, and respect ethical digital practices.` : ''}
+       ${(isNlsEnabled || isAiEnabled) ? `- Digital competence & AI literacy (Decision 2422/QĐ-BGDĐT & Circular 02/2025): identify and use educational tools (${suggestedToolsText}, hoclieu.vn) safely, verify information, and respect ethical digital practices.` : ''}
      * **### 3. Attitudes/ Qualities:**
        - Show pride in their personal information, hobbies, hometown, family, and country.
-       ${data.integrateQpan08 ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): Foster love for peaceful Vietnam, pride in national sovereignty (sea and islands), solidarity, and traffic/cyber discipline.` : ''}
+       ${isQpanEnabled ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): Foster love for peaceful Vietnam, pride in national sovereignty (sea and islands), solidarity, and traffic/cyber discipline.` : ''}
    - Section **## B. TEACHING AIDS:**
-     * Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success - Kết nối tri thức), lesson plan, TV/projector, audio files, flashcards${data.suggestedAiTools && data.suggestedAiTools.length > 0 ? `, AI teaching tools (${suggestedToolsText})` : ''}.
+     * Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success - Kết nối tri thức), lesson plan, TV/projector, audio files, flashcards${isAiEnabled && suggestedToolsText ? `, AI teaching tools (${suggestedToolsText})` : ''}.
      * Students: Students’ book Page [X], notebooks, school things.
    - Section **## C. PROCEDURES:**
      MUST BE IN A 2-COLUMN MARKDOWN TABLE:
@@ -156,10 +177,10 @@ By the end of the lesson, Ss will be able to:
 - Communication and collaboration: ...
 - Self-control and independent learning: ...
 - Critical thinking and creativity: ...
-${data.integrateDigitalCompetence || data.integrateAi2422 ? `- Digital competence & AI literacy (Decision 2422/QĐ-BGDĐT & Circular 02/2025): ...` : ''}
+${(isNlsEnabled || isAiEnabled) ? `- Digital competence & AI literacy (Decision 2422/QĐ-BGDĐT & Circular 02/2025): ...` : ''}
 ### 3. Attitudes/ Qualities:
 - ...
-${data.integrateQpan08 ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): ...` : ''}
+${isQpanEnabled ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): ...` : ''}
 
 ## B. TEACHING AIDS:
 - Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success), lesson plan, TV...
@@ -645,6 +666,23 @@ export const createLessonPlanPrompt = (data: LessonPlanFormData): string => {
   const classes = data.classesTaught || `${data.grade}A, ${data.grade}B, ${data.grade}C`;
   const periodText = data.periodNumber ? (data.periodNumber.startsWith('(') ? data.periodNumber : `(${data.periodNumber})`) : `(tiết 1)`;
 
+  const isDigitalGeneralEnabled = data.integrateDigitalCompetence !== false;
+  const isQpanEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    data.integrateQpan08 !== false &&
+    data.qpanThemes &&
+    data.qpanThemes.length > 0
+  );
+  const isAiEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    (data.integrateAi2422 ?? true)
+  );
+  const isNlsEnabled = Boolean(
+    isDigitalGeneralEnabled &&
+    data.digitalDomains &&
+    data.digitalDomains.length > 0
+  );
+
   const aiStrandsText = data.aiStrands && data.aiStrands.length > 0
     ? data.aiStrands.join('; ')
     : 'Mạch A: Tư duy lấy con người làm trung tâm & Mạch C: Kỹ thuật và Ứng dụng AI vào học tập';
@@ -665,12 +703,12 @@ export const createLessonPlanPrompt = (data: LessonPlanFormData): string => {
 Bạn là một chuyên gia sư phạm tiểu học và phổ thông tại Việt Nam, am hiểu sâu sắc về:
 1. Bộ sách giáo khoa **Kết nối tri thức với cuộc sống**.
 2. **Thông tư số 02/2025/TT-BGDĐT** (Khung năng lực số) & **Công văn số 3456/BGDĐT-GDPT** (Hướng dẫn triển khai giáo dục năng lực số).
-3. **Quyết định số 2422/QĐ-BGDĐT của Bộ GD&ĐT** (Khung nội dung giáo dục Trí tuệ nhân tạo AI cho học sinh phổ thông).
-4. **Thông tư số 08/2024/TT-BGDĐT ngày 15/05/2024 của Bộ GD&ĐT** (Hướng dẫn lồng ghép nội dung giáo dục quốc phòng và an ninh trong trường tiểu học, trường trung học cơ sở và trường phổ thông có nhiều cấp học).
+3. **Quyết định số 2422/QĐ-BGDĐT của Bộ GD&ĐT** (Khung nội dung giáo dục Trí tuệ nhân tạo AI cho học sinh phổ thông).${isQpanEnabled ? `
+4. **Thông tư số 08/2024/TT-BGDĐT ngày 15/05/2024 của Bộ GD&ĐT** (Hướng dẫn lồng ghép nội dung giáo dục quốc phòng và an ninh trong trường tiểu học, trường trung học cơ sở và trường phổ thông có nhiều cấp học).` : ''}
 
 Nhiệm vụ của bạn là soạn một **KẾ HOẠCH BÀI DẠY (KHBD / GIÁO ÁN)** hoàn chỉnh, chi tiết, chuyên nghiệp theo **ĐÚNG FORMAT ĐỊNH DẠNG MẪU VĂN BẢN THỰC TẾ** sau đây:
 
-**QUY TẮC BẮT BUỘC VỀ BỘ MÃ NĂNG LỰC SỐ (TT 02/2025) & GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT):**
+${isNlsEnabled && isAiEnabled ? `**QUY TẮC BẮT BUỘC VỀ BỘ MÃ NĂNG LỰC SỐ (TT 02/2025) & GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT):**
 Bạn PHẢI TỰ ĐỘNG TẠO ra mục Năng lực số và Giáo dục Trí tuệ nhân tạo KÈM THEO BỘ MÃ CHUẨN HÓA CỦA BỘ GD&ĐT:
 - Ví dụ mẫu chuẩn:
 \`Tích hợp Năng lực số (theo TT 02/2025: NLS 1.1.CB1a) & Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3; 4.C2.3) [nội dung hành vi nhiệm vụ cụ thể gắn với bài học, tra cứu, ứng dụng công cụ số/AI, bảo vệ môi trường, liên hệ thực tế, con người kiểm soát và làm chủ công nghệ]\`.
@@ -680,13 +718,20 @@ Bạn PHẢI TỰ ĐỘNG TẠO ra mục Năng lực số và Giáo dục Trí t
   * THCS / THPT: \`NLS 1.1.TC1a\`, \`NLS 2.1.TC2a\`, \`NLS 6.1.NC1a\`...
 - Quy cách mã AI (theo Khung nội dung giáo dục Trí tuệ nhân tạo Quyết định số 2422/QĐ-BGDĐT):
   * Cấu trúc mã: \`[Khối].A[x].[y]; [Khối].B[x].[y]; [Khối].C[x].[y]; [Khối].D[x].[y]\`
+  * Mạch kiến thức đã chọn: ${aiStrandsText}
   * Khối 3: \`3.A1.2; 3.B1.1; 3.C1.1\`
   * Khối 4: \`4.A1.3; 4.B1.2; 4.C2.3\`
   * Khối 5: \`5.A2.1; 5.C1.2; 5.D1.2\`
   * Khối THCS (6-9): \`7.A1.2; 8.B2.1; 9.C1.3; 9.D1.1\`
-  * Khối THPT (10-12): \`11.A2.2; 11.B2.1; 12.C1.4; 12.D1.1\`
+  * Khối THPT (10-12): \`11.A2.2; 11.B2.1; 12.C1.4; 12.D1.1\`` : isNlsEnabled ? `**QUY TẮC BẮT BUỘC VỀ BỘ MÃ NĂNG LỰC SỐ (TT 02/2025/TT-BGDĐT):**
+Bạn PHẢI TỰ ĐỘNG TẠO ra mục Năng lực số KÈM THEO BỘ MÃ NLS CHUẨN HÓA (theo TT 02/2025 và CV 3456/BGDĐT-GDPT).
+(LƯU Ý: Người dùng đã tắt tính năng Giáo dục AI QĐ 2422. TUYỆT ĐỐI KHÔNG sinh mã AI như 4.A1.3 hay đề cập đến QĐ 2422).` : isAiEnabled ? `**QUY TẮC BẮT BUỘC VỀ GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT):**
+Bạn PHẢI TỰ ĐỘNG TẠO ra mục Giáo dục AI KÈM THEO BỘ MÃ AI CHUẨN HÓA (theo QĐ 2422/QĐ-BGDĐT).
+(LƯU Ý: Người dùng đã tắt tính năng Năng lực số TT 02/2025. TUYỆT ĐỐI KHÔNG sinh mã NLS).` : `**LƯU Ý QUAN TRỌNG VỀ NĂNG LỰC SỐ & TRÍ TUỆ NHÂN TẠO (AI):**
+Người dùng ĐÃ TẮT tính năng tích hợp Năng lực số (TT 02/2025) và Giáo dục AI (QĐ 2422).
+TUYỆT ĐỐI KHÔNG tạo mục riêng cho Năng lực số / AI, không sinh các bộ mã NLS hay mã AI trong giáo án này.`}
 
-**QUY TẮC BẮT BUỘC VỀ LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (THÔNG TƯ 08/2024/TT-BGDĐT):**
+${isQpanEnabled ? `**QUY TẮC BẮT BUỘC VỀ LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (THÔNG TƯ 08/2024/TT-BGDĐT):**
 Bạn PHẢI LỒNG GHÉP NỘI DUNG GIÁO DỤC QUỐC PHÒNG VÀ AN NINH theo đúng Điều 2, Điều 3, Điều 4 Thông tư số 08/2024/TT-BGDĐT:
 - Chủ đề lồng ghép cho ${data.grade}: ${qpanThemesText}
 - Phương pháp & hình thức lồng ghép: ${qpanMethodsText}
@@ -694,7 +739,13 @@ Bạn PHẢI LỒNG GHÉP NỘI DUNG GIÁO DỤC QUỐC PHÒNG VÀ AN NINH theo 
 - Lồng ghép GDQP&AN BẮT BUỘC xuất hiện ở:
   1. Mục \`I. YÊU CẦU CẦN ĐẠT\` -> \`4. Phẩm chất\` (Phẩm chất Yêu nước & Trách nhiệm): Ghi rõ \`Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT): [nêu hành vi/tình cảm cụ thể phù hợp với bài học và khối lớp]\`.
   2. Mục \`II. ĐỒ DÙNG DẠY HỌC\`: Nêu rõ hình ảnh, bản đồ, video tư liệu hoặc bài hát hỗ trợ lồng ghép QP-AN.
-  3. Trong bảng \`III. HOẠT ĐỘNG DẠY HỌC\`: Lồng ghép rõ ràng vào ít nhất 1 hoạt động (Khám phá hoặc Vận dụng) với chú thích: \`*(Lồng ghép GDQP&AN theo TT 08/2024: [nội dung GV hướng dẫn và HS thực hiện/cảm nhận/liên hệ])*\`.
+  3. Trong bảng \`III. HOẠT ĐỘNG DẠY HỌC\`: Lồng ghép rõ ràng vào ít nhất 1 hoạt động (Khám phá hoặc Vận dụng) với chú thích: \`*(Lồng ghép GDQP&AN theo TT 08/2024: [nội dung GV hướng dẫn và HS thực hiện/cảm nhận/liên hệ])*\`.` : `**QUY TẮC BẮT BUỘC: ĐÃ TẮT LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (GDQP-AN):**
+NGƯỜI DÙNG ĐÃ TẮT TÍNH NĂNG TÍCH HỢP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (THÔNG TƯ 08/2024/TT-BGDĐT).
+YÊU CẦU BẮT BUỘC TUÂN THỦ 100%:
+1. TUYỆT ĐỐI KHÔNG đề cập đến "Thông tư 08/2024/TT-BGDĐT" hay "GDQP&AN", "GDQP-AN", "quốc phòng", "an ninh", "chủ quyền biển đảo" trong bất kỳ phần nào của giáo án này.
+2. Mục I. YÊU CẦU CẦN ĐẠT -> Phẩm chất yêu nước: Chỉ nêu tình cảm yêu quý quê hương, đất nước, yêu gia đình, thầy cô, bạn bè một cách tự nhiên theo đặc thù môn học; TUYỆT ĐỐI KHÔNG ghi chú thích hoặc lồng ghép GDQP&AN.
+3. Mục II. ĐỒ DÙNG DẠY HỌC: Chỉ chuẩn bị đồ dùng phục vụ bài học bình thường; TUYỆT ĐỐI KHÔNG ghi tranh ảnh, video lồng ghép GDQP&AN.
+4. Mục III. HOẠT ĐỘNG DẠY HỌC: TUYỆT ĐỐI KHÔNG chèn bất kỳ dòng chú thích nào dạng \`*(Lồng ghép GDQP&AN theo TT 08/2024...)*\`. Kế hoạch bài dạy phải hoàn toàn thuần túy chuyên môn nội dung bài học.`}
 
 **BỘ SÁCH ÁP DỤNG:** DUY NHẤT bộ sách **Kết nối tri thức với cuộc sống**.
 
@@ -720,15 +771,21 @@ ${data.themeName ? `${data.themeName.toUpperCase()}\n` : ''}BÀI: ${data.lessonN
 - Năng lực tự chủ, tự học: (Mô tả hành vi cụ thể học tập độc lập, chủ động).
 - Năng lực giải quyết vấn đề và sáng tạo: (Mô tả hành vi phát hiện và đề xuất giải pháp).
 - Năng lực giao tiếp và hợp tác: (Mô tả hành vi làm việc nhóm, chia sẻ, lắng nghe bạn bè).
-### 3. Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)
-- Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT: NLS 1.1.CB1a) & Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3; 4.C2.3) [Tự động tạo câu mô tả chuẩn chỉ rõ nội dung kiến thức bài học học sinh tra cứu, ứng dụng AI/thiết bị số an toàn, có trách nhiệm, hiểu AI là công cụ hỗ trợ và bảo vệ môi trường học đường/gia đình].
-### 4. Phẩm chất
-- Phẩm chất yêu nước: Tự hào về truyền thống dân tộc; **Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT)**: (Ghi rõ nội dung học sinh nhận thức về tình yêu quê hương, đất nước, lòng biết ơn người có công, tự hào về Quân đội nhân dân, Công an nhân dân, hoặc ý thức về chủ quyền biển đảo/an ninh trật tự theo bài học).
+${isNlsEnabled || isAiEnabled ? `### 3. Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)
+- ${
+  isNlsEnabled && isAiEnabled
+    ? 'Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT: NLS 1.1.CB1a) & Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3; 4.C2.3) [Tự động tạo câu mô tả chuẩn chỉ rõ nội dung kiến thức bài học học sinh tra cứu, ứng dụng AI/thiết bị số an toàn, có trách nhiệm, hiểu AI là công cụ hỗ trợ và bảo vệ môi trường học đường/gia đình].'
+    : isNlsEnabled
+    ? 'Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT: NLS 1.1.CB1a) [Tự động tạo câu mô tả chuẩn chỉ rõ nội dung học sinh tra cứu, khai thác dữ liệu, an toàn số phù hợp bài học].'
+    : 'Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3) [Tự động tạo câu mô tả học sinh nhận biết ứng dụng AI, sử dụng AI có đạo đức, con người làm chủ].'
+}
+### 4. Phẩm chất` : `### 3. Phẩm chất`}
+- Phẩm chất yêu nước: Tự hào về truyền thống tốt đẹp của quê hương, đất nước${isQpanEnabled ? `; **Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT)**: (Ghi rõ nội dung học sinh nhận thức về tình yêu quê hương, đất nước, lòng biết ơn người có công, tự hào về Quân đội nhân dân, Công an nhân dân, hoặc ý thức về chủ quyền biển đảo/an ninh trật tự theo bài học)` : '; có ý thức giữ gìn, bảo vệ các giá trị văn hóa và môi trường xung quanh'}.
 - Phẩm chất chăm chỉ: Tích cực tham gia vào các hoạt động học tập, hoàn thành nhiệm vụ được giao.
-- Phẩm chất trách nhiệm: Có ý thức bảo quản thiết bị, đồ dùng học tập; sử dụng công nghệ và AI an toàn; có ý thức chấp hành kỷ luật, nội quy trường lớp và quy định của pháp luật.
+- Phẩm chất trách nhiệm: Có ý thức bảo quản thiết bị, đồ dùng học tập; sử dụng công nghệ an toàn; có ý thức chấp hành kỷ luật, nội quy trường lớp và quy định của pháp luật.
 
 ## II. ĐỒ DÙNG DẠY HỌC
-- **Giáo viên chuẩn bị:** Giáo án điện tử PowerPoint, máy tính, máy chiếu, thiết bị dạy học, trò chơi học tập website (blooket.com, Quizizz.com...), công cụ AI minh họa (theo QĐ 2422/QĐ-BGDĐT: ${suggestedToolsText}), tư liệu/hình ảnh/video lồng ghép GDQP&AN (theo TT 08/2024/TT-BGDĐT: ${qpanMethodsText}), phiếu học tập.
+- **Giáo viên chuẩn bị:** Giáo án điện tử PowerPoint, máy tính, máy chiếu, thiết bị dạy học, trò chơi học tập (Quizizz/blooket...)${isAiEnabled ? `, công cụ AI minh họa (theo QĐ 2422/QĐ-BGDĐT: ${suggestedToolsText})` : ''}${isQpanEnabled ? `, tư liệu/hình ảnh/video lồng ghép GDQP&AN (theo TT 08/2024/TT-BGDĐT: ${qpanMethodsText})` : ''}, phiếu học tập.
 - **Học sinh chuẩn bị:** Sách giáo khoa Kết nối tri thức với cuộc sống, vở ghi bài, bút, nháp...
 
 ## III. HOẠT ĐỘNG DẠY HỌC
@@ -737,10 +794,10 @@ ${data.themeName ? `${data.themeName.toUpperCase()}\n` : ''}BÀI: ${data.lessonN
 | HOẠT ĐỘNG CỦA GIÁO VIÊN | HOẠT ĐỘNG CỦA HỌC SINH |
 | :--- | :--- |
 | **1. Khởi động, kết nối.**<br/>- Ổn định lớp.<br/>- Yêu cầu: Thực hiện trò chơi "Ai nhanh hơn" (hoặc Đố bạn / video tương tác / câu đố). Luật chơi: Trả lời nhanh và đúng các câu hỏi trắc nghiệm đã cho.<br/>- GV nhận xét, tuyên dương, dẫn dắt vào bài mới. | - HS báo cáo sĩ số lớp.<br/>- HS tham gia trò chơi, trả lời câu hỏi.<br/>- HS chú ý lắng nghe. |
-| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1]**<br/>- GV giới thiệu nội dung bài tập / chia sẻ tranh ảnh, video / nêu câu hỏi cho học sinh thảo luận nhóm...<br/>*(Tích hợp NLS TT 02/2025: NLS 1.1.CB1a & Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.A1.3: HS tìm kiếm, nhận biết ứng dụng AI/công nghệ số...)*<br/>- GV nhận xét tuyên dương, chốt kiến thức: ... | - HS chú ý quan sát tranh/video.<br/>- HS thảo luận nhóm làm bài tập vào phiếu bài tập.<br/>- Đại diện các nhóm báo cáo kết quả thảo luận.<br/>- HS khác nhận xét, bổ sung.<br/>- Lắng nghe rút kinh nghiệm. |
-| **2.2. [Tên hoạt động khám phá 2]**<br/>- GV nêu câu hỏi / nhiệm vụ tìm hiểu tiếp theo...<br/>*(Lồng ghép GDQP&AN theo Thông tư 08/2024/TT-BGDĐT: GV khéo léo liên hệ nội dung bài học với truyền thống yêu nước, hình ảnh bộ đội, công an, bảo vệ an ninh trật tự, chủ quyền biển đảo hoặc ý thức giữ gìn kỷ luật học đường...)*<br/>- GV nhận xét chung, tuyên dương và chốt kiến thức: ... | - HS đọc yêu cầu bài, quan sát và suy nghĩ.<br/>- HS thảo luận và trả lời câu hỏi.<br/>- Đại diện trình bày, nhóm khác nhận xét.<br/>- HS lắng nghe, tự hào và chốt nội dung. |
+| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1]**<br/>- GV giới thiệu nội dung bài tập / chia sẻ tranh ảnh, video / nêu câu hỏi cho học sinh thảo luận nhóm...<br/>${isNlsEnabled || isAiEnabled ? `*(Tích hợp ${isNlsEnabled ? 'NLS TT 02/2025: NLS 1.1.CB1a' : ''}${isNlsEnabled && isAiEnabled ? ' & ' : ''}${isAiEnabled ? 'Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.A1.3' : ''}: HS tìm kiếm, nhận biết ứng dụng công nghệ/AI...)*<br/>` : ''}- GV nhận xét tuyên dương, chốt kiến thức: ... | - HS chú ý quan sát tranh/video.<br/>- HS thảo luận nhóm làm bài tập vào phiếu bài tập.<br/>- Đại diện các nhóm báo cáo kết quả thảo luận.<br/>- HS khác nhận xét, bổ sung.<br/>- Lắng nghe rút kinh nghiệm. |
+| **2.2. [Tên hoạt động khám phá 2]**<br/>- GV nêu câu hỏi / nhiệm vụ tìm hiểu tiếp theo mở rộng kiến thức...<br/>${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo Thông tư 08/2024/TT-BGDĐT: GV khéo léo liên hệ nội dung bài học với truyền thống yêu nước, hình ảnh bộ đội, công an, bảo vệ an ninh trật tự, chủ quyền biển đảo hoặc ý thức giữ gìn kỷ luật học đường...)*<br/>` : ''}- GV nhận xét chung, tuyên dương và chốt kiến thức: ... | - HS đọc yêu cầu bài, quan sát và suy nghĩ.<br/>- HS thảo luận và trả lời câu hỏi.<br/>- Đại diện trình bày, nhóm khác nhận xét.<br/>- HS lắng nghe, tự hào và chốt nội dung. |
 | **3. Luyện tập**<br/>- GV hướng dẫn học sinh làm bài tập ... trong SGK Kết nối tri thức.<br/>- Yêu cầu học sinh làm việc cá nhân / nhóm đôi để hoàn thành.<br/>- GV quan sát, giúp đỡ học sinh gặp khó khăn.<br/>- GV nhận xét tuyên dương học sinh làm tốt. | - HS nghe hướng dẫn của giáo viên làm bài tập.<br/>- HS thực hành làm bài tập vào vở hoặc phiếu bài tập.<br/>- Một số HS trình bày trước lớp.<br/>- HS khác nhận xét bài làm của bạn. |
-| **4. Vận dụng**<br/>- GV giao nhiệm vụ vận dụng thực tế đời sống...<br/>*(Tích hợp NLS TT 02/2025 & Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.C2.3: Hướng dẫn HS tra cứu/chia sẻ kiến thức, áp dụng AI an toàn, đạo đức và trách nhiệm, kiểm chứng thông tin, bảo vệ môi trường, ứng dụng vào gia đình/trường học...)*<br/>*(Lồng ghép GDQP&AN theo TT 08/2024: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước...)*<br/>- GV nhận xét tiết dạy, tuyên dương tinh thần học tập.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng.<br/>- HS chia sẻ với bạn về hiểu biết và ý tưởng thực tế.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
+| **4. Vận dụng**<br/>- GV giao nhiệm vụ vận dụng thực tế đời sống...<br/>${isNlsEnabled || isAiEnabled ? `*(Tích hợp ${isNlsEnabled ? 'NLS TT 02/2025' : ''}${isNlsEnabled && isAiEnabled ? ' & ' : ''}${isAiEnabled ? 'Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.C2.3' : ''}: Hướng dẫn HS tra cứu/chia sẻ kiến thức, áp dụng AI an toàn, đạo đức và trách nhiệm, kiểm chứng thông tin, bảo vệ môi trường, ứng dụng vào gia đình/trường học...)*<br/>` : ''}${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo TT 08/2024: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước...)*<br/>` : ''}- GV nhận xét tiết dạy, tuyên dương tinh thần học tập.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng.<br/>- HS chia sẻ với bạn về hiểu biết và ý tưởng thực tế.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
 
 ## IV. ĐIỀU CHỈNH SAU BÀI DẠY:
 .....................................................................................................................................

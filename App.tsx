@@ -374,13 +374,19 @@ const Footer: React.FC<{ visits: number; clicks: number; onOpenFeedback: () => v
 );
 
 /* ---------------------- Loading Indicator ---------------------- */
-const LoadingIndicator: React.FC<{ onCancel: () => void; isLessonPlan?: boolean }> = ({ onCancel, isLessonPlan }) => {
+const LoadingIndicator: React.FC<{ onCancel: () => void; isLessonPlan?: boolean; isQpanEnabled?: boolean }> = ({
+  onCancel,
+  isLessonPlan,
+  isQpanEnabled = true,
+}) => {
   const steps = isLessonPlan
     ? [
         { text: 'Đang gửi thông tin bài dạy đến AI...', duration: 1500, progress: 10 },
         { text: 'AI đang phân tích mục tiêu & yêu cầu cần đạt...', duration: 6000, progress: 30 },
-        { text: 'Đang tích hợp Năng lực số (TT 02/2025) & Giáo dục AI (QĐ 2422)...', duration: 7000, progress: 55 },
-        { text: 'Đang lồng ghép GDQP&AN theo Thông tư số 08/2024/TT-BGDĐT...', duration: 6000, progress: 75 },
+        { text: 'Đang thiết lập năng lực & phẩm chất học sinh...', duration: 6000, progress: 55 },
+        isQpanEnabled
+          ? { text: 'Đang lồng ghép GDQP&AN theo Thông tư số 08/2024/TT-BGDĐT...', duration: 6000, progress: 75 }
+          : { text: 'Đang thiết kế đồ dùng & tiến trình sư phạm...', duration: 6000, progress: 75 },
         { text: 'AI đang soạn tiến trình 4 hoạt động dạy học...', duration: 7000, progress: 92 },
         { text: 'Đang hoàn thiện kế hoạch bài dạy...', duration: 2500, progress: 100 },
       ]
@@ -1001,7 +1007,17 @@ const App: React.FC = () => {
               </div>
 
               <div id="lesson-plan-result-section" className="mt-6 sm:mt-10">
-                {isLessonPlanLoading && <LoadingIndicator onCancel={handleCancelLoading} isLessonPlan />}
+                {isLessonPlanLoading && (
+                  <LoadingIndicator
+                    onCancel={handleCancelLoading}
+                    isLessonPlan
+                    isQpanEnabled={
+                      lessonPlanFormData.integrateDigitalCompetence &&
+                      lessonPlanFormData.integrateQpan08 !== false &&
+                      (lessonPlanFormData.qpanThemes || []).length > 0
+                    }
+                  />
+                )}
                 {lessonPlanError && !isLessonPlanLoading && (
                   <ErrorMessage
                     message={lessonPlanError}
