@@ -15,6 +15,7 @@ import LessonPlanHistoryModal from './components/LessonPlanHistoryModal';
 
 import { generateExam } from './services/geminiService';
 import { generateLessonPlan } from './services/lessonPlanService';
+import { runQualityCheck, extractQuestionsFromExam } from './services/qualityCheckerService';
 import {
   getSavedExams,
   saveExamToHistory,
@@ -684,58 +685,92 @@ const App: React.FC = () => {
       const cleanText = (text: string) =>
         text.replace(/\*\*/g, '').replace(/<br>/gi, '\n').replace(/^---+\s*$/gm, '').trim();
 
-      const flexibleHeader = (text: string) =>
-        `(?:\\*\\*\\s*)?${text.replace(/[-\\/\\^$*+?.()|[\\]{}]/g, '\\$&')}(?:\\s*\\*\\*)?`;
+      // Phân tách linh hoạt 5 phần từ văn bản sinh ra
+      // Hỗ trợ cả định dạng mới 5 phần (Đề, Đáp án, Hướng dẫn chấm, Ma trận, Bản đặc tả)
+      // và định dạng cũ 4 phần (Ma trận, Bản đặc tả, Đề thi, Đáp án & Hướng dẫn chấm)
+      let examPart = '';
+      let answerKeyPart = '';
+      let gradingGuidePart = '';
+      let matrixPart = '';
+      let specPart = '';
 
-      let fullRegex: RegExp;
+      // Pattern 1: Chuẩn 5 PHẦN
+      const headerPatterns = [
+        { key: 'exam', regex: /(?:#{1,3}\s*|\*{0,2}\s*)(?:PHẦN\s*1\s*[:\.]\s*ĐỀ\s*KIỂM\s*TRA|PART\s*1\s*[:\.]\s*EXAM\s*PAPER|ĐỀ\s*KIỂM\s*TRA|TAB\s*1\s*–\s*ĐỀ\s*KIỂM\s*TRA)/i },
+        { key: 'answerKey', regex: /(?:#{1,3}\s*|\*{0,2}\s*)(?:PHẦN\s*2\s*[:\.]\s*ĐÁP\s*ÁN|PART\s*2\s*[:\.]\s*ANSWER\s*KEY|BẢNG\s*ĐÁP\s*ÁN|ĐÁP\s*ÁN\s*CHI\s*TIẾT|TAB\s*2\s*–\s*ĐÁP\s*ÁN)/i },
+        { key: 'gradingGuide', regex: /(?:#{1,3}\s*|\*{0,2}\s*)(?:PHẦN\s*3\s*[:\.]\s*HƯỚNG\s*DẪN\s*CHẤM|PART\s*3\s*[:\.]\s*GRADING\s*GUIDE|BIỂU\s*ĐIỂM|HƯỚNG\s*DẪN\s*CHẤM\s*CHI\s*TIẾT|TAB\s*3\s*–\s*HƯỚNG\s*DẪN\s*CHẤM)/i },
+        { key: 'matrix', regex: /(?:#{1,3}\s*|\*{0,2}\s*)(?:PHẦN\s*4\s*[:\.]\s*MA\s*TRẬN\s*ĐỀ|PART\s*4\s*[:\.]\s*EXAM\s*MATRIX|MA\s*TRẬN\s*ĐỀ\s*KIỂM\s*TRA|TAB\s*4\s*–\s*MA\s*TRẬN)/i },
+        { key: 'specification', regex: /(?:#{1,3}\s*|\*{0,2}\s*)(?:PHẦN\s*5\s*[:\.]\s*BẢN\s*ĐẶC\s*TẢ|PART\s*5\s*[:\.]\s*TEST\s*SPECIFICATION|BẢN\s*ĐẶC\s*TẢ\s*CHI\s*TIẾT|TAB\s*5\s*–\s*BẢN\s*ĐẶC\s*TẢ)/i },
+      ];
 
-      if (data.subject === 'Ngoại ngữ 1 (Tiếng Anh)') {
-        const p1 = 'PART 1: EXAM MATRIX';
-        const p2 = 'PART 2: TEST SPECIFICATION GRID';
-        const p3 = 'PART 3: EXAM PAPER';
-        const p4 = 'PART 4: ANSWER KEY & GRADING GUIDE';
-        fullRegex = new RegExp(
-          `${flexibleHeader(p1)}([\\s\\S]*?)` +
-            `${flexibleHeader(p2)}([\\s\\S]*?)` +
-            `${flexibleHeader(p3)}([\\s\\S]*?)` +
-            `${flexibleHeader(p4)}([\\s\\S]*)`,
-          'i'
-        );
-      } else {
-        const p1 = 'PHẦN 1: MA TRẬN ĐỀ KIỂM TRA';
-        const p2 = 'PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT';
-        const p3 = 'PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA';
-        const p4 = 'PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN';
-        fullRegex = new RegExp(
-          `${flexibleHeader(p1)}([\\s\\S]*?)` +
-            `${flexibleHeader(p2)}([\\s\\S]*?)` +
-            `${flexibleHeader(p3)}([\\s\\S]*?)` +
-            `${flexibleHeader(p4)}([\\s\\S]*)`,
-          'i'
-        );
+      // Tìm vị trí các header
+      const matchesWithIndices: { key: string; index: number; matchLength: number }[] = [];
+      for (const p of headerPatterns) {
+        const match = resultText.match(p.regex);
+        if (match && match.index !== undefined) {
+          matchesWithIndices.push({ key: p.key, index: match.index, matchLength: match[0].length });
+        }
       }
 
-      const matches = resultText.match(fullRegex);
-      if (isCancelledRef.current) return;
+      if (matchesWithIndices.length >= 3) {
+        // Sắp xếp theo vị trí xuất hiện
+        matchesWithIndices.sort((a, b) => a.index - b.index);
+        const sections: Record<string, string> = {};
+        for (let i = 0; i < matchesWithIndices.length; i++) {
+          const current = matchesWithIndices[i];
+          const startIndex = current.index + current.matchLength;
+          const endIndex = i + 1 < matchesWithIndices.length ? matchesWithIndices[i + 1].index : resultText.length;
+          sections[current.key] = cleanText(resultText.slice(startIndex, endIndex));
+        }
 
-      let finalResult: ExamResult;
-
-      if (!matches || matches.length < 5) {
-        console.warn('Could not parse all sections, showing raw output.');
-        finalResult = {
-          matrix: 'Không thể phân tích Ma trận từ kết quả trả về.',
-          specification: 'Không thể phân tích Bản đặc tả từ kết quả trả về.',
-          exam: 'Không thể phân tích Đề kiểm tra từ kết quả trả về.',
-          answerKey: `Vui lòng kiểm tra kết quả thô:\n\n${cleanText(resultText)}`,
-        };
+        examPart = sections['exam'] || '';
+        answerKeyPart = sections['answerKey'] || '';
+        gradingGuidePart = sections['gradingGuide'] || sections['answerKey'] || '';
+        matrixPart = sections['matrix'] || '';
+        specPart = sections['specification'] || '';
       } else {
-        finalResult = {
-          matrix: cleanText(matches[1]),
-          specification: cleanText(matches[2]),
-          exam: cleanText(matches[3]),
-          answerKey: cleanText(matches[4]),
-        };
+        // Fallback: Thử tìm theo cấu trúc 4 phần cũ (Ma trận -> Bản đặc tả -> Đề kiểm tra -> Đáp án & HD Chấm)
+        const oldMatrixRegex = /(?:PHẦN 1|PART 1)[^\n]*?(?:MA TRẬN|MATRIX)([\s\S]*?)(?=(?:PHẦN 2|PART 2)|$)/i;
+        const oldSpecRegex = /(?:PHẦN 2|PART 2)[^\n]*?(?:ĐẶC TẢ|SPECIFICATION)([\s\S]*?)(?=(?:PHẦN 3|PART 3)|$)/i;
+        const oldExamRegex = /(?:PHẦN 3|PART 3)[^\n]*?(?:ĐỀ KIỂM TRA|EXAM PAPER)([\s\S]*?)(?=(?:PHẦN 4|PART 4)|$)/i;
+        const oldKeyRegex = /(?:PHẦN 4|PART 4)[^\n]*?(?:HƯỚNG DẪN CHẤM|ANSWER KEY)([\s\S]*)$/i;
+
+        const mMatrix = resultText.match(oldMatrixRegex);
+        const mSpec = resultText.match(oldSpecRegex);
+        const mExam = resultText.match(oldExamRegex);
+        const mKey = resultText.match(oldKeyRegex);
+
+        if (mExam || mKey) {
+          matrixPart = mMatrix ? cleanText(mMatrix[1]) : '';
+          specPart = mSpec ? cleanText(mSpec[1]) : '';
+          examPart = mExam ? cleanText(mExam[1]) : cleanText(resultText);
+          answerKeyPart = mKey ? cleanText(mKey[1]) : '';
+          gradingGuidePart = answerKeyPart;
+        } else {
+          // Fallback đơn giản: hiển thị toàn bộ
+          examPart = cleanText(resultText);
+          answerKeyPart = 'Xem nội dung đáp án trong đề thi hoặc chỉnh sửa trực tiếp.';
+          gradingGuidePart = 'Xem hướng dẫn chấm và thang điểm trong phần đáp án.';
+          matrixPart = 'Xem ma trận trong nội dung kết quả sinh.';
+          specPart = 'Xem bản đặc tả chi tiết trong nội dung kết quả sinh.';
+        }
       }
+
+      // Trích xuất danh sách câu hỏi phục vụ Ngân hàng câu hỏi và Trộn đề
+      const parsedQuestions = extractQuestionsFromExam(examPart, answerKeyPart, data);
+
+      // Chạy bộ kiểm tra chất lượng tự động (Requirement 16)
+      const qualityReport = runQualityCheck(data, parsedQuestions, data.totalScore || 10);
+
+      const finalResult: ExamResult = {
+        matrix: matrixPart || 'Đang cập nhật ma trận đề thi...',
+        specification: specPart || 'Đang cập nhật bản đặc tả chi tiết...',
+        exam: examPart || cleanText(resultText),
+        answerKey: answerKeyPart || 'Đang cập nhật đáp án...',
+        gradingGuide: gradingGuidePart || answerKeyPart,
+        questions: parsedQuestions,
+        qualityReport,
+      };
 
       setExamResult(finalResult);
 

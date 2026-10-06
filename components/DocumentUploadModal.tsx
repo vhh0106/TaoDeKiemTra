@@ -100,7 +100,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".docx,.txt,.md,.json,.csv"
+              accept=".pdf,.docx,.txt,.md,.json,.csv,image/*"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -109,10 +109,10 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({
             </div>
             <div>
               <p className="font-bold text-indigo-950 dark:text-indigo-200 text-sm">
-                Nhấp để chọn file hoặc kéo thả file vào đây
+                Nhấp để chọn file hoặc kéo thả tài liệu vào đây
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Hỗ trợ định dạng: Word (.docx), Văn bản (.txt, .md)
+                Hỗ trợ: PDF, Word (.docx), Văn bản (.txt), SGK, Giáo án, Kế hoạch bài dạy, Đề cũ
               </p>
             </div>
           </div>

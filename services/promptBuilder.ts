@@ -1,5 +1,5 @@
-import type { ExamFormData, LessonPlanFormData } from '../types';
-import { isEnglishSubject, ENGLISH_EXAM_FORMATS, ENGLISH_SKILL_CATEGORIES } from '../constants';
+import type { ExamFormData, LessonPlanFormData } from '../types.ts';
+import { isEnglishSubject, ENGLISH_EXAM_FORMATS, ENGLISH_SKILL_CATEGORIES } from '../constants.ts';
 
 /* ==========================================================================
    PROMPT DÀNH CHO: SOẠN KẾ HOẠCH BÀI DẠY (GIÁO ÁN) MÔN TIẾNG ANH (ENGLISH)
@@ -209,101 +209,179 @@ ${isQpanEnabled ? `- Integration of National Defense & Security Education (under
 };
 
 /* ==========================================================================
+   HÀM HỖ TRỢ XÂY DỰNG NỘI DUNG VÀ HƯỚNG DẪN ĐỀ THI CHUẨN GD VIỆT NAM
+   ========================================================================== */
+
+const formatExamTypeLabel = (examType?: string): string => {
+  switch (examType) {
+    case '15min': return 'Kiểm tra 15 phút';
+    case 'regular': return 'Kiểm tra thường xuyên';
+    case 'midterm': return 'Kiểm tra giữa kỳ';
+    case 'final': return 'Kiểm tra cuối kỳ';
+    case 'review': return 'Đề ôn tập';
+    case 'practice': return 'Đề luyện tập';
+    case 'survey': return 'Đề khảo sát';
+    case 'selection': return 'Đề tuyển chọn học sinh';
+    case 'custom': return 'Đề kiểm tra tự tạo';
+    default: return 'Kiểm tra định kỳ';
+  }
+};
+
+const buildKnowledgeAndReferenceDocSection = (data: ExamFormData): string => {
+  let section = `**1. NỘI DUNG KIẾN THỨC VÀ YÊU CẦU CẦN ĐẠT:**\n`;
+  if (data.topicName) section += `- **Tên bài/chủ đề:** ${data.topicName}\n`;
+  if (data.chapterName) section += `- **Chương:** ${data.chapterName}\n`;
+  if (data.knowledgeScope) section += `- **Phạm vi kiến thức:** ${data.knowledgeScope}\n`;
+  if (data.testFocus) section += `- **Nội dung cần kiểm tra:** ${data.testFocus}\n`;
+  if (data.learningOutcomes) section += `- **Yêu cầu cần đạt:** ${data.learningOutcomes}\n`;
+  if (data.teacherNotes) section += `- **Ghi chú của giáo viên:** ${data.teacherNotes}\n`;
+  if (data.knowledgeContent) {
+    section += `- **Nội dung bài học / Kiến thức trọng tâm:**\n"""\n${data.knowledgeContent}\n"""\n`;
+  }
+
+  // TÀI LIỆU THAM CHIẾU (MỤC 3)
+  if (data.referenceDoc && data.referenceDoc.text && data.referenceDoc.text.trim()) {
+    section += `\n**2. TÀI LIỆU THAM CHIẾU ĐƯỢC CUNG CẤP (${data.referenceDoc.fileName || 'Tài liệu tham khảo'}):**\n`;
+    if (data.referenceDoc.mode === 'only_document') {
+      section += `⚠️ **QUY TẮC BẮT BUỘC - CHẾ ĐỘ: CHỈ SỬ DỤNG TÀI LIỆU ĐÃ CUNG CẤP:**\n`;
+      section += `- Ưu tiên TUYỆT ĐỐI 100% nội dung trong tài liệu tham chiếu này để biên soạn đề.\n`;
+      section += `- TUYỆT ĐỐI KHÔNG tự bổ sung kiến thức hoặc sự kiện nằm ngoài tài liệu đã cung cấp.\n`;
+      section += `- Nếu tài liệu không đủ dữ liệu để tạo đủ số lượng câu hỏi theo yêu cầu, BẮT BUỘC phải ghi chú rõ ràng thông báo cho giáo viên thay vì tự bịa dữ kiện.\n`;
+    } else if (data.referenceDoc.mode === 'document_and_curriculum') {
+      section += `📌 **CHẾ ĐỘ: TÀI LIỆU TẢI LÊN + KIẾN THỨC CHƯƠNG TRÌNH PHỔ THÔNG:**\n`;
+      section += `- Ưu tiên nội dung trong tài liệu tham chiếu, kết hợp chuẩn kiến thức kỹ năng môn học của CT GDPT 2018.\n`;
+    } else {
+      section += `📌 **CHẾ ĐỘ: GIÁO VIÊN TỰ NHẬP NỘI DUNG:**\n`;
+      section += `- Bám sát nội dung và định hướng do giáo viên cung cấp.\n`;
+    }
+    section += `NỘI DUNG TÀI LIỆU THAM CHIẾU:\n"""\n${data.referenceDoc.text}\n"""\n`;
+  }
+
+  return section;
+};
+
+const buildSubjectSpecificRules = (subject: string): string => {
+  const norm = (subject || '').toLowerCase();
+
+  if (norm.includes('toán') || norm.includes('vật lí') || norm.includes('vật lý') || norm.includes('hóa học') || norm.includes('khtn') || norm.includes('khoa học tự nhiên')) {
+    return `\n**QUY TẮC BẮT BUỘC VỚI MÔN TOÁN, VẬT LÍ, HÓA HỌC VÀ CÁC MÔN CÓ TÍNH TOÁN (MỤC 12):**
+1. BẮT BUỘC hệ thống AI phải TỰ GIẢI LẠI TOÀN BỘ bài toán trước khi đưa vào đề.
+2. Kiểm tra chặt chẽ: Dữ kiện, công thức áp dụng, các bước phép tính, đơn vị đo lường, kết quả và đáp số.
+3. Tuyệt đối không tạo bài toán vô nghiệm hoặc dữ kiện mâu thuẫn ngoài chủ đích sư phạm.
+4. Tuyệt đối không để đáp án trắc nghiệm khác với kết quả tính toán thực tế. Phương án nhiễu phải cùng kiểu dữ liệu, bắt nguồn từ các lỗi sai điển hình của học sinh.`;
+  }
+
+  if (norm.includes('ngữ văn') || norm.includes('tiếng việt')) {
+    return `\n**QUY TẮC BẮT BUỘC VỚI MÔN NGỮ VĂN & TIẾNG VIỆT (MỤC 13):**
+1. Đảm bảo cấu trúc Đọc hiểu (ngữ liệu hoàn chỉnh giàu tính giáo dục) và Viết (đoạn văn / bài văn).
+2. Nếu giáo viên cung cấp văn bản đọc hiểu, ưu tiên sử dụng đúng văn bản đó. Không tự chép dài các tác phẩm có bản quyền.
+3. Nếu tạo ngữ liệu mới, hãy tạo ngữ liệu nguyên bản, trong sáng, nhân văn, phù hợp lứa tuổi học sinh.
+4. Biểu điểm chấm tự luận phải có tiêu chí rõ ràng về nội dung, hình thức diễn đạt, chính tả và tính sáng tạo.`;
+  }
+
+  if (norm.includes('lịch sử') || norm.includes('địa lí') || norm.includes('địa lý') || norm.includes('công dân') || norm.includes('kinh tế và pháp luật') || norm.includes('gdkte&pl')) {
+    return `\n**QUY TẮC BẮT BUỘC VỚI MÔN LỊCH SỬ, ĐỊA LÍ, GDCD, GDKT&PL (MỤC 14):**
+1. BẮT BUỘC kiểm tra đặc biệt: Mốc thời gian, tên nhân vật lịch sử, địa danh, sự kiện lịch sử, thuật ngữ pháp luật/kinh tế, quan hệ nguyên nhân - kết quả.
+2. Tuyệt đối không tự bịa dữ kiện lịch sử hoặc số liệu địa lí không có căn cứ xác thực.`;
+  }
+
+  return '';
+};
+
+/* ==========================================================================
    PROMPT DÀNH CHO TIỂU HỌC: THEO THÔNG TƯ 27/2020/TT-BGDĐT
    (Áp dụng 3 Mức độ nhận thức: Mức 1, Mức 2, Mức 3; thang điểm 10 không số thập phân)
    ========================================================================== */
 export const createPrimarySchoolPrompt = (data: ExamFormData): string => {
-  const schoolHeader = data.schoolName
-    ? data.schoolName
-    : 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I';
+  const schoolHeader = data.schoolName || 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I';
+  const effectiveSubject = data.customSubject || data.subject;
+  const examTitle = data.examTitle || `ĐỀ KIỂM TRA ĐỊNH KỲ MÔN ${effectiveSubject.toUpperCase()} LỚP ${data.grade.toUpperCase()}`;
+  const totalScore = data.totalScore || 10;
 
   return `
 Bạn là một chuyên gia giáo dục tiểu học tại Việt Nam, am hiểu sâu sắc về Chương trình GDPT 2018 và **THÔNG TƯ 27/2020/TT-BGDĐT** (Quy định đánh giá học sinh tiểu học) của Bộ Giáo dục và Đào tạo.
-Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra định kỳ hoàn chỉnh cho học sinh tiểu học môn **${data.subject} lớp ${data.grade}** (${data.textbook}), tuân thủ nghiêm ngặt các quy định của Thông tư 27/2020/TT-BGDĐT.
+Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra định kỳ hoàn chỉnh cho học sinh tiểu học môn **${effectiveSubject} lớp ${data.grade}** (${data.textbook}), tuân thủ nghiêm ngặt các quy định của Thông tư 27/2020/TT-BGDĐT.
 
 **CĂN CỨ PHÁP LÝ & QUY ĐỊNH BẮT BUỘC THEO THÔNG TƯ 27/2020/TT-BGDĐT (TUÂN THỦ 100%):**
 
 1. **3 MỨC ĐỘ NHẬN THỨC THEO ĐIỀU 7 KHOẢN 1 ĐIỂM C (TUYỆT ĐỐI KHÔNG DÙNG 4 MỨC CỦA THCS/THPT):**
-   Đề kiểm tra định kỳ cấp tiểu học chỉ được thiết kế theo ĐÚNG 3 MỨC ĐỘ:
    - **Mức 1**: Nhận biết, nhắc lại hoặc mô tả được nội dung đã học và áp dụng trực tiếp để giải quyết một số tình huống, vấn đề quen thuộc trong học tập.
    - **Mức 2**: Kết nối, sắp xếp được một số nội dung đã học để giải quyết vấn đề có nội dung tương tự.
    - **Mức 3**: Vận dụng các nội dung đã học để giải quyết một số vấn đề mới hoặc đưa ra những phản hồi hợp lý trong học tập và cuộc sống.
-   *QUY ĐỊNH CỘT "Mức độ nhận thức" TRONG MA TRẬN VÀ BẢN ĐẶC TẢ*: BẮT BUỘC PHẢI GHI RÕ LÀ: **Mức 1**, **Mức 2**, hoặc **Mức 3**. TUYỆT ĐỐI KHÔNG ghi Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao.
+   *QUY ĐỊNH CỘT "Mức độ nhận thức" TRONG MA TRẬN VÀ BẢN ĐẶC TẢ*: BẮT BUỘC PHẢI GHI RÕ LÀ: **Mức 1**, **Mức 2**, hoặc **Mức 3**.
 
 2. **THANG ĐIỂM VÀ ĐÁNH GIÁ THEO ĐIỀU 7 KHOẢN 1 ĐIỂM D:**
-   - Cho điểm theo thang điểm 10, **KHÔNG CHO ĐIỂM THẬP PHÂN**.
-   - Các câu hỏi được phân bổ điểm số nguyên hoặc nửa điểm chẵn (ví dụ: 1 điểm, 2 điểm; tổng điểm toàn bài đúng tròn 10 điểm, không cho điểm lẻ như 0.25, 0.75).
+   - Cho điểm theo thang điểm ${totalScore}, **KHÔNG CHO ĐIỂM THẬP PHÂN**.
+   - Các câu hỏi được phân bổ điểm số nguyên hoặc nửa điểm chẵn (tổng điểm toàn bài đúng tròn ${totalScore} điểm, không cho điểm lẻ như 0.25, 0.75).
    - Giáo viên sửa lỗi, nhận xét về sự tiến bộ của học sinh, không so sánh học sinh này với học sinh khác.
 
-3. **CẤU TRÚC 4 PHẦN CHUẨN (DÙNG ĐÚNG TIÊU ĐỀ THUẦN TÚY, CÁCH NHAU BẰNG '---'):**
-   - PHẦN 1: MA TRẬN ĐỀ KIỂM TRA
+3. **CẤU TRÚC 5 PHẦN BẮT BUỘC THEO MỤC 15 (DÙNG ĐÚNG TIÊU ĐỀ THUẦN TÚY, CÁCH NHAU BẰNG '---'):**
+   - \`PHẦN 1: ĐỀ KIỂM TRA\`
    - ---
-   - PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT
+   - \`PHẦN 2: ĐÁP ÁN\`
    - ---
-   - PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA
+   - \`PHẦN 3: HƯỚNG DẪN CHẤM\`
    - ---
-   - PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN
+   - \`PHẦN 4: MA TRẬN ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT\`
 
 4. **YÊU CẦU ĐỊNH DẠNG TỪNG PHẦN:**
-   - **PHẦN 1 (MA TRẬN):** Phải là MỘT bảng markdown sạch có 6 cột:
-     - Cột 1: \`Nội dung/Chủ đề kiến thức\`
-     - Cột 2: \`Mức độ nhận thức\` (Bắt buộc ghi rõ: Mức 1, Mức 2, Mức 3)
-     - Cột 3: \`Hình thức câu hỏi\` (TNKQ, Đúng/Sai, Trả lời ngắn, Tự luận)
-     - Cột 4: \`Số câu hỏi\`
-     - Cột 5: \`Số điểm\`
-     - Cột 6: \`Tỉ lệ % điểm\`
-     - Dòng TỔNG CỘNG: Cột "Nội dung/Chủ đề kiến thức" phải có tóm tắt thống kê: "TỔNG CỘNG (Thống kê theo TT27: Mức 1 [X]đ/[A]%; Mức 2 [Y]đ/[B]%; Mức 3 [Z]đ/[C]%)". Các cột còn lại tính tổng tương ứng (Tổng 10 điểm, 100%).
-
-   - **PHẦN 2 (BẢN ĐẶC TẢ):** Phải là MỘT bảng markdown sạch có 6 cột:
-     - Cột 1: \`Câu số\`
-     - Cột 2: \`Nội dung/Chủ đề kiến thức\`
-     - Cột 3: \`Yêu cầu cần đạt\` (Theo chuẩn kiến thức kỹ năng CT GDPT 2018 cấp tiểu học)
-     - Cột 4: \`Mức độ nhận thức\` (Bắt buộc ghi rõ: Mức 1, Mức 2, hoặc Mức 3)
-     - Cột 5: \`Thời gian dự kiến (phút)\`
-     - Cột 6: \`Điểm số\`
-
-   - **PHẦN 3 (NỘI DUNG ĐỀ KIỂM TRA):** Tuyệt đối KHÔNG dùng bảng. Bắt đầu bằng khối tiêu đề chuẩn:
+   - **PHẦN 1: ĐỀ KIỂM TRA:** NỘI DUNG ĐỀ KIỂM TRA tuyệt đối KHÔNG được trình bày dưới dạng bảng, KHÔNG dùng bảng markdown, block code hay table HTML.
+     Mở đầu PHẢI có khối tiêu đề chuẩn:
      \`\`\`text
      ${schoolHeader}
-     ĐỀ KIỂM TRA ĐỊNH KỲ (THEO THÔNG TƯ 27/2020/TT-BGDĐT)
-     NĂM HỌC 2025-2026
-     MÔN: ${data.subject} - LỚP ${data.grade}
+     Họ và tên học sinh: .................................................... Lớp: ${data.grade}
+     Môn: ${effectiveSubject}
+     ${examTitle}
      Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
-     Họ và tên học sinh: .................................................... Lớp: .............
      \`\`\`
-     Sau đó là các câu hỏi rõ ràng, câu từ trong sáng, phù hợp tâm lý học sinh tiểu học. Tuyệt đối không để lộ đáp án ở phần này.
+     Sau đó là toàn bộ các câu hỏi rõ ràng, câu từ trong sáng, phù hợp tâm lý lứa tuổi học sinh tiểu học. TUYỆT ĐỐI KHÔNG để lộ đáp án ở phần này. Không sinh số câu vượt quá cấu hình của giáo viên.
 
-   - **PHẦN 4 (HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN):** Bảng markdown 3 cột:
-     - Cột 1: \`Câu\`
-     - Cột 2: \`Đáp án và Hướng dẫn chấm\` (Đáp án chi tiết, biểu điểm rõ ràng từng bước không chia điểm lẻ thập phân)
-     - Cột 3: \`Điểm\` (Số nguyên, tổng bằng 10)
-     Sau bảng đáp án, bổ sung hướng dẫn nhận xét theo Thông tư 27:
-     \`\`\`text
-     *Hướng dẫn nhận xét đánh giá theo Thông tư 27/2020/TT-BGDĐT:*
-     - Lời nhận xét khích lệ sự tiến bộ, chỉ rõ ưu điểm và hướng dẫn học sinh khắc phục những điểm còn hạn chế; không so sánh học sinh với nhau.
-     \`\`\`
+   - **PHẦN 2: ĐÁP ÁN:**
+     + Đối với phần Trắc nghiệm: BẮT BUỘC trình bày dạng bảng markdown 3 cột:
+       \`| Câu | Đáp án | Điểm |\`
+     + Đối với phần Tự luận: Hiển thị đáp án, lời giải hoặc gợi ý trả lời chi tiết từng câu.
+
+   - **PHẦN 3: HƯỚNG DẪN CHẤM:**
+     Hiển thị rõ ràng các mục:
+     • Nội dung cần đạt cho từng câu/ý
+     • Điểm thành phần
+     • Tổng điểm (bằng ${totalScore} điểm)
+     • Lưu ý chấm & Hướng dẫn nhận xét đánh giá theo Thông tư 27/2020/TT-BGDĐT (lời nhận xét khích lệ sự tiến bộ, chỉ rõ ưu điểm và hướng dẫn khắc phục hạn chế, không so sánh học sinh với nhau).
+
+   - **PHẦN 4: MA TRẬN ĐỀ KIỂM TRA:** Phải là MỘT bảng markdown sạch thể hiện tối thiểu:
+     \`| Chủ đề/Nội dung | Mức 1 (NB) | Mức 2 (TH) | Mức 3 (VD) | Tổng cộng |\`
+     Với mỗi ô thể hiện: Số câu, Số điểm, Tỉ lệ %.
+     Phía cuối có dòng: Tổng số câu, Tổng điểm, Tỷ lệ từng mức độ. Các con số trong ma trận phải khớp tuyệt đối với đề kiểm tra được sinh ra.
+
+   - **PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT:** Bảng markdown thể hiện:
+     \`| Câu số | Chủ đề/Đơn vị kiến thức | Yêu cầu cần đạt | Mức độ | Dạng câu hỏi | Số lượng câu | Số điểm |\`
+
+${buildKnowledgeAndReferenceDocSection(data)}
+
+${buildSubjectSpecificRules(effectiveSubject)}
 
 **THÔNG SỐ ĐỀ KIỂM TRA CẦN TẠO:**
 - **Cấp học:** Tiểu học (Áp dụng Thông tư 27/2020/TT-BGDĐT)
 - **Lớp:** ${data.grade}
-- **Môn học:** ${data.subject}
-- **Bộ sách:** ${data.textbook}
+- **Môn học:** ${effectiveSubject}
+- **Loại đề:** ${formatExamTypeLabel(data.examType)} (${data.examTitle || 'Đề kiểm tra định kỳ'})
 - **Thời gian làm bài:** ${data.duration} phút
-- **Nội dung kiến thức:**
-${data.knowledgeContent}
+- **Thang điểm tổng:** ${totalScore} điểm (không số thập phân)
 
-**CẤU TRÚC ĐỀ (BẮT BUỘC TUÂN THỦ):**
-- **Trắc nghiệm khách quan:** ${data.multipleChoice.questionCount} câu, ${data.multipleChoice.score} điểm (${data.multipleChoice.percentage}%)
-- **Trắc nghiệm Đúng/Sai:** ${data.trueFalse.questionCount} câu, ${data.trueFalse.score} điểm (${data.trueFalse.percentage}%)
-- **Trả lời ngắn:** ${data.shortAnswer.questionCount} câu, ${data.shortAnswer.score} điểm (${data.shortAnswer.percentage}%)
-- **Tự luận:** ${data.essay.questionCount} câu, ${data.essay.score} điểm (${data.essay.percentage}%)
-- **Tổng điểm:** 10 (Thang điểm 10 không số thập phân theo TT 27)
+**CẤU TRÚC PHÂN BỔ CÂU HỎI (BẮT BUỘC TUÂN THỦ CHÍNH XÁC):**
+- **Trắc nghiệm khách quan (4 lựa chọn):** ${data.multipleChoice.questionCount} câu, ${data.multipleChoice.score} điểm
+- **Đúng / Sai:** ${data.trueFalse.questionCount} câu, ${data.trueFalse.score} điểm
+- **Trả lời ngắn / Điền khuyết:** ${data.shortAnswer.questionCount} câu, ${data.shortAnswer.score} điểm
+- **Tự luận:** ${data.essay.questionCount} câu, ${data.essay.score} điểm
+- **Tổng số câu:** ${data.multipleChoice.questionCount + data.trueFalse.questionCount + data.shortAnswer.questionCount + data.essay.questionCount} câu.
 
 **YÊU CẦU BỔ SUNG:**
 ${data.additionalRequirements || 'Không có'}
 
 ---
-Hãy tạo bộ đề kiểm tra tiểu học hoàn chỉnh, bám sát tuyệt đối Thông tư 27/2020/TT-BGDĐT.
+Hãy tạo bộ đề kiểm tra tiểu học hoàn chỉnh 5 phần, bám sát tuyệt đối Thông tư 27/2020/TT-BGDĐT và các yêu cầu trên.
 `;
 };
 
@@ -311,9 +389,9 @@ Hãy tạo bộ đề kiểm tra tiểu học hoàn chỉnh, bám sát tuyệt �
    PROMPT DÀNH CHO TIẾNG VIỆT TIỂU HỌC: THEO THÔNG TƯ 27/2020/TT-BGDĐT
    ========================================================================== */
 export const createPrimaryVietnamesePrompt = (data: ExamFormData): string => {
-  const schoolHeader = data.schoolName
-    ? data.schoolName
-    : 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I';
+  const schoolHeader = data.schoolName || 'TRƯỜNG TIỂU HỌC SƠN HẠ SỐ I';
+  const examTitle = data.examTitle || `ĐỀ KIỂM TRA ĐỊNH KỲ MÔN TIẾNG VIỆT LỚP ${data.grade.toUpperCase()}`;
+  const totalScore = data.totalScore || 10;
 
   return `
 Bạn là một chuyên gia giáo dục tiểu học tại Việt Nam, am hiểu sâu sắc về môn Tiếng Việt tiểu học Chương trình GDPT 2018 và **THÔNG TƯ 27/2020/TT-BGDĐT** (Quy định đánh giá học sinh tiểu học).
@@ -321,30 +399,49 @@ Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra định kỳ h
 
 **CĂN CỨ PHÁP LÝ & QUY CÁCH ĐỀ TIẾNG VIỆT TIỂU HỌC THEO TT 27/2020/TT-BGDĐT:**
 
-1. **3 MỨC ĐỘ NHẬN THỨC THEO ĐIỀU 7 KHOẢN 1 ĐIỂM C (TUYỆT ĐỐI KHÔNG DÙNG 4 MỨC CỦA THCS/THPT):**
-   - **Mức 1**: Nhận biết, nhắc lại hoặc mô tả được nội dung đã học (tìm chi tiết trong văn bản đọc; nhận diện từ loại, dấu câu quen thuộc).
-   - **Mức 2**: Kết nối, sắp xếp được nội dung đã học để giải quyết vấn đề tương tự (hiểu ý nghĩa hình ảnh, rút ra ý chính bài đọc, đặt câu theo mẫu).
-   - **Mức 3**: Vận dụng giải quyết vấn đề mới hoặc phản hồi hợp lý (bài học liên hệ bản thân, viết đoạn văn thể hiện tình cảm, suy nghĩ).
-   *Trong Ma trận và Bản đặc tả, cột "Mức độ nhận thức" BẮT BUỘC ghi rõ là: **Mức 1**, **Mức 2**, hoặc **Mức 3**.*
+1. **3 MỨC ĐỘ NHẬN THỨC THEO ĐIỀU 7 KHOẢN 1 ĐIỂM C:**
+   - **Mức 1**: Nhận biết, nhắc lại hoặc mô tả nội dung đã học (tìm chi tiết trong văn bản đọc; nhận diện từ loại, dấu câu).
+   - **Mức 2**: Kết nối, sắp xếp nội dung đã học để giải quyết vấn đề tương tự (hiểu ý nghĩa hình ảnh, rút ra bài học, đặt câu).
+   - **Mức 3**: Vận dụng giải quyết vấn đề mới hoặc phản hồi hợp lý (bài học liên hệ bản thân, viết đoạn văn thể hiện suy nghĩ).
 
-2. **CẤU TRÚC ĐỀ ĐỊNH KỲ TIẾNG VIỆT TIỂU HỌC (THANG ĐIỂM 10, KHÔNG DÙNG ĐIỂM THẬP PHÂN):**
-   - **A. BÀI KIỂM TRA ĐỌC (Tổng 10 điểm quy đổi hoặc phân 5 điểm Đọc hiểu)**:
-     - I. Đọc thành tiếng: Một đoạn văn ngắn khoảng 50-80 từ phù hợp lứa tuổi ${data.grade} + 1 câu hỏi tìm hiểu nội dung.
-     - II. Đọc hiểu văn bản và Kiến thức Tiếng Việt:
-       + Cung cấp 1 bài đọc/đoạn trích hoàn chỉnh giàu ý nghĩa nhân văn, giáo dục lối sống đẹp.
-       + Hệ thống câu hỏi đọc hiểu (trắc nghiệm và tự luận ngắn) được thiết kế theo 3 mức độ (Mức 1, Mức 2, Mức 3), bao gồm cả câu hỏi kiểm tra kiến thức về từ và câu theo chương trình ${data.grade}.
-   - **B. BÀI KIỂM TRA VIẾT (Tổng 10 điểm quy đổi hoặc phân 5 điểm Viết)**:
-     - I. Viết chính tả / bài tập chính tả (Nghe - viết một đoạn văn ngắn hoặc bài tập phân biệt âm/vần dễ lẫn).
-     - II. Viết đoạn văn / Tập làm văn: Đề bài gắn liền với chủ điểm kiến thức ${data.grade} (ví dụ: tả người, tả cảnh, viết thư, kể lại câu chuyện đã học/chứng kiến, nêu cảm nghĩ về nhân vật hoặc sự việc).
+2. **CẤU TRÚC 5 PHẦN BẮT BUỘC THEO MỤC 15 (DÙNG ĐÚNG TIÊU ĐỀ THUẦN TÚY, CÁCH NHAU BẰNG '---'):**
+   - \`PHẦN 1: ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 2: ĐÁP ÁN\`
+   - ---
+   - \`PHẦN 3: HƯỚNG DẪN CHẤM\`
+   - ---
+   - \`PHẦN 4: MA TRẬN ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT\`
 
-3. **CẤU TRÚC 4 PHẦN CHUẨN:**
-   - PHẦN 1: MA TRẬN ĐỀ KIỂM TRA (Bảng markdown 6 cột với 3 Mức: Mức 1, Mức 2, Mức 3)
-   - ---
-   - PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT (Bảng markdown 6 cột với 3 Mức: Mức 1, Mức 2, Mức 3)
-   - ---
-   - PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA (Đề thi hoàn chỉnh dành cho học sinh, mở đầu bằng khối tiêu đề chuẩn, không dùng bảng)
-   - ---
-   - PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN (Bảng đáp án, biểu điểm chi tiết không điểm lẻ thập phân + Hướng dẫn nhận xét khích lệ theo TT 27)
+3. **YÊU CẦU ĐỊNH DẠNG TỪNG PHẦN:**
+   - **PHẦN 1: ĐỀ KIỂM TRA:** Tuyệt đối KHÔNG dùng bảng. Bắt đầu bằng khối tiêu đề chuẩn:
+     \`\`\`text
+     ${schoolHeader}
+     Họ và tên học sinh: .................................................... Lớp: ${data.grade}
+     Môn: Tiếng Việt
+     ${examTitle}
+     Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
+     \`\`\`
+     Cấu trúc đề Tiếng Việt gồm:
+     - **A. BÀI KIỂM TRA ĐỌC (Đọc hiểu văn bản và Kiến thức Tiếng Việt):** Cung cấp 1 ngữ liệu đọc hiểu hoàn chỉnh, giàu tính nhân văn, trong sáng, phù hợp lứa tuổi kèm hệ thống câu hỏi đọc hiểu 3 mức độ (Mức 1, Mức 2, Mức 3).
+     - **B. BÀI KIỂM TRA VIẾT:** Đề bài viết đoạn văn / tập làm văn gắn liền với chủ điểm kiến thức lớp ${data.grade}.
+
+   - **PHẦN 2: ĐÁP ÁN:**
+     + Trắc nghiệm đọc hiểu: Bảng markdown 3 cột \`| Câu | Đáp án | Điểm |\`
+     + Tự luận & Tập làm văn: Đáp án gợi ý chi tiết, dàn ý cần đạt.
+
+   - **PHẦN 3: HƯỚNG DẪN CHẤM:**
+     Hiển thị rõ: Nội dung cần đạt, Điểm thành phần, Tổng điểm (${totalScore} điểm), Lưu ý chấm & Hướng dẫn nhận xét khích lệ theo TT 27.
+
+   - **PHẦN 4: MA TRẬN ĐỀ KIỂM TRA:** Bảng markdown 3 Mức (Mức 1, Mức 2, Mức 3), có số câu, số điểm, tỉ lệ % và dòng tổng kết.
+
+   - **PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT:** Bảng markdown thể hiện chi tiết câu hỏi, yêu cầu cần đạt, mức độ, dạng bài và điểm số.
+
+${buildKnowledgeAndReferenceDocSection(data)}
+
+${buildSubjectSpecificRules('Tiếng Việt')}
 
 **THÔNG SỐ ĐỀ KIỂM TRA:**
 - **Cấp học:** Tiểu học (Áp dụng Thông tư 27/2020/TT-BGDĐT)
@@ -352,111 +449,137 @@ Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra định kỳ h
 - **Môn học:** Tiếng Việt
 - **Bộ sách:** ${data.textbook}
 - **Thời gian làm bài:** ${data.duration} phút
-- **Nội dung kiến thức / Chủ điểm:**
-${data.knowledgeContent}
-- **Yêu cầu bổ sung:**
+- **Thang điểm tổng:** ${totalScore} điểm
+
+**YÊU CẦU BỔ SUNG:**
 ${data.additionalRequirements || 'Không có'}
 
 ---
-Hãy tạo bộ đề kiểm tra Tiếng Việt tiểu học hoàn chỉnh, bám sát tuyệt đối Thông tư 27/2020/TT-BGDĐT.
+Hãy tạo bộ đề kiểm tra Tiếng Việt tiểu học hoàn chỉnh 5 phần theo Thông tư 27/2020/TT-BGDĐT.
 `;
 };
 
 /* ==========================================================================
    PROMPT DÀNH CHO THCS & THPT: THEO CÔNG VĂN 7991/BGDĐT-GDTrH
+   Áp dụng cho mọi môn học: Toán, KHTN, Vật lí, Hóa học, Sinh học, Lịch sử, Địa lí,
+   Tin học, Công nghệ, GDCD, GDKT&PL, Âm nhạc, Mĩ thuật và mọi môn tùy chỉnh!
    ========================================================================== */
 export const createGeneralPrompt = (data: ExamFormData): string => {
+  const effectiveSubject = data.customSubject || data.subject;
+  const schoolHeader = data.schoolName
+    ? data.schoolName
+    : data.schoolLevel === 'THCS'
+    ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+    : 'TRƯỜNG THPT SƠN HẠ SỐ I';
+  const examTitle = data.examTitle || `ĐỀ KIỂM TRA MÔN ${effectiveSubject.toUpperCase()} LỚP ${data.grade.toUpperCase()}`;
+  const totalScore = data.totalScore || 10;
+
+  // Xây dựng chuỗi phân bổ mức độ nhận thức nếu có
+  let cognitiveSection = '';
+  if (data.cognitiveDistribution) {
+    if (data.cognitiveDistribution.mode === 'percentage') {
+      cognitiveSection = `\n**PHÂN BỔ 4 MỨC ĐỘ NHẬN THỨC (THEO TỈ LỆ % - TỔNG 100%):**
+- Nhận biết: ${data.cognitiveDistribution.recognition}%
+- Thông hiểu: ${data.cognitiveDistribution.comprehension}%
+- Vận dụng: ${data.cognitiveDistribution.application}%
+- Vận dụng cao: ${data.cognitiveDistribution.highApplication}%`;
+    } else {
+      cognitiveSection = `\n**PHÂN BỔ 4 MỨC ĐỘ NHẬN THỨC (THEO SỐ CÂU):**
+- Nhận biết: ${data.cognitiveDistribution.recognition} câu
+- Thông hiểu: ${data.cognitiveDistribution.comprehension} câu
+- Vận dụng: ${data.cognitiveDistribution.application} câu
+- Vận dụng cao: ${data.cognitiveDistribution.highApplication} câu`;
+    }
+  }
+
   return `
-Bạn là một trợ lý AI chuyên gia cho giáo viên THCS và THPT Việt Nam, có chuyên môn sâu về môn ${data.subject}. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, chính xác và khoa học, tuân thủ nghiêm ngặt **CÔNG VĂN 7991/BGDĐT-GDTrH** và các thông số được cung cấp.
+Bạn là một trợ lý AI chuyên gia cho giáo viên THCS và THPT Việt Nam, có chuyên môn sâu về môn **${effectiveSubject}**. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, chính xác và khoa học, tuân thủ nghiêm ngặt **CÔNG VĂN 7991/BGDĐT-GDTrH** và các thông số được cung cấp.
 
 **HƯỚNG DẪN TỐI QUAN TRỌNG (BẮT BUỘC TUÂN THỦ 100%):**
 
-1.  **Ngôn ngữ đầu ra:** Toàn bộ đầu ra, bao gồm tất cả các tiêu đề và nội dung, BẮT BUỘC phải bằng tiếng Việt.
-2.  **Cấu trúc 4 phần:** Đầu ra PHẢI tuân thủ nghiêm ngặt cấu trúc 4 phần này. TUYỆT ĐỐI không thay đổi tiêu đề và phải có dấu phân cách '---' giữa các phần.
-    - \`PHẦN 1: MA TRẬN ĐỀ KIỂM TRA\`
-    - ---
-    - \`PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT\`
-    - ---
-    - \`PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA\`
-    - ---
-    - \`PHẦN 4: HƯỚNG DẪN CHẤM VÀ ĐÁP ÁN\`
-3.  **Định dạng Tiêu đề (QUAN TRỌNG):** Các tiêu đề của 4 phần trên BẮT BUỘC phải là văn bản thuần túy (plain text). TUYỆT ĐỐI KHÔNG sử dụng markdown. Viết chính xác các tiêu đề như đã chỉ định.
-4.  **QUY TẮC PHÂN TÁCH NỘI DUNG:** Mỗi phần phải chứa đúng và đủ nội dung được yêu cầu, không được lẫn lộn nội dung giữa các phần.
-    - **PHẦN 1 (MA TRẬN):** Chỉ chứa MỘT bảng markdown duy nhất theo CV 7991.
-    - **PHẦN 2 (BẢN ĐẶC TẢ):** Chỉ chứa MỘT bảng markdown duy nhất theo CV 7991.
-    - **PHẦN 3 (ĐỀ KIỂM TRA):** NỘI DUNG ĐỀ KIỂM TRA tuyệt đối KHÔNG được trình bày dưới dạng bảng, KHÔNG dùng bảng markdown, KHÔNG dùng các ký tự phân chia dòng, KHÔNG dùng block code, KHÔNG dùng bảng HTML. Chỉ trình bày đề kiểm tra dưới dạng các câu hỏi, đoạn văn hoặc danh sách rõ ràng, khoa học.
-Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn:
-      \`\`\`text
-      ${
-        data.schoolName
-          ? data.schoolName
-          : data.schoolLevel === 'THCS'
-          ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
-          : 'TRƯỜNG THPT SƠN HẠ SỐ I'
-      }
-      ĐỀ KIỂM TRA (THEO CV 7991/BGDĐT-GDTrH)
-      NĂM HỌC 2025-2026
-      MÔN: ${data.subject}
-      LỚP: ${data.grade}
-      Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
-      \`\`\`
-      Sau khối tiêu đề trên, chỉ chứa đề bài hoàn chỉnh cho học sinh. **TUYỆT ĐỐI KHÔNG** bao gồm bất kỳ đáp án, lời giải, hay hướng dẫn chấm nào trong phần này.
-    - **PHẦN 4 (ĐÁP ÁN):** **CHỈ** chứa đáp án, lời giải và biểu điểm chấm chi tiết. **TUYỆT ĐỐI KHÔNG** lặp lại đề bài từ Phần 3.
-5.  **Phân bổ câu hỏi (QUAN TRỌNG):** Bạn BẮT BUỘC phải tuân thủ CHÍNH XÁC SỐ LƯỢNG câu hỏi và ĐIỂM SỐ cho từng dạng bài đã được chỉ định. Toàn bộ 4 phần phải phản ánh đúng cấu trúc này.
-6.  **Định dạng Toán học và Khoa học:**
-    - Sử dụng ký tự Unicode (ví dụ: ², ³, ₁, ₂) cho các chỉ số trên và chỉ số dưới đơn giản.
-    - Sử dụng cú pháp LaTeX cho các công thức phức tạp (phân số, căn, tích phân, phương trình hóa học).
-7.  **Định dạng và Cấu trúc Bảng (BẮT BUỘC):**
-    - **Bảng MA TRẬN (PHẦN 1 - CV 7991):** Phải có 6 cột với các tiêu đề sau:
-        - Cột 1: \`Nội dung/Đơn vị kiến thức\`
-        - Cột 2: \`Mức độ nhận thức\` (Ghi rõ: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao)
-        - Cột 3: \`Hình thức câu hỏi\` (Ghi rõ: TNKQ, Đúng/Sai, Trả lời ngắn, Tự luận)
-        - Cột 4: \`Số câu hỏi\`
-        - Cột 5: \`Số điểm\`
-        - Cột 6: \`Tỉ lệ % điểm\`
-        - **Yêu cầu thêm:** Cuối bảng PHẢI có dòng TỔNG CỘNG. Trong dòng TỔNG CỘNG này, ở cột "Nội dung/Đơn vị kiến thức", hãy ghi tóm tắt thống kê tổng điểm VÀ TỔNG TỈ LỆ % theo từng mức độ nhận thức (NB, TH, VD, VDC). Các cột còn lại tính tổng cho toàn bảng.
-    - **Bảng BẢN ĐẶC TẢ (PHẦN 2 - CV 7991):** Phải có 6 cột với các tiêu đề sau:
-        - Cột 1: \`Câu số\`
-        - Cột 2: \`Nội dung/Đơn vị kiến thức\`
-        - Cột 3: \`Yêu cầu cần đạt\`
-        - Cột 4: \`Mức độ nhận thức\` (Ghi rõ: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao)
-        - Cột 5: \`Thời gian dự kiến (phút)\`
-        - Cột 6: \`Điểm số\`
-    - **Bảng ĐÁP ÁN (PHẦN 4):** Phải là MỘT bảng markdown duy nhất có 3 cột:
-        - Cột 1: \`Câu\`
-        - Cột 2: \`Đáp án và Hướng dẫn chấm\` (Có đáp án mẫu và biểu điểm chi tiết)
-        - Cột 3: \`Điểm\`
+1. **Ngôn ngữ đầu ra:** Toàn bộ đầu ra, bao gồm tất cả các tiêu đề và nội dung, BẮT BUỘC phải bằng tiếng Việt.
+2. **Cấu trúc 5 phần bắt buộc theo Mục 15:** Đầu ra PHẢI tuân thủ nghiêm ngặt cấu trúc 5 phần này. TUYỆT ĐỐI không thay đổi tiêu đề và phải có dấu phân cách '---' giữa các phần:
+   - \`PHẦN 1: ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 2: ĐÁP ÁN\`
+   - ---
+   - \`PHẦN 3: HƯỚNG DẪN CHẤM\`
+   - ---
+   - \`PHẦN 4: MA TRẬN ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT\`
 
----
+3. **Định dạng Tiêu đề (QUAN TRỌNG):** Các tiêu đề của 5 phần trên BẮT BUỘC phải là văn bản thuần túy (plain text). TUYỆT ĐỐI KHÔNG sử dụng markdown trên dòng tiêu đề đó.
 
-**THÔNG SỐ ĐỀ KIỂM TRA CẦN TẠO:**
+4. **QUY TẮC PHÂN TÁCH NỘI DUNG TỪNG PHẦN:**
+   - **PHẦN 1: ĐỀ KIỂM TRA:** NỘI DUNG ĐỀ KIỂM TRA tuyệt đối KHÔNG được trình bày dưới dạng bảng, KHÔNG dùng bảng markdown, KHÔNG dùng block code cho toàn bài, KHÔNG dùng bảng HTML.
+     Mở đầu phần này BẮT BUỘC phải có khối tiêu đề chuẩn:
+     \`\`\`text
+     ${schoolHeader}
+     Họ và tên học sinh: .................................................... Lớp: ${data.grade}
+     Môn: ${effectiveSubject}
+     ${examTitle}
+     Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
+     \`\`\`
+     Sau khối tiêu đề trên, trình bày đề bài hoàn chỉnh cho học sinh theo các phần rõ ràng (ví dụ: PHẦN I. CÂU TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN, PHẦN II. CÂU TRẮC NGHIỆM ĐÚNG SAI, PHẦN III. CÂU TRẢ LỜI NGẮN, PHẦN IV. TỰ LUẬN).
+     **TUYỆT ĐỐI KHÔNG** bao gồm bất kỳ đáp án, lời giải, hay hướng dẫn chấm nào trong Phần 1 này.
+     **TUYỆT ĐỐI KHÔNG** sinh số câu vượt quá cấu hình của giáo viên.
+
+   - **PHẦN 2: ĐÁP ÁN:**
+     + Đối với Trắc nghiệm (nhiều lựa chọn, đúng sai, trả lời ngắn): BẮT BUỘC trình bày dạng bảng markdown 3 cột:
+       \`| Câu | Đáp án | Điểm |\`
+     + Đối với Tự luận: Lời giải chi tiết, kết quả số hoặc dàn ý đáp án.
+
+   - **PHẦN 3: HƯỚNG DẪN CHẤM:**
+     Hiển thị:
+     • Nội dung cần đạt cho từng câu hỏi
+     • Điểm thành phần chi tiết từng bước
+     • Tổng điểm (khớp chuẩn ${totalScore} điểm)
+     • Lưu ý chấm sư phạm (cách tính điểm các phương án, hướng dẫn chấp nhận các cách giải khác nhau của học sinh).
+
+   - **PHẦN 4: MA TRẬN ĐỀ KIỂM TRA:** Phải là MỘT bảng markdown chuẩn CV 7991 có các cột:
+     \`| Chủ đề/Nội dung | Nhận biết | Thông hiểu | Vận dụng | Vận dụng cao | Tổng cộng |\`
+     Với mỗi ô thể hiện: Số câu, Số điểm, Tỉ lệ %.
+     Dòng cuối: TỔNG CỘNG thể hiện: Tổng số câu, Tổng điểm (${totalScore} điểm), Tỉ lệ từng mức độ nhận thức (NB, TH, VD, VDC). Các con số trong ma trận phải khớp tuyệt đối với đề kiểm tra sinh ra.
+
+   - **PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT:** Bảng markdown chuẩn CV 7991 thể hiện:
+     \`| Câu số | Chủ đề/Đơn vị kiến thức | Yêu cầu cần đạt | Mức độ | Dạng câu hỏi | Số lượng câu | Số điểm |\`
+
+5. **Định dạng Toán học và Khoa học:**
+   - Sử dụng ký tự Unicode (², ³, ₁, ₂) cho các chỉ số trên và dưới đơn giản.
+   - Sử dụng cú pháp LaTeX cho các công thức phức tạp (phân số, căn, tích phân, phương trình hóa học).
+
+${buildKnowledgeAndReferenceDocSection(data)}
+
+${buildSubjectSpecificRules(effectiveSubject)}
+
+**THÔNG SỐ ĐỀ KIỂM TRA:**
 - **Cấp học:** ${data.schoolLevel} (Áp dụng CV 7991/BGDĐT-GDTrH)
 - **Lớp:** ${data.grade}
-- **Môn học:** ${data.subject}
+- **Môn học:** ${effectiveSubject}
 - **Bộ sách:** ${data.textbook}
+- **Loại đề:** ${formatExamTypeLabel(data.examType)} (${data.examTitle || 'Đề kiểm tra định kỳ'})
 - **Thời gian làm bài:** ${data.duration} phút
-- **Nội dung kiến thức:**
-${data.knowledgeContent}
+- **Thang điểm tổng:** ${totalScore} điểm
+${cognitiveSection}
 
-**CẤU TRÚC ĐỀ (BẮT BUỘC TUÂN THỦ):**
-- **Trắc nghiệm khách quan:** ${data.multipleChoice.questionCount} câu, ${data.multipleChoice.score} điểm (${data.multipleChoice.percentage}%)
-- **Trắc nghiệm Đúng/Sai:** ${data.trueFalse.questionCount} câu, ${data.trueFalse.score} điểm (${data.trueFalse.percentage}%)
+**CẤU TRÚC PHÂN BỔ CÂU HỎI (BẮT BUỘC TUÂN THỦ CHÍNH XÁC):**
+- **Trắc nghiệm khách quan (4 lựa chọn):** ${data.multipleChoice.questionCount} câu, ${data.multipleChoice.score} điểm (${data.multipleChoice.percentage}%)
+- **Trắc nghiệm Đúng / Sai:** ${data.trueFalse.questionCount} câu, ${data.trueFalse.score} điểm (${data.trueFalse.percentage}%)
 - **Trả lời ngắn:** ${data.shortAnswer.questionCount} câu, ${data.shortAnswer.score} điểm (${data.shortAnswer.percentage}%)
 - **Tự luận:** ${data.essay.questionCount} câu, ${data.essay.score} điểm (${data.essay.percentage}%)
-- **Tổng điểm:** 10
+- **Tổng số câu toàn đề:** ${data.multipleChoice.questionCount + data.trueFalse.questionCount + data.shortAnswer.questionCount + data.essay.questionCount} câu.
 
-**YÊU CẦU BỔ SUNG (nếu có):**
+**YÊU CẦU BỔ SUNG:**
 ${data.additionalRequirements || 'Không có'}
 
 ---
-Bây giờ, hãy tạo ra bộ đề kiểm tra hoàn chỉnh, tuân thủ nghiêm ngặt mọi yêu cầu trên theo Công văn 7991/BGDĐT-GDTrH.
+Bây giờ, hãy tạo ra bộ đề kiểm tra hoàn chỉnh 5 phần, tuân thủ nghiêm ngặt mọi yêu cầu trên theo Công văn 7991/BGDĐT-GDTrH.
 `;
 };
 
 /* ==========================================================================
    PROMPT DÀNH CHO TIẾNG ANH (CẢ TIỂU HỌC & TRUNG HỌC)
-   Hỗ trợ cấu hình cấu trúc đề, menu chọn dạng đề & đa dạng các dạng bài
-   cho từng kỹ năng (Nghe điền từ, nghe chọn ABC, đọc cloze test, viết lại câu...)
    ========================================================================== */
 export const createEnglishPrompt = (data: ExamFormData): string => {
   const isPrimary = data.schoolLevel === 'Tiểu học';
@@ -469,25 +592,17 @@ export const createEnglishPrompt = (data: ExamFormData): string => {
     : 'TRƯỜNG THPT SƠN HẠ SỐ I';
 
   const formatOption = ENGLISH_EXAM_FORMATS.find((f) => f.id === data.examFormat);
+  const examTitle = data.examTitle || (isPrimary ? `ENGLISH PROGRESS TEST - GRADE ${data.grade.replace(/\D/g, '')}` : `ENGLISH EXAMINATION - GRADE ${data.grade.replace(/\D/g, '')}`);
+  const totalScore = data.totalScore || 10;
 
   // Parse skill configuration
   const cfg = data.englishSkillsConfig;
-  const lTypes = cfg?.listeningTypes && cfg.listeningTypes.length > 0
-    ? cfg.listeningTypes
-    : ['listen_gap_fill', 'listen_mcq'];
-  const rTypes = cfg?.readingTypes && cfg.readingTypes.length > 0
-    ? cfg.readingTypes
-    : ['read_mcq', 'read_cloze', 'read_true_false'];
-  const wTypes = cfg?.writingTypes && cfg.writingTypes.length > 0
-    ? cfg.writingTypes
-    : ['write_rewrite', 'write_reorder', 'write_paragraph'];
-  const lfTypes = cfg?.languageFocusTypes && cfg.languageFocusTypes.length > 0
-    ? cfg.languageFocusTypes
-    : ['lang_phonetics', 'lang_vocab_grammar'];
+  const lTypes = cfg?.listeningTypes && cfg.listeningTypes.length > 0 ? cfg.listeningTypes : ['listen_gap_fill', 'listen_mcq'];
+  const rTypes = cfg?.readingTypes && cfg.readingTypes.length > 0 ? cfg.readingTypes : ['read_mcq', 'read_cloze', 'read_true_false'];
+  const wTypes = cfg?.writingTypes && cfg.writingTypes.length > 0 ? cfg.writingTypes : ['write_rewrite', 'write_reorder', 'write_paragraph'];
+  const lfTypes = cfg?.languageFocusTypes && cfg.languageFocusTypes.length > 0 ? cfg.languageFocusTypes : ['lang_phonetics', 'lang_vocab_grammar'];
   const includeSpeaking = Boolean(cfg?.includeSpeaking);
-  const sTypes = includeSpeaking && cfg?.speakingTypes && cfg.speakingTypes.length > 0
-    ? cfg.speakingTypes
-    : [];
+  const sTypes = includeSpeaking && cfg?.speakingTypes && cfg.speakingTypes.length > 0 ? cfg.speakingTypes : [];
 
   const allSkillTypesMap = new Map<string, { label: string; englishLabel: string; desc: string }>();
   ENGLISH_SKILL_CATEGORIES.forEach((cat) => {
@@ -505,103 +620,63 @@ export const createEnglishPrompt = (data: ExamFormData): string => {
       .join('\n');
   };
 
-  const regulatoryNote = isPrimary
-    ? `IMPORTANT REGULATORY NOTE FOR PRIMARY SCHOOL (Circular 27/2020/TT-BGDĐT):
-       - The cognitive levels in the Matrix and Test Specification Grid MUST be strictly divided into 3 levels:
-         + Level 1 (Mức 1: Recall, recognition, familiar contexts)
-         + Level 2 (Mức 2: Connection and application to similar contexts)
-         + Level 3 (Mức 3: Application to new problems and personal responses)
-       - Total points: 10 points. As per Circular 27, points MUST NOT contain decimal fractions (use integer or simple half-point units summing to 10).`
-    : `IMPORTANT REGULATORY NOTE FOR SECONDARY/HIGH SCHOOL (Dispatch 7991/BGDĐT-GDTrH):
-       - The cognitive levels in the Matrix and Test Specification Grid MUST be strictly 4 levels: Recognition, Comprehension, Application, High Application.`;
-
   return `
-You are an expert, a teacher of English teaching for Vietnamese students. Your task is to create a complete, high-quality set of English test questions based on user requests.
+You are an expert English Language Teaching (ELT) specialist AI creating exams for Vietnamese students.
+Your task is to create a complete, high-quality English test package based on the teacher's request.
 
-${regulatoryNote}
+${isPrimary ? 'Governed by Circular 27/2020/TT-BGDĐT: 3 Cognitive levels (Level 1, Level 2, Level 3), total score 10 without fractions.' : 'Governed by Dispatch 7991/BGDĐT-GDTrH: 4 Cognitive levels (Recognition, Comprehension, Application, High Application).'}
 
-**CRITICAL INSTRUCTIONS:**
-1.  **Output Language:** The entire output, including all headers and content, MUST be 100% in English, **WITH ONE EXCEPTION:** The exam header in PART 3 must be in Vietnamese as specified below.
-2.  **Strict 4-Part Structure:** The output MUST strictly follow this 4-part structure, using the exact headers provided. Use '---' as a separator between parts.
-    - PART 1: EXAM MATRIX
-    - ---
-    - PART 2: TEST SPECIFICATION GRID
-    - ---
-    - PART 3: EXAM PAPER (IMPORTANT: The EXAM PAPER section MUST NOT be presented as a table, MUST NOT use markdown table, MUST NOT use any row/column separators, block code, or HTML table.)
-    - ---
-    - PART 4: ANSWER KEY & GRADING GUIDE
-3.  **Header Formatting (IMPORTANT):** The 4 part headers above MUST be plain text. DO NOT use markdown. Write the headers exactly as specified.
-4.  **Table Formatting (MANDATORY):** For Parts 1, 2, and 4, the output MUST be a single, clean, well-formed markdown table ONLY.
-    - In Part 1 (EXAM MATRIX): The 'Cognitive Level' column must indicate ${isPrimary ? 'Level 1, Level 2, or Level 3 (as per Circular 27/2020/TT-BGDĐT)' : 'Recognition, Comprehension, Application, or High Application (as per Dispatch 7991)'}.
-    - In Part 2 (TEST SPECIFICATION GRID): The 'Cognitive Level' column must match Part 1.
-    - In Part 4 (ANSWER KEY & GRADING GUIDE): Table with 3 columns (\`Question\`, \`Answer & Grading Guide\`, \`Points\`).
-5.  **Pedagogy & Question Quality:** All questions must be clear, appropriate for grade ${data.grade}, and align with the textbook ${data.textbook}.
-6.  **Question Distribution Compliance (MANDATORY):**
-    You MUST strictly build the exam according to the question distribution below configured by the teacher. The matrix, specification, exam questions, and answer key must accurately correspond to these question types and point values.
+**STRICT 5-PART STRUCTURE REQUIRED (MANDATORY PLAIN TEXT HEADERS SEPARATED BY '---'):**
+- \`PART 1: EXAM PAPER\`
+- ---
+- \`PART 2: ANSWER KEY\`
+- ---
+- \`PART 3: GRADING GUIDE & RUBRICS\`
+- ---
+- \`PART 4: EXAM MATRIX\`
+- ---
+- \`PART 5: TEST SPECIFICATION GRID\`
 
-**EXAM SPECIFICATIONS & FORMAT:**
-- **Level:** ${data.schoolLevel} ${isPrimary ? '(Governed by Circular 27/2020/TT-BGDĐT)' : '(Governed by Dispatch 7991/BGDĐT-GDTrH)'}
-- **Grade:** ${data.grade}
-- **Textbook Series:** ${data.textbook}
-- **Exam Duration:** ${data.duration} minutes
-- **Exam Format Type:** ${formatOption ? formatOption.label : 'Standard Formatted Test'}
-${formatOption ? `\n**Format Structure Guidelines:**\n${formatOption.promptGuideline}\n` : ''}
+**FORMATTING & QUALITY RULES:**
+1. **PART 1: EXAM PAPER:** MUST NOT be presented as a table. Plain question format with the mandatory Vietnamese header block:
+   \`\`\`text
+   ${schoolHeader}
+   Họ và tên học sinh: .................................................... Lớp: ${data.grade}
+   Môn: Tiếng Anh
+   ${examTitle}
+   Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
+   \`\`\`
+   Followed by full English exam sections (Listening with realistic audio script in answer key, Language Focus, Reading with high-quality passages, Writing).
+2. **PART 2: ANSWER KEY:** Table with columns: \`Question\` | \`Answer\` | \`Points\`.
+3. **PART 3: GRADING GUIDE & RUBRICS:** Detailed grading criteria for writing, listening script, component points, total score (${totalScore} pts).
+4. **PART 4: EXAM MATRIX:** Clean markdown matrix showing topics, cognitive levels, question count, points, and percentages.
+5. **PART 5: TEST SPECIFICATION GRID:** Detailed specification showing question numbers, outcomes, formats, cognitive levels, points.
+
+${buildKnowledgeAndReferenceDocSection(data)}
 
 **QUESTION DISTRIBUTION (MANDATORY):**
-- **Multiple Choice:** ${data.multipleChoice.questionCount} questions, ${data.multipleChoice.score} points (${data.multipleChoice.percentage}%)
-- **True / False:** ${data.trueFalse.questionCount} questions, ${data.trueFalse.score} points (${data.trueFalse.percentage}%)
-- **Short Answer / Gap-Fill:** ${data.shortAnswer.questionCount} questions, ${data.shortAnswer.score} points (${data.shortAnswer.percentage}%)
-- **Essay / Writing:** ${data.essay.questionCount} questions, ${data.essay.score} points (${data.essay.percentage}%)
-- **Total Score:** 10.0 points (100%)
+- **Multiple Choice:** ${data.multipleChoice.questionCount} questions, ${data.multipleChoice.score} points
+- **True / False:** ${data.trueFalse.questionCount} questions, ${data.trueFalse.score} points
+- **Short Answer / Gap-Fill:** ${data.shortAnswer.questionCount} questions, ${data.shortAnswer.score} points
+- **Essay / Writing:** ${data.essay.questionCount} questions, ${data.essay.score} points
+- **Total Score:** ${totalScore} points
 
-**MANDATORY VARIETY OF QUESTION TYPES FOR EACH SKILL (USER EXPLICIT REQUIREMENT):**
-The exam MUST NOT consist of only a single question type per skill. You MUST implement multiple diverse question formats for each section as specified below:
-
-1. **LISTENING SECTION:**
-   - MUST include a complete, realistic **Audio Script / Listening Transcript** printed in the teacher's instructions or answer key, featuring natural dialogs/announcements matching grade ${data.grade}.
-   - The Listening section MUST include the following specific question formats:
+**MANDATORY SKILL TASK TYPES:**
+- **Listening:**
 ${formatSkillTypeList(lTypes)}
-     *(Example: incorporate both gap-filling with missing words/numbers AND multiple-choice A/B/C/D or True/False).*
-
-2. **LANGUAGE FOCUS (PHONETICS, VOCABULARY & GRAMMAR):**
-   - The Language Focus section MUST include the following specific question formats:
+- **Language Focus:**
 ${formatSkillTypeList(lfTypes)}
-     *(Example: include pronunciation/stress odd-one-out, vocabulary in context, and everyday communicative exchanges).*
-
-3. **READING COMPREHENSION SECTION:**
-   - MUST include high-quality, engaging reading passage(s) closely linked to ${data.textbook} themes for grade ${data.grade}.
-   - The Reading section MUST include the following specific question formats:
+- **Reading:**
 ${formatSkillTypeList(rTypes)}
-     *(Example: include both a Cloze test / gap-fill passage with word box AND reading comprehension multiple-choice questions A/B/C/D or True/False).*
-
-4. **WRITING SECTION:**
-   - The Writing section MUST include the following specific question formats:
+- **Writing:**
 ${formatSkillTypeList(wTypes)}
-     *(Example: include sentence reordering to make complete sentences, sentence rewriting with given cues keeping the same meaning, and short paragraph/email writing).*
+${includeSpeaking ? `- **Speaking:**\n${formatSkillTypeList(sTypes)}\n` : ''}
 
-${includeSpeaking ? `5. **SPEAKING SECTION (OPTIONAL COMPONENT):**
-   - Provide clear teacher prompt cards and student task descriptions covering:
-${formatSkillTypeList(sTypes)}
-     *(Include interactive questions, topic presentation prompts, and concise grading criteria).*
-` : ''}
-
-- **Knowledge Content / Topics:**
-${data.knowledgeContent}
-- **Additional Requirements:** ${data.additionalRequirements || 'None'}
-
-**Part 3 (Exam Paper) must begin with this mandatory Vietnamese header block:**
-\`\`\`text
-${schoolHeader}
-ĐỀ KIỂM TRA ĐỊNH KỲ ${isPrimary ? '(THEO THÔNG TƯ 27/2020/TT-BGDĐT)' : '(THEO CV 7991/BGDĐT-GDTrH)'}
-NĂM HỌC 2025-2026
-MÔN: ${data.subject}
-LỚP: ${data.grade}
-Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
-Họ và tên học sinh: .................................................... Lớp: .............
-\`\`\`
+**YÊU CẦU BỔ SUNG:**
+${data.additionalRequirements || 'None'}
 
 ---
-Please generate the complete exam package now, adhering strictly to the above specifications, question distribution, and diverse skill-specific question formats.
+Please generate the complete 5-part English exam package now adhering strictly to the above instructions.
 `;
 };
 
@@ -609,22 +684,53 @@ Please generate the complete exam package now, adhering strictly to the above sp
    PROMPT DÀNH CHO NGỮ VĂN (THCS & THPT)
    ========================================================================== */
 export const createLiteraturePrompt = (data: ExamFormData): string => {
+  const schoolHeader = data.schoolName
+    ? data.schoolName
+    : data.schoolLevel === 'THCS'
+    ? 'TRƯỜNG THCS SƠN HẠ SỐ I'
+    : 'TRƯỜNG THPT SƠN HẠ SỐ I';
+  const examTitle = data.examTitle || `ĐỀ KIỂM TRA MÔN NGỮ VĂN LỚP ${data.grade.toUpperCase()}`;
+  const totalScore = data.totalScore || 10;
+
   return `
 Bạn là một chuyên gia giàu kinh nghiệm trong việc biên soạn đề thi môn Ngữ văn cho học sinh THCS và THPT tại Việt Nam theo **Công văn 7991/BGDĐT-GDTrH** và CT GDPT 2018. Nhiệm vụ của bạn là tạo ra một bộ đề kiểm tra hoàn chỉnh, khoa học, và bám sát chương trình giáo dục.
 
-**HƯỚNG DẪN TỐI THƯỢNG (BẮT BUỘC TUÂN THỦ):**
-1.  **Ngôn ngữ:** 100% nội dung và tiêu đề phải là tiếng Việt.
-2.  **Cấu trúc 4 phần:** Phải tuân thủ nghiêm ngặt cấu trúc 4 phần với tiêu đề chính xác. Dùng '---' để ngăn cách các phần.
-    - PHẦN 1: MA TRẬN ĐỀ KIỂM TRA
-    - ---
-    - PHẦN 2: BẢN ĐẶC TẢ CHI TIẾT
-    - ---
-    - PHẦN 3: NỘI DUNG ĐỀ KIỂM TRA
-    - ---
-    - PHẦN 4: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM
-3.  **Tiêu đề phần:** Các tiêu đề phần phải là văn bản thuần túy, không dùng markdown.
-4.  **Cấu trúc đề:** Đề thi gồm 2 phần Đọc hiểu (ngữ liệu ngoài sách giáo khoa) và Viết (nghị luận văn học hoặc nghị luận xã hội), phân bổ theo 4 mức độ nhận thức của CV 7991: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao.
-5.  **Đáp án mẫu & Biểu điểm:** Biểu điểm rõ ràng từng ý, tiêu chí chấm lập luận, dẫn chứng, chính tả, ngữ pháp, sáng tạo.
+**HƯỚNG DẪN TỐI THƯỢNG (BẮT BUỘC TUÂN THỦ 100%):**
+1. **Ngôn ngữ:** 100% nội dung và tiêu đề phải là tiếng Việt.
+2. **Cấu trúc 5 phần bắt buộc (Mục 15):** Phải tuân thủ nghiêm ngặt cấu trúc 5 phần với tiêu đề chính xác thuần túy, dùng '---' để ngăn cách các phần:
+   - \`PHẦN 1: ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 2: ĐÁP ÁN\`
+   - ---
+   - \`PHẦN 3: HƯỚNG DẪN CHẤM\`
+   - ---
+   - \`PHẦN 4: MA TRẬN ĐỀ KIỂM TRA\`
+   - ---
+   - \`PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT\`
+
+3. **Cấu trúc đề kiểm tra (Phần 1):**
+   Mở đầu bằng khối tiêu đề:
+   \`\`\`text
+   ${schoolHeader}
+   Họ và tên học sinh: .................................................... Lớp: ${data.grade}
+   Môn: Ngữ văn
+   ${examTitle}
+   Thời gian làm bài: ${data.duration} phút (không kể thời gian phát đề)
+   \`\`\`
+   Đề thi gồm 2 phần lớn:
+   - **I. ĐỌC HIỂU:** Cung cấp 1 văn bản/đoạn trích hoàn chỉnh (ngữ liệu ngoài SGK hoặc văn bản do giáo viên cung cấp), kèm hệ thống câu hỏi phân bổ theo 4 mức độ nhận thức (Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao).
+   - **II. VIẾT:** Gồm viết đoạn văn nghị luận (khoảng 200 chữ) và/hoặc bài văn nghị luận hoàn chỉnh.
+
+4. **Phần 2 (Đáp án) & Phần 3 (Hướng dẫn chấm):**
+   - Đáp án trắc nghiệm (nếu có): Bảng markdown 3 cột \`| Câu | Đáp án | Điểm |\`.
+   - Đáp án đọc hiểu tự luận: Nêu rõ từng ý, dẫn chứng từ văn bản.
+   - Hướng dẫn chấm bài viết: Biểu điểm rõ ràng từng tiêu chí: Xác định đúng vấn đề, triển khai luận điểm, dẫn chứng, chính tả - ngữ pháp, sáng tạo.
+
+5. **Phần 4 (Ma trận) & Phần 5 (Bản đặc tả):** Bảng ma trận và bản đặc tả chuẩn theo CV 7991 với 4 mức độ nhận thức.
+
+${buildKnowledgeAndReferenceDocSection(data)}
+
+${buildSubjectSpecificRules('Ngữ văn')}
 
 **THÔNG SỐ ĐỀ KIỂM TRA:**
 - **Cấp học:** ${data.schoolLevel}
@@ -632,13 +738,13 @@ Bạn là một chuyên gia giàu kinh nghiệm trong việc biên soạn đề 
 - **Môn học:** Ngữ văn
 - **Bộ sách:** ${data.textbook}
 - **Thời gian làm bài:** ${data.duration} phút
-- **Nội dung kiến thức:**
-${data.knowledgeContent}
-- **Yêu cầu bổ sung:**
+- **Thang điểm tổng:** ${totalScore} điểm
+
+**YÊU CẦU BỔ SUNG:**
 ${data.additionalRequirements || 'Không có'}
 
 ---
-Hãy tạo bộ đề kiểm tra hoàn chỉnh, tuân thủ nghiêm ngặt mọi yêu cầu trên theo Công văn 7991/BGDĐT-GDTrH.
+Hãy tạo bộ đề kiểm tra Ngữ văn hoàn chỉnh 5 phần theo Công văn 7991/BGDĐT-GDTrH.
 `;
 };
 

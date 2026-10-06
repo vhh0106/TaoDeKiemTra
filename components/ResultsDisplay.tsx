@@ -1,8 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import type { ExamResult } from '../types';
+import type { ExamResult, QuestionItem } from '../types';
 import ExamShuffleModal from './ExamShuffleModal';
+import QualityCheckModal from './QualityCheckModal';
 import RichTextEditor, { isHtmlContent } from './RichTextEditor';
+import { saveMultipleQuestionsToBank } from '../services/questionBankService';
+import { extractQuestionsFromExam } from '../services/qualityCheckerService';
 
 declare const JSZip: any;
 
@@ -11,13 +14,14 @@ interface ResultsDisplayProps {
     onRegenerate: () => void;
 }
 
-type Tab = 'matrix' | 'specification' | 'exam' | 'answerKey';
+type Tab = 'exam' | 'answerKey' | 'gradingGuide' | 'matrix' | 'specification';
 
-const tabConfig: { id: Tab; label: string }[] = [
-    { id: 'matrix', label: 'Ma trận đề' },
-    { id: 'specification', label: 'Bản đặc tả' },
-    { id: 'exam', label: 'Đề kiểm tra' },
-    { id: 'answerKey', label: 'Đáp án & Hướng dẫn chấm' },
+const tabConfig: { id: Tab; label: string; icon: string }[] = [
+    { id: 'exam', label: 'TAB 1 – ĐỀ KIỂM TRA', icon: '📝' },
+    { id: 'answerKey', label: 'TAB 2 – ĐÁP ÁN', icon: '🔑' },
+    { id: 'gradingGuide', label: 'TAB 3 – HƯỚNG DẪN CHẤM', icon: '📋' },
+    { id: 'matrix', label: 'TAB 4 – MA TRẬN', icon: '📊' },
+    { id: 'specification', label: 'TAB 5 – BẢN ĐẶC TẢ', icon: '📑' },
 ];
 
 interface ParsedTable {
@@ -209,18 +213,25 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
 
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate }) => {
-    const [activeTab, setActiveTab] = useState<Tab>('matrix');
+    const [activeTab, setActiveTab] = useState<Tab>('exam');
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [editedResults, setEditedResults] = useState<ExamResult>(result);
     const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [isZipping, setIsZipping] = useState<boolean>(false);
     const [isShuffleModalOpen, setIsShuffleModalOpen] = useState<boolean>(false);
+    const [isQualityModalOpen, setIsQualityModalOpen] = useState<boolean>(false);
+    const [bankSaveSuccess, setBankSaveSuccess] = useState<string | null>(null);
 
     useEffect(() => {
-        setEditedResults(result);
+        // Đảm bảo có mục gradingGuide nếu đề cũ chưa có
+        const updated = { ...result };
+        if (!updated.gradingGuide) {
+            updated.gradingGuide = updated.answerKey || 'Xem đáp án và biểu điểm ở mục Đáp án.';
+        }
+        setEditedResults(updated);
     }, [result]);
 
-    const contentToDisplay = editedResults[activeTab];
+    const contentToDisplay = editedResults[activeTab] || '';
 
     const handleContentChange = (newHtml: string) => {
         setEditedResults(prev => ({
@@ -233,7 +244,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
         if (window.confirm(`Khôi phục nội dung gốc cho mục "${tabConfig.find(t => t.id === activeTab)?.label}"?`)) {
             setEditedResults(prev => ({
                 ...prev,
-                [activeTab]: result[activeTab],
+                [activeTab]: result[activeTab] || '',
             }));
         }
     };
@@ -296,10 +307,11 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
             };
 
             const files = [
-                { name: '01_Ma-tran-de.doc', title: 'Ma trận đề', content: editedResults.matrix },
-                { name: '02_Ban-dac-ta.doc', title: 'Bản đặc tả', content: editedResults.specification },
-                { name: '03_De-kiem-tra.doc', title: 'Đề kiểm tra', content: editedResults.exam },
-                { name: '04_Dap-an.doc', title: 'Đáp án & Hướng dẫn chấm', content: editedResults.answerKey },
+                { name: '01_De-kiem-tra.doc', title: 'Đề kiểm tra', content: editedResults.exam },
+                { name: '02_Dap-an.doc', title: 'Đáp án', content: editedResults.answerKey },
+                { name: '03_Huong-dan-cham.doc', title: 'Hướng dẫn chấm', content: editedResults.gradingGuide || editedResults.answerKey },
+                { name: '04_Ma-tran-de.doc', title: 'Ma trận đề', content: editedResults.matrix },
+                { name: '05_Ban-dac-ta.doc', title: 'Bản đặc tả', content: editedResults.specification },
             ];
 
             for (const file of files) {
@@ -311,7 +323,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
 
             const link = document.createElement('a');
             link.href = URL.createObjectURL(zipBlob);
-            link.download = 'Bo-de-kiem-tra.zip';
+            link.download = 'Bo-de-kiem-tra-5-phan.zip';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -324,6 +336,24 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
         }
     };
 
+    const handleSaveToQuestionBank = () => {
+        const questions = editedResults.questions && editedResults.questions.length > 0
+            ? editedResults.questions
+            : extractQuestionsFromExam(editedResults.exam, editedResults.answerKey);
+
+        if (questions.length === 0) {
+            alert('Chưa trích xuất được câu hỏi từ đề này. Thầy/cô vui lòng kiểm tra nội dung.');
+            return;
+        }
+
+        const count = saveMultipleQuestionsToBank(questions, 'THCS');
+        setBankSaveSuccess(`Đã lưu thành công ${count} câu hỏi vào Ngân hàng!`);
+        setTimeout(() => setBankSaveSuccess(null), 3000);
+    };
+
+    const handlePrint = () => {
+        window.print();
+    };
 
     const copyButtonText = {
         idle: 'Sao chép',
@@ -335,95 +365,150 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
         idle: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />,
         success: <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />,
         error: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    }
+    };
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors">
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 p-3 sm:p-4 gap-3 bg-slate-50/70 dark:bg-slate-850/80">
-                {/* Scrollable Tabs */}
-                <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-xl overflow-x-auto no-scrollbar scroll-smooth">
-                    {tabConfig.map(({ id, label }) => (
-                         <button
-                            key={id}
-                            onClick={() => setActiveTab(id)}
-                            className={`shrink-0 px-3.5 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-lg transition-all whitespace-nowrap focus:outline-none cursor-pointer ${
-                                activeTab === id
-                                    ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700/50 hover:text-slate-800 dark:hover:text-white'
-                            }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors">
+            {/* Thanh thông báo lưu ngân hàng thành công */}
+            {bankSaveSuccess && (
+                <div className="bg-emerald-600 text-white text-xs sm:text-sm font-bold px-4 py-2 text-center animate-fadeIn">
+                    ✓ {bankSaveSuccess}
+                </div>
+            )}
+
+            {/* Thanh điều hướng và tác vụ được thiết kế tách biệt 2 hàng rõ ràng, chống đè lên nhau */}
+            <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-850/90 divide-y divide-slate-200/60 dark:divide-slate-800">
+                {/* Hàng 1: 5 Tabs hiển thị rõ ràng, scroll mượt mà không bị nút che */}
+                <div className="p-2 sm:p-3 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-1.5 sm:gap-2 p-1 bg-slate-200/70 dark:bg-slate-800 rounded-2xl w-max min-w-full sm:min-w-0">
+                        {tabConfig.map(({ id, label, icon }) => (
+                            <button
+                                key={id}
+                                onClick={() => setActiveTab(id)}
+                                className={`shrink-0 px-3.5 sm:px-4 py-2 font-bold text-xs sm:text-sm rounded-xl transition-all whitespace-nowrap focus:outline-none cursor-pointer flex items-center gap-1.5 ${
+                                    activeTab === id
+                                        ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm ring-1 ring-slate-200 dark:ring-slate-600'
+                                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white'
+                                }`}
+                            >
+                                <span className="text-base">{icon}</span>
+                                <span>{label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Responsive Action Buttons */}
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-start lg:justify-end">
-                    {/* Nút Chuyển chế độ Soạn thảo / Xem trước */}
-                    <button
-                        onClick={() => setIsEditing(!isEditing)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl transition shadow-xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer ${
-                            isEditing
-                                ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        }`}
-                        title={isEditing ? 'Lưu và xem trước văn bản' : 'Mở trình soạn thảo Rich Text để chỉnh sửa câu hỏi, đáp án, ma trận'}
-                    >
-                        <span>{isEditing ? '👁️' : '✏️'}</span>
-                        <span className="hidden sm:inline">{isEditing ? 'Xem trước' : 'Soạn thảo (Rich Text)'}</span>
-                        <span className="sm:hidden">{isEditing ? 'Xem' : 'Sửa'}</span>
-                    </button>
+                {/* Hàng 2: Thanh công cụ hành động gọn gàng, chia 2 nhóm rõ ràng */}
+                <div className="p-2.5 sm:p-3 flex flex-wrap items-center justify-between gap-2 bg-white/60 dark:bg-slate-900/40">
+                    {/* Nhóm công cụ sư phạm: Kiểm tra đề, Lưu ngân hàng, Soạn thảo, Trộn đề */}
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        {/* Nút Kiểm tra chất lượng (12 tiêu chí) */}
+                        <button
+                            onClick={() => setIsQualityModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl transition shadow-2xs font-bold text-xs sm:text-sm bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 cursor-pointer active:scale-95"
+                            title="Xem báo cáo thẩm định 12 tiêu chí sư phạm tự động"
+                        >
+                            <span>🛡️</span>
+                            <span>Kiểm tra đề (12 tiêu chí)</span>
+                        </button>
 
-                    <button
-                        onClick={() => setIsShuffleModalOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 transition shadow-xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer"
-                        title="Trộn đề thành 4 mã đề (101, 102, 103, 104) kèm ma trận đáp án"
-                    >
-                        <span>🔀</span>
-                        <span className="hidden sm:inline">Trộn đề (4 Mã)</span>
-                        <span className="sm:hidden">Trộn</span>
-                    </button>
-                    <button
-                        onClick={handleCopy}
-                        disabled={copyStatus !== 'idle'}
-                        className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-white rounded-xl transition shadow-xs text-xs sm:text-sm font-semibold active:scale-95 disabled:cursor-wait cursor-pointer ${copyStatus === 'success' ? 'bg-emerald-600' : copyStatus === 'error' ? 'bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{copyButtonIcon[copyStatus]}</svg>
-                        <span>{copyButtonText[copyStatus]}</span>
-                    </button>
-                    <button
-                        onClick={handleExportDocx}
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl transition shadow-xs text-xs sm:text-sm font-semibold active:scale-95 cursor-pointer"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        <span>.Docx</span>
-                    </button>
-                    <button
-                        onClick={handleDownloadZip}
-                        disabled={isZipping}
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition shadow-xs text-xs sm:text-sm font-semibold active:scale-95 disabled:bg-slate-400 disabled:cursor-wait cursor-pointer"
-                    >
-                        {isZipping ? (
-                            <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        {/* Nút Lưu vào Ngân hàng câu hỏi */}
+                        <button
+                            onClick={handleSaveToQuestionBank}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl transition shadow-2xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer"
+                            title="Trích xuất và lưu toàn bộ câu hỏi trong đề này vào Ngân hàng câu hỏi cá nhân"
+                        >
+                            <span>🏦</span>
+                            <span>Lưu ngân hàng</span>
+                        </button>
+
+                        {/* Nút Chuyển chế độ Soạn thảo / Xem trước */}
+                        <button
+                            onClick={() => setIsEditing(!isEditing)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl transition shadow-2xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer ${
+                                isEditing
+                                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            }`}
+                            title={isEditing ? 'Lưu và xem trước văn bản' : 'Mở trình soạn thảo Rich Text để chỉnh sửa câu hỏi, đáp án, ma trận'}
+                        >
+                            <span>{isEditing ? '👁️' : '✏️'}</span>
+                            <span>{isEditing ? 'Xem trước' : 'Soạn thảo'}</span>
+                        </button>
+
+                        {/* Nút Trộn đề 4 mã */}
+                        <button
+                            onClick={() => setIsShuffleModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl transition shadow-2xs font-bold text-xs sm:text-sm active:scale-95 cursor-pointer"
+                            title="Trộn đề thành 4 mã đề (101, 102, 103, 104) kèm ma trận đáp án"
+                        >
+                            <span>🔀</span>
+                            <span>Trộn đề (4 Mã)</span>
+                        </button>
+                    </div>
+
+                    {/* Nhóm xuất file và thao tác: Sao chép, In ấn, .Docx, Tải ZIP, Tạo lại */}
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        {/* Nút Sao chép */}
+                        <button
+                            onClick={handleCopy}
+                            disabled={copyStatus !== 'idle'}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-white rounded-xl transition shadow-2xs text-xs sm:text-sm font-semibold active:scale-95 disabled:cursor-wait cursor-pointer ${copyStatus === 'success' ? 'bg-emerald-600' : copyStatus === 'error' ? 'bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">{copyButtonIcon[copyStatus]}</svg>
+                            <span>{copyButtonText[copyStatus]}</span>
+                        </button>
+
+                        {/* Nút In đề */}
+                        <button
+                            onClick={handlePrint}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl transition shadow-2xs text-xs sm:text-sm font-semibold active:scale-95 cursor-pointer"
+                            title="In ấn đề kiểm tra ra giấy hoặc xuất PDF"
+                        >
+                            <span>🖨️</span>
+                            <span>In ấn</span>
+                        </button>
+
+                        {/* Nút .Docx */}
+                        <button
+                            onClick={handleExportDocx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl transition shadow-2xs text-xs sm:text-sm font-semibold active:scale-95 cursor-pointer"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            <span>.Docx</span>
+                        </button>
+
+                        {/* Nút Tải ZIP */}
+                        <button
+                            onClick={handleDownloadZip}
+                            disabled={isZipping}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition shadow-2xs text-xs sm:text-sm font-semibold active:scale-95 disabled:bg-slate-400 disabled:cursor-wait cursor-pointer"
+                            title="Tải trọn bộ 5 file Word (.doc) nén trong 1 file ZIP"
+                        >
+                            {isZipping ? (
+                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            )}
+                            <span>{isZipping ? 'Đang nén...' : 'Tải ZIP'}</span>
+                        </button>
+
+                        {/* Nút Tạo lại */}
+                        <button
+                            onClick={onRegenerate}
+                            title="Tạo lại đề mới"
+                            className="p-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs active:scale-95 cursor-pointer"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v.001" />
                             </svg>
-                        ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        )}
-                        <span>{isZipping ? 'Đang nén...' : 'Tải ZIP'}</span>
-                    </button>
-                    <button
-                        onClick={onRegenerate}
-                        title="Tạo lại"
-                        className="p-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white transition shadow-2xs active:scale-95 cursor-pointer"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-4.991-2.695v.001" />
-                        </svg>
-                    </button>
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -449,7 +534,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                     </div>
                     <RichTextEditor
                         key={activeTab}
-                        initialContent={editedResults[activeTab]}
+                        initialContent={editedResults[activeTab] || ''}
                         onChange={handleContentChange}
                         onSave={() => setIsEditing(false)}
                         onReset={editedResults[activeTab] !== result[activeTab] ? handleResetCurrentTab : undefined}
@@ -464,7 +549,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                     <div className="prose max-w-none">
                         <ContentRenderer content={contentToDisplay} />
                     </div>
-                    <div className="mt-6 pt-4 border-t border-dashed border-slate-300 dark:border-slate-700">
+                    <div className="mt-6 pt-4 border-t border-dashed border-slate-300 dark:border-slate-700 print:hidden">
                         <p className="italic font-bold text-red-600 dark:text-red-400 text-sm text-center">
                             Lưu ý: Giáo viên cần kiểm tra nội dung trước khi sử dụng nội dung này !
                         </p>
@@ -478,6 +563,12 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onRegenerate })
                 examContent={editedResults.exam}
                 answerKeyContent={editedResults.answerKey}
                 subject="Đề kiểm tra"
+            />
+
+            <QualityCheckModal
+                isOpen={isQualityModalOpen}
+                onClose={() => setIsQualityModalOpen(false)}
+                report={editedResults.qualityReport}
             />
         </div>
     );

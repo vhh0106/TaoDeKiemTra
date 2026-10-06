@@ -4,6 +4,7 @@ import {
   SCHOOL_LEVELS,
   GRADES_BY_LEVEL,
   SUBJECTS_BY_LEVEL,
+  OTHER_SUBJECT_KEY,
   GENERAL_TEXTBOOKS,
   TEXTBOOKS_BY_SUBJECT,
   isEnglishSubject,
@@ -606,104 +607,94 @@ const ExamForm: React.FC<ExamFormProps> = ({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 mb-3 sm:mb-4">
-              <div>
-                <label
-                  htmlFor="schoolLevel"
-                  className="block font-medium mb-1 text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 text-xs sm:text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /></svg>
-                  Cấp học
-                </label>
-                <select
-                  id="schoolLevel"
-                  value={formData.schoolLevel}
-                  onChange={(e) => handleChange("schoolLevel", e.target.value)}
-                  className="block w-full px-3 py-2 min-h-10 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-                  required
-                >
-                  {SCHOOL_LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
-                  ))}
-                </select>
+            {/* Bước 1: 3 Thẻ lớn chọn cấp học theo yêu cầu */}
+            <div className="mb-5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+                Bước 1 – Chọn cấp học
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'Tiểu học', title: 'TIỂU HỌC', subtitle: 'Lớp 1 → Lớp 5', icon: '🏫', desc: 'TT 27/2020/TT-BGDĐT • 3 Mức độ', color: 'emerald' },
+                  { id: 'THCS', title: 'THCS', subtitle: 'Lớp 6 → Lớp 9', icon: '🎒', desc: 'CV 7991 • 4 Mức độ nhận thức', color: 'indigo' },
+                  { id: 'THPT', title: 'THPT', subtitle: 'Lớp 10 → Lớp 12', icon: '🎓', desc: 'CV 7991 / GDPT 2018 • 4 Mức độ', color: 'purple' },
+                ].map((lvl) => {
+                  const isSelected = formData.schoolLevel === lvl.id;
+                  return (
+                    <button
+                      key={lvl.id}
+                      type="button"
+                      onClick={() => handleChange('schoolLevel', lvl.id)}
+                      className={`p-3.5 sm:p-4 rounded-2xl text-left border-2 transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/40 shadow-md ring-2 ring-indigo-200 dark:ring-indigo-900/60'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl sm:text-3xl">{lvl.icon}</span>
+                        <div>
+                          <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                            {lvl.title}
+                          </div>
+                          <div className="text-xs text-indigo-700 dark:text-indigo-300 font-semibold">
+                            {lvl.subtitle}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            {lvl.desc}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
+                        isSelected ? 'bg-indigo-600 text-white' : 'border border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {isSelected ? '✓' : ''}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <div>
-                <label
-                  htmlFor="schoolName"
-                  className="block font-medium mb-1 text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5 text-xs sm:text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v4a1 1 0 001 1h3m10-5v4a1 1 0 01-1 1h-3m-4 0h4" /></svg>
-                  Tên trường
+                <label htmlFor="schoolName" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Tên trường (tùy chọn)
                 </label>
                 <input
                   id="schoolName"
                   name="schoolName"
                   type="text"
                   value={formData.schoolName || ""}
-                  onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                  className="block w-full px-3 py-2 min-h-10 border border-slate-300 dark:border-slate-700 rounded-xl shadow-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-                  placeholder="VD: Trường Tiểu học số 1..."
+                  onChange={(e) => handleChange("schoolName", e.target.value)}
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  placeholder="VD: THCS Chu Văn An..."
                 />
               </div>
-            </div>
 
-            {/* Thanh căn cứ quy định: Tinh gọn, click để xem chi tiết khi cần */}
-            <div className={`rounded-xl border mb-4 transition-colors ${
-              formData.schoolLevel === 'Tiểu học'
-                ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60'
-                : 'bg-indigo-50/70 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800/60'
-            }`}>
-              <div className="flex items-center justify-between p-2.5 sm:p-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-base shrink-0">⚖️</span>
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm">
-                    <span className="font-bold text-slate-800 dark:text-slate-100">
-                      {formData.schoolLevel === 'Tiểu học' ? 'Thông tư 27/2020/TT-BGDĐT' : 'Công văn 7991/BGDĐT-GDTrH'}
-                    </span>
-                    <span className="text-slate-500 dark:text-slate-400 text-xs hidden sm:inline">
-                      • {formData.schoolLevel === 'Tiểu học' ? '3 mức độ nhận thức, điểm số nguyên' : '4 mức độ nhận thức'}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowLegalDetails(!showLegalDetails)}
-                  className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 transition cursor-pointer flex items-center gap-1 shrink-0"
-                >
-                  <span>{showLegalDetails ? 'Thu gọn' : 'Xem quy định'}</span>
-                  <span>{showLegalDetails ? '▴' : '▾'}</span>
-                </button>
+              <div>
+                <label htmlFor="teacherName" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Giáo viên ra đề (tùy chọn)
+                </label>
+                <input
+                  id="teacherName"
+                  name="teacherName"
+                  type="text"
+                  value={formData.teacherName || ""}
+                  onChange={(e) => handleChange("teacherName", e.target.value)}
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  placeholder="VD: Thầy Nguyễn Văn A..."
+                />
               </div>
 
-              {showLegalDetails && (
-                <div className="px-3.5 pb-3 pt-1 border-t border-slate-200/60 dark:border-slate-800 text-xs space-y-1.5">
-                  {formData.schoolLevel === 'Tiểu học' ? (
-                    <ul className="space-y-1 text-emerald-800 dark:text-emerald-300 list-disc list-inside">
-                      <li><strong>3 Mức độ nhận thức (Điều 7)</strong>: Mức 1 (Nhận biết/nhắc lại), Mức 2 (Kết nối/sắp xếp), Mức 3 (Vận dụng giải quyết vấn đề mới).</li>
-                      <li><strong>Thang điểm 10 không số thập phân</strong> theo Điều 7 TT 27/2020/TT-BGDĐT.</li>
-                    </ul>
-                  ) : (
-                    <p className="text-indigo-800 dark:text-indigo-300">
-                      Đề kiểm tra biên soạn theo <strong>4 mức độ nhận thức</strong>: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <div>
                 <label htmlFor="grade" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Lớp
+                  Bước 2 – Chọn lớp
                 </label>
                 <select
                   id="grade"
                   value={formData.grade}
                   onChange={(e) => handleChange("grade", e.target.value)}
-                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold"
                 >
                   {grades.map((grade) => (
                     <option key={grade} value={grade}>
@@ -715,13 +706,13 @@ const ExamForm: React.FC<ExamFormProps> = ({
 
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Môn học
+                  Bước 3 – Chọn môn học
                 </label>
                 <select
                   id="subject"
                   value={formData.subject}
                   onChange={(e) => handleChange("subject", e.target.value)}
-                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold"
                 >
                   {subjects.map((subject) => (
                     <option key={subject} value={subject}>
@@ -730,29 +721,80 @@ const ExamForm: React.FC<ExamFormProps> = ({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Ô Nhập tên môn học khác khi chọn hoặc cần tùy chỉnh */}
+            {(formData.subject === OTHER_SUBJECT_KEY || formData.customSubject) && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/50 mt-3 animate-scale-in">
+                <label htmlFor="customSubject" className="block text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200 mb-1">
+                  ✍️ Nhập tên môn học khác:
+                </label>
+                <input
+                  id="customSubject"
+                  type="text"
+                  value={formData.customSubject || ""}
+                  onChange={(e) => handleChange("customSubject", e.target.value)}
+                  placeholder="Nhập bất kỳ môn học nào (VD: Triết học, Mỹ thuật công nghiệp, Lập trình Python, v.v.)..."
+                  className="w-full px-3 py-2 text-sm border border-amber-300 dark:border-amber-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-3">
+              <div>
+                <label htmlFor="examType" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Loại đề kiểm tra
+                </label>
+                <select
+                  id="examType"
+                  value={formData.examType || "Kiểm tra giữa kỳ"}
+                  onChange={(e) => handleChange("examType", e.target.value)}
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                >
+                  <option value="Kiểm tra thường xuyên">Kiểm tra thường xuyên</option>
+                  <option value="Kiểm tra 15 phút">Kiểm tra 15 phút</option>
+                  <option value="Kiểm tra giữa kỳ">Kiểm tra giữa kỳ</option>
+                  <option value="Kiểm tra cuối kỳ">Kiểm tra cuối kỳ</option>
+                  <option value="Đề ôn tập">Đề ôn tập</option>
+                  <option value="Đề luyện tập">Đề luyện tập</option>
+                  <option value="Đề khảo sát">Đề khảo sát</option>
+                  <option value="Đề tuyển chọn học sinh">Đề tuyển chọn học sinh</option>
+                  <option value="Đề tự tạo">Đề tự tạo</option>
+                </select>
+              </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Bộ sách áp dụng
+                <label htmlFor="examTitle" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Tên đề: (tùy chọn)
                 </label>
-                <div className="flex items-center gap-2 px-3 py-2 min-h-11 border border-indigo-200 dark:border-slate-700 rounded-md bg-indigo-50/80 dark:bg-slate-800 text-indigo-900 dark:text-indigo-300 font-semibold text-sm">
-                  <span>📘</span>
-                  <span className="truncate">Kết nối tri thức với cuộc sống</span>
-                </div>
+                <input
+                  id="examTitle"
+                  type="text"
+                  value={formData.examTitle || ""}
+                  onChange={(e) => handleChange("examTitle", e.target.value)}
+                  placeholder="VD: Đề kiểm tra giữa học kì 1..."
+                  className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
               </div>
 
               <div>
                 <label htmlFor="duration" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Thời gian (phút)
+                  Thời gian làm bài
                 </label>
-                <input
+                <select
                   id="duration"
-                  type="number"
-                  inputMode="numeric"
                   value={formData.duration}
                   onChange={(e) => handleChange("duration", parseInt(e.target.value, 10))}
                   className="block w-full px-3 py-2 min-h-11 border border-slate-300 dark:border-slate-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-                />
+                >
+                  <option value={10}>10 phút</option>
+                  <option value={15}>15 phút</option>
+                  <option value={30}>30 phút</option>
+                  <option value={45}>45 phút</option>
+                  <option value={60}>60 phút</option>
+                  <option value={90}>90 phút</option>
+                  <option value={120}>120 phút</option>
+                </select>
               </div>
             </div>
 
@@ -1175,30 +1217,173 @@ const ExamForm: React.FC<ExamFormProps> = ({
 
         {((step === 3 && !isSpecialSubject) || (step === 2 && isSpecialSubject)) && (
           <Section
-            title={
-              isSpecialSubject
-                ? formData.schoolLevel === "Cấp 1" && formData.subject === "Tiếng Việt"
-                  ? "2. Nội dung và Yêu cầu (Tiếng Việt cấp 1)"
-                  : "2. Nội dung và Yêu cầu"
-                : "3. Nội dung và Yêu cầu"
-            }
-            description="Cung cấp nội dung kiến thức và các yêu cầu đặc biệt để AI tùy chỉnh đề bài tốt hơn."
+            title="Bước 4 – Nhập nội dung kiến thức & Tài liệu tham chiếu"
+            description="Cung cấp chi tiết bài học, yêu cầu cần đạt hoặc tải tài liệu tham chiếu (PDF, Word, TXT, Giáo án, Đề cũ...)."
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8 flex-grow">
+            {/* Mục 3: TÀI LIỆU THAM CHIẾU */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 mb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📚</span>
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                    TÀI LIỆU THAM CHIẾU
+                  </h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
+                    Ưu tiên tuyệt đối
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-650 rounded-lg border border-indigo-200 dark:border-slate-600 shadow-2xs transition active:scale-95 cursor-pointer"
+                >
+                  <span>📎</span>
+                  <span>Tải lên PDF / Word / TXT / SGK / Đề cũ</span>
+                </button>
+              </div>
+
+              <div className="text-xs text-slate-600 dark:text-slate-300 mb-3 leading-relaxed">
+                Chế độ sử dụng tài liệu:
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {[
+                  { mode: 'strict_doc_only', label: 'Chỉ sử dụng tài liệu đã cung cấp', desc: 'Không tự bổ sung kiến thức ngoài tài liệu' },
+                  { mode: 'doc_and_curriculum', label: 'Tài liệu + Kiến thức phổ thông', desc: 'Ưu tiên tài liệu, bổ sung kiến thức chuẩn GDPT' },
+                  { mode: 'manual_input', label: 'Giáo viên tự nhập nội dung', desc: 'Dựa trên các trường nhập liệu bên dưới' },
+                ].map((item) => {
+                  const currentMode = formData.referenceDoc?.mode || 'doc_and_curriculum';
+                  const isChecked = currentMode === item.mode;
+                  return (
+                    <label
+                      key={item.mode}
+                      onClick={() => handleChange('referenceDoc', { ...(formData.referenceDoc || {}), mode: item.mode })}
+                      className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                        isChecked
+                          ? 'border-indigo-600 bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-300 dark:ring-indigo-800'
+                          : 'border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-850/50 hover:bg-white dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <input
+                          type="radio"
+                          name="referenceDocMode"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="mt-0.5 text-indigo-600"
+                        />
+                        <div>
+                          <div className="text-xs font-bold text-slate-900 dark:text-white">
+                            {item.label}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                            {item.desc}
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Các trường nhập chi tiết Bước 4 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
+              <div>
+                <label htmlFor="topicName" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Tên bài / Chủ đề:
+                </label>
+                <input
+                  id="topicName"
+                  type="text"
+                  value={formData.topicName || ""}
+                  onChange={(e) => handleChange("topicName", e.target.value)}
+                  placeholder="VD: Định luật Ôm, Trao đổi chất..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="chapterName" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Chương / Phân môn:
+                </label>
+                <input
+                  id="chapterName"
+                  type="text"
+                  value={formData.chapterName || ""}
+                  onChange={(e) => handleChange("chapterName", e.target.value)}
+                  placeholder="VD: Chương 1: Điện học, Hình học..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="knowledgeScope" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Phạm vi kiến thức:
+                </label>
+                <input
+                  id="knowledgeScope"
+                  type="text"
+                  value={formData.knowledgeScope || ""}
+                  onChange={(e) => handleChange("knowledgeScope", e.target.value)}
+                  placeholder="VD: Từ tuần 1 đến tuần 9..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="testFocus" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Nội dung cần kiểm tra:
+                </label>
+                <input
+                  id="testFocus"
+                  type="text"
+                  value={formData.testFocus || ""}
+                  onChange={(e) => handleChange("testFocus", e.target.value)}
+                  placeholder="VD: Khái niệm, công thức, giải bài toán mạch nối tiếp..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="learningOutcomes" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Yêu cầu cần đạt:
+                </label>
+                <input
+                  id="learningOutcomes"
+                  type="text"
+                  value={formData.learningOutcomes || ""}
+                  onChange={(e) => handleChange("learningOutcomes", e.target.value)}
+                  placeholder="VD: Nêu được định luật, vận dụng tính điện trở tương đương..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="teacherNotes" className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Ghi chú của giáo viên:
+                </label>
+                <input
+                  id="teacherNotes"
+                  type="text"
+                  value={formData.teacherNotes || ""}
+                  onChange={(e) => handleChange("teacherNotes", e.target.value)}
+                  placeholder="VD: Tránh câu đánh đố, câu hỏi cần sát thực tế..."
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+                />
+              </div>
+            </div>
+
+            {/* Vùng văn bản lớn để dán nội dung bài học */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 flex-grow">
               <div className="flex flex-col">
                 <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="knowledgeContent" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Nội dung kiến thức
+                  <label htmlFor="knowledgeContent" className="block text-sm font-bold text-slate-700 dark:text-slate-300">
+                    📋 Vùng dán nội dung bài học / Văn bản đọc hiểu
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsUploadModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-slate-700 rounded-lg border border-indigo-200 dark:border-slate-700 shadow-2xs transition active:scale-95 cursor-pointer"
-                    title="Trích xuất văn bản từ file Word .docx hoặc .txt"
-                  >
-                    <span>📎</span>
-                    <span>Tải file Word / Text</span>
-                  </button>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    (Văn bản SGK, giáo án, kế hoạch bài dạy)
+                  </span>
                 </div>
                 <textarea
                   id="knowledgeContent"
@@ -1207,15 +1392,15 @@ const ExamForm: React.FC<ExamFormProps> = ({
                   placeholder={
                     isEnglish
                       ? "VD:\n- Unit 1: All about me! / Leisure time\n- Unit 2: Our homes / Life in the countryside\n- Target vocabulary, pronunciation (/s/, /z/), grammar (Present simple vs continuous, verbs of liking/disliking + V-ing)..."
-                      : "VD:\n- Bài 1: Sự đa dạng của thế giới sống\n- Bài 2: Các giới sinh vật\n- Chủ đề: Quang hợp và hô hấp"
+                      : "Dán trực tiếp văn bản bài học, đoạn trích đọc hiểu, nội dung SGK hoặc tài liệu ôn tập vào đây..."
                   }
-                  className="block w-full px-3 py-2 text-base border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm flex-grow min-h-[160px] sm:min-h-[200px] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                  className="block w-full px-3 py-2.5 text-base border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm flex-grow min-h-[180px] sm:min-h-[220px] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                 />
               </div>
 
               <div className="flex flex-col">
-                <label htmlFor="additionalRequirements" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Yêu cầu bổ sung (tùy chọn)
+                <label htmlFor="additionalRequirements" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                  ✨ Yêu cầu bổ sung đặc biệt (tùy chọn)
                 </label>
                 <textarea
                   id="additionalRequirements"
@@ -1224,9 +1409,9 @@ const ExamForm: React.FC<ExamFormProps> = ({
                   placeholder={
                     isEnglish
                       ? "VD:\n- Kèm audio script chi tiết cho bài nghe.\n- Phần viết (Writing) gồm 1 câu sắp xếp từ và 1 câu viết lại câu.\n- Có hướng dẫn chấm và đáp án chi tiết."
-                      : "VD:\n- Cần có 1 câu hỏi trắc nghiệm liên hệ thực tế.\n- Phần tự luận cần có 1 câu hỏi vận dụng cao."
+                      : "VD:\n- Cần 1 câu hỏi trắc nghiệm liên hệ thực tế địa phương.\n- Phần tự luận giải bài toán bằng hai bước.\n- Không ra câu hỏi ngoài phạm vi tài liệu."
                   }
-                  className="block w-full px-3 py-2 text-base border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm flex-grow min-h-[160px] sm:min-h-[200px] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
+                  className="block w-full px-3 py-2.5 text-base border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-xl shadow-sm flex-grow min-h-[180px] sm:min-h-[220px] bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
                 />
               </div>
             </div>

@@ -1,5 +1,7 @@
 export const SCHOOL_LEVELS: string[] = ["Tiểu học", "THCS", "THPT"];
 
+export const OTHER_SUBJECT_KEY = "Môn học khác...";
+
 export const GRADES_BY_LEVEL: Record<string, string[]> = {
     "Tiểu học": ["Lớp 1", "Lớp 2", "Lớp 3", "Lớp 4", "Lớp 5"],
     "THCS": ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"],
@@ -8,8 +10,8 @@ export const GRADES_BY_LEVEL: Record<string, string[]> = {
 
 export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
     "Tiểu học": [
-        "Tiếng Việt",
         "Toán",
+        "Tiếng Việt",
         "Ngoại ngữ 1 (Tiếng Anh)",
         "Tự nhiên và Xã hội",
         "Khoa học",
@@ -17,9 +19,10 @@ export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
         "Tin học",
         "Công nghệ",
         "Đạo đức",
-        "Hoạt động trải nghiệm",
+        "Âm nhạc",
         "Mĩ thuật",
-        "Âm nhạc"
+        "Hoạt động trải nghiệm",
+        OTHER_SUBJECT_KEY
     ],
     "THCS": [
         "Toán",
@@ -27,15 +30,18 @@ export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
         "Ngoại ngữ 1 (Tiếng Anh)",
         "Khoa học tự nhiên",
         "Lịch sử và Địa lí",
-        "Tin học",
-        "Công nghệ",
-        "Giáo dục công dân",
-        "Hoạt động trải nghiệm, hướng nghiệp",
         "Vật lí",
         "Hóa học",
         "Sinh học",
         "Lịch sử",
-        "Địa lí"
+        "Địa lí",
+        "Tin học",
+        "Công nghệ",
+        "Giáo dục công dân",
+        "Âm nhạc",
+        "Mĩ thuật",
+        "Hoạt động trải nghiệm, hướng nghiệp",
+        OTHER_SUBJECT_KEY
     ],
     "THPT": [
         "Toán",
@@ -49,9 +55,216 @@ export const SUBJECTS_BY_LEVEL: Record<string, string[]> = {
         "Giáo dục kinh tế và pháp luật",
         "Tin học",
         "Công nghệ",
-        "Hoạt động trải nghiệm, hướng nghiệp"
+        "Giáo dục quốc phòng và an ninh",
+        "Âm nhạc",
+        "Mĩ thuật",
+        "Hoạt động trải nghiệm, hướng nghiệp",
+        OTHER_SUBJECT_KEY
     ]
 };
+
+/* =====================================================================
+   CẤU HÌNH LOẠI ĐỀ, THỜI GIAN, THANG ĐIỂM & DẠNG CÂU HỎI
+   ===================================================================== */
+
+export interface ExamTypeOption {
+    id: string;
+    label: string;
+    desc?: string;
+    recommendedDuration: number;
+}
+
+export const EXAM_TYPE_OPTIONS: ExamTypeOption[] = [
+    { id: 'regular', label: 'Kiểm tra thường xuyên', recommendedDuration: 15 },
+    { id: '15min', label: 'Kiểm tra 15 phút', recommendedDuration: 15 },
+    { id: 'midterm', label: 'Kiểm tra giữa kỳ', recommendedDuration: 45 },
+    { id: 'final', label: 'Kiểm tra cuối kỳ', recommendedDuration: 60 },
+    { id: 'review', label: 'Đề ôn tập', recommendedDuration: 45 },
+    { id: 'practice', label: 'Đề luyện tập', recommendedDuration: 45 },
+    { id: 'survey', label: 'Đề khảo sát', recommendedDuration: 60 },
+    { id: 'selection', label: 'Đề tuyển chọn học sinh', recommendedDuration: 90 },
+    { id: 'custom', label: 'Đề tự tạo', recommendedDuration: 45 },
+];
+
+export const DURATION_PRESETS = [10, 15, 30, 45, 60, 90, 120];
+export const SCORE_SCALE_PRESETS = [10, 20, 100];
+
+export interface QuestionTypeDefinition {
+    id: string;
+    label: string;
+    shortLabel: string;
+    category: 'objective' | 'essay';
+    categoryLabel: string;
+    defaultCount: number;
+    defaultScore: number;
+    desc: string;
+}
+
+export const QUESTION_TYPE_DEFINITIONS: QuestionTypeDefinition[] = [
+    // Trắc nghiệm
+    {
+        id: 'mcq_4',
+        label: 'Trắc nghiệm 4 lựa chọn (A/B/C/D)',
+        shortLabel: 'TNKQ 4 lựa chọn',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 12,
+        defaultScore: 0.25,
+        desc: 'Chọn 1 đáp án đúng trong 4 phương án A, B, C, D.'
+    },
+    {
+        id: 'mcq_multi',
+        label: 'Nhiều đáp án đúng',
+        shortLabel: 'Nhiều đáp án',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 0,
+        defaultScore: 0.5,
+        desc: 'Câu hỏi có thể có 2 hoặc nhiều phương án đúng.'
+    },
+    {
+        id: 'true_false',
+        label: 'Đúng / Sai (4 ý)',
+        shortLabel: 'Đúng / Sai',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 2,
+        defaultScore: 0.5,
+        desc: 'Mỗi câu có 4 ý a, b, c, d để học sinh xác định Đúng hoặc Sai.'
+    },
+    {
+        id: 'matching',
+        label: 'Ghép nối (Nối đôi cột A với B)',
+        shortLabel: 'Ghép nối',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 0,
+        defaultScore: 0.5,
+        desc: 'Nối các dữ kiện tương ứng giữa hai cột kiến thức.'
+    },
+    {
+        id: 'fill_blank',
+        label: 'Điền khuyết / Điền vào chỗ trống',
+        shortLabel: 'Điền khuyết',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 0,
+        defaultScore: 0.5,
+        desc: 'Điền từ, cụm từ, số hoặc công thức thích hợp vào chỗ trống.'
+    },
+    {
+        id: 'short_answer',
+        label: 'Trả lời ngắn (TNKQ điền số/kết quả)',
+        shortLabel: 'Trả lời ngắn',
+        category: 'objective',
+        categoryLabel: 'Trắc nghiệm khách quan',
+        defaultCount: 2,
+        defaultScore: 0.5,
+        desc: 'Học sinh tự giải và viết đáp án số hoặc từ khóa ngắn gọn.'
+    },
+
+    // Tự luận
+    {
+        id: 'essay_short',
+        label: 'Câu hỏi ngắn',
+        shortLabel: 'Câu hỏi ngắn',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.0,
+        desc: 'Trả lời trực tiếp câu hỏi trọng tâm của bài.'
+    },
+    {
+        id: 'essay_explain',
+        label: 'Giải thích hiện tượng / khái niệm',
+        shortLabel: 'Giải thích',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.0,
+        desc: 'Nêu nguyên nhân, bản chất hoặc lý do của hiện tượng/quy luật.'
+    },
+    {
+        id: 'essay_present',
+        label: 'Trình bày nội dung / quy trình',
+        shortLabel: 'Trình bày',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.0,
+        desc: 'Mô tả rõ ràng các bước, định lý hoặc diễn biến.'
+    },
+    {
+        id: 'essay_problem',
+        label: 'Giải bài tập / Tính toán',
+        shortLabel: 'Giải bài tập',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 1,
+        defaultScore: 1.5,
+        desc: 'Bài toán tự luận có các bước biến đổi, công thức và đáp số.'
+    },
+    {
+        id: 'essay_analysis',
+        label: 'Phân tích nhân vật / số liệu / biểu đồ',
+        shortLabel: 'Phân tích',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.5,
+        desc: 'Mổ xẻ chi tiết các khía cạnh của dẫn chứng hoặc số liệu.'
+    },
+    {
+        id: 'essay_compare',
+        label: 'So sánh điểm giống và khác nhau',
+        shortLabel: 'So sánh',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.0,
+        desc: 'Chỉ ra điểm tương đồng và phân biệt giữa hai đối tượng.'
+    },
+    {
+        id: 'essay_proof',
+        label: 'Chứng minh định lý / luận điểm',
+        shortLabel: 'Chứng minh',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.5,
+        desc: 'Lập luận logic và dẫn chứng chặt chẽ để làm sáng tỏ vấn đề.'
+    },
+    {
+        id: 'essay_practical',
+        label: 'Vận dụng thực tế đời sống',
+        shortLabel: 'Vận dụng thực tế',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 1.0,
+        desc: 'Liên hệ kiến thức đã học để giải quyết vấn đề thực tiễn.'
+    },
+    {
+        id: 'reading_comp',
+        label: 'Đọc hiểu văn bản (ngữ liệu)',
+        shortLabel: 'Đọc hiểu',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 2.0,
+        desc: 'Trích đoạn ngữ liệu kèm hệ thống câu hỏi tìm hiểu thông điệp.'
+    },
+    {
+        id: 'writing_passage',
+        label: 'Viết đoạn văn / bài văn',
+        shortLabel: 'Viết đoạn/bài',
+        category: 'essay',
+        categoryLabel: 'Tự luận',
+        defaultCount: 0,
+        defaultScore: 2.0,
+        desc: 'Viết đoạn văn nghị luận hoặc bài văn hoàn chỉnh theo chủ đề.'
+    }
+];
 
 export const GENERAL_TEXTBOOKS: string[] = [
     "Kết nối tri thức với cuộc sống"

@@ -13,14 +13,120 @@ export interface EnglishSkillsConfig {
     includeSpeaking?: boolean;
 }
 
-export interface ExamFormData {
-    schoolLevel: string;
-    schoolName?: string;
+/* =========================================================
+   CÁC LOẠI HÌNH CÂU HỎI & MỨC ĐỘ NHẬN THỨC MỚI
+   ========================================================= */
+
+export type CognitiveLevel = 'Nhận biết' | 'Thông hiểu' | 'Vận dụng' | 'Vận dụng cao';
+
+export interface CognitiveDistribution {
+    mode: 'count' | 'percentage';
+    recognition: number; // Nhận biết
+    comprehension: number; // Thông hiểu
+    application: number; // Vận dụng
+    highApplication: number; // Vận dụng cao
+}
+
+export type ExamType =
+    | 'regular' // Kiểm tra thường xuyên
+    | '15min' // Kiểm tra 15 phút
+    | 'midterm' // Kiểm tra giữa kỳ
+    | 'final' // Kiểm tra cuối kỳ
+    | 'review' // Đề ôn tập
+    | 'practice' // Đề luyện tập
+    | 'survey' // Đề khảo sát
+    | 'selection' // Đề tuyển chọn học sinh
+    | 'custom'; // Đề tự tạo
+
+export interface ReferenceDocumentConfig {
+    text: string;
+    fileName?: string;
+    fileType?: string;
+    mode: 'only_document' | 'document_and_curriculum' | 'teacher_input';
+}
+
+export interface QuestionItem {
+    id: string; // "Q01", "Q02", ...
     subject: string;
     grade: string;
-    textbook: string; // Cố định: "Kết nối tri thức với cuộc sống"
-    knowledgeContent: string;
+    topic: string;
+    questionType: string;
+    level: CognitiveLevel;
+    question: string;
+    options?: string[]; // ["A. ...", "B. ...", "C. ...", "D. ..."]
+    correctAnswer: string;
+    explanation?: string;
+    score: number;
+    learningOutcome?: string;
+    isLocked?: boolean; // Khi giáo viên chọn "Giữ nguyên câu hỏi đã nhập"
+    needsReview?: boolean; // Đánh dấu "⚠ Cần giáo viên kiểm tra" nếu AI chưa chắc chắn
+    reviewReason?: string;
+}
+
+export interface TestCodeVariant {
+    code: string; // "101", "102", "103", "104"
+    questions: QuestionItem[];
+    examText: string;
+    answerKeyText: string;
+}
+
+export interface QualityCheckIssue {
+    rule: string;
+    status: 'pass' | 'warning' | 'fail';
+    message: string;
+}
+
+export interface QualityCheckReport {
+    timestamp: string;
+    passed: boolean;
+    issues: QualityCheckIssue[];
+}
+
+export interface ExamFormData {
+    schoolLevel: string; // 'Tiểu học' | 'THCS' | 'THPT'
+    schoolName?: string;
+    teacherName?: string;
+    subject: string;
+    customSubject?: string; // Ô "Nhập tên môn học khác"
+    grade: string;
+    textbook: string; // Sách giáo khoa
+    
+    // Bước 4: Chi tiết nội dung kiến thức
+    topicName?: string; // Tên bài/chủ đề
+    chapterName?: string; // Chương
+    knowledgeScope?: string; // Phạm vi kiến thức
+    testFocus?: string; // Nội dung cần kiểm tra
+    learningOutcomes?: string; // Yêu cầu cần đạt
+    teacherNotes?: string; // Ghi chú của giáo viên
+    knowledgeContent: string; // Vùng văn bản lớn dán nội dung bài học
+
+    // Mục 3: Tài liệu tham chiếu
+    referenceDoc?: ReferenceDocumentConfig;
+
+    // Mục 4: Loại đề & Thời gian làm bài
+    examType?: ExamType;
+    examTitle?: string;
     duration: number;
+
+    // Mục 5: Hình thức câu hỏi & số lượng từng dạng
+    questionCounts?: Record<string, number>;
+    totalQuestions?: number;
+
+    // Mục 6: Thiết lập mức độ câu hỏi (4 mức)
+    cognitiveDistribution?: CognitiveDistribution;
+
+    // Mục 7: Thang điểm
+    totalScore?: number; // 10, 20, 100 hoặc tự nhập
+
+    // Mục 17: Số mã đề (1, 2, 3, 4)
+    testCodeCount?: number;
+
+    // Mục 21 & 22: Nhập câu hỏi giáo viên & Giữ nguyên câu hỏi đã nhập
+    fixedQuestions?: QuestionItem[];
+    lockFixedQuestions?: boolean;
+    importedMatrix?: string;
+
+    // Tương thích ngược
     multipleChoice: QuestionTypeDistribution;
     trueFalse: QuestionTypeDistribution;
     shortAnswer: QuestionTypeDistribution;
@@ -35,6 +141,11 @@ export interface ExamResult {
     specification: string;
     exam: string;
     answerKey: string;
+    gradingGuide?: string; // TAB 3: Hướng dẫn chấm chi tiết
+    questions?: QuestionItem[]; // Danh sách câu hỏi có cấu trúc
+    variants?: TestCodeVariant[]; // Các mã đề (101, 102, 103, 104)
+    activeVariantCode?: string;
+    qualityReport?: QualityCheckReport; // Báo cáo kiểm tra chất lượng tự động
 }
 
 export interface SavedExamItem {
