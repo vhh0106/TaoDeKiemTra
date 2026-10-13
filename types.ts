@@ -183,7 +183,8 @@ export interface LessonPlanFormData {
     teacherName?: string; // Giáo viên (VD: Vũ Hoàng Hiệp)
     approverName?: string; // Người ký duyệt (VD: Nguyễn Thị Pô Ly)
     knowledgeContent: string;
-    integrateDigitalCompetence: boolean;
+    integrateDigitalCompetence: boolean; // Tương thích ngược
+    integrateNls?: boolean; // Tích hợp Khung năng lực số (Thông tư 02/2025/TT-BGDĐT)
     digitalDomains: string[]; // Các miền năng lực số từ TT 02/2025
     integrateAi2422?: boolean; // Tích hợp Khung nội dung giáo dục Trí tuệ nhân tạo theo QĐ 2422/QĐ-BGDĐT
     aiStrands?: string[]; // 4 mạch kiến thức AI theo QĐ 2422 (Mạch A, Mạch B, Mạch C, Mạch D)

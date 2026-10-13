@@ -45,41 +45,58 @@ export const createEnglishLessonPlanPrompt = (data: LessonPlanFormData): string 
     ? data.aiStrands.join('; ')
     : 'Human-centred mindset & AI techniques in education';
 
-  const suggestedToolsText = data.suggestedAiTools && data.suggestedAiTools.length > 0
-    ? data.suggestedAiTools.join(', ')
-    : 'Canva Magic Studio Edu, interactive flashcard tools, digital audio/visual aids';
+  const isNlsEnabled = Boolean(
+    (data.integrateNls ?? (data.integrateDigitalCompetence && data.digitalDomains && data.digitalDomains.length > 0)) &&
+    data.digitalDomains &&
+    data.digitalDomains.length > 0
+  );
+
+  const isAiEnabled = Boolean(
+    data.integrateAi2422 === true &&
+    data.aiStrands &&
+    data.aiStrands.length > 0
+  );
+
+  const isQpanEnabled = Boolean(
+    data.integrateQpan08 === true &&
+    data.qpanThemes &&
+    data.qpanThemes.length > 0
+  );
+
+  const hasSelectedAiTools = Boolean(isAiEnabled && data.suggestedAiTools && data.suggestedAiTools.length > 0);
+  const suggestedToolsText = hasSelectedAiTools
+    ? (data.suggestedAiTools || []).join(', ')
+    : '';
 
   const qpanThemesText = data.qpanThemes && data.qpanThemes.length > 0
     ? data.qpanThemes.join('; ')
     : 'Love for hometown, pride in sea and islands, friendly school environment and public discipline';
 
-  const isDigitalGeneralEnabled = data.integrateDigitalCompetence !== false;
-  const isQpanEnabled = Boolean(
-    isDigitalGeneralEnabled &&
-    data.integrateQpan08 !== false &&
-    data.qpanThemes &&
-    data.qpanThemes.length > 0
-  );
-  const isAiEnabled = Boolean(
-    isDigitalGeneralEnabled &&
-    (data.integrateAi2422 ?? true)
-  );
-  const isNlsEnabled = Boolean(
-    isDigitalGeneralEnabled &&
-    data.digitalDomains &&
-    data.digitalDomains.length > 0
-  );
+  const selectedDomains = isNlsEnabled ? (data.digitalDomains || []) : [];
+  const domainCount = selectedDomains.length;
+  const singleDomainMatch = domainCount === 1 ? selectedDomains[0].match(/Miền\s*(\d+)/i) : null;
+  const singleDomainNumber = singleDomainMatch ? singleDomainMatch[1] : null;
+  const singleDomainPrefix = singleDomainNumber ? `NLS ${singleDomainNumber}.` : 'NLS ';
 
   return `
 You are an expert English Language Teaching (ELT) educational specialist in Vietnam, with profound expertise in:
 1. The national English textbook **"Tiếng Anh - Global Success" (Bộ sách Kết nối tri thức với cuộc sống của Nhà xuất bản Giáo dục Việt Nam)**.
-2. Vietnam's **General Education Program 2018 (Chương trình GDPT 2018)** for English.
-3. Decision No. 2422/QĐ-BGDĐT on AI education framework and Circular No. 02/2025/TT-BGDĐT on digital competence.${isQpanEnabled ? `
-4. Circular No. 08/2024/TT-BGDĐT on integrating National Defense and Security Education into school subjects.` : ''}
+2. Vietnam's **General Education Program 2018 (Chương trình GDPT 2018)** for English.${isAiEnabled ? `
+3. Decision No. 2422/QĐ-BGDĐT on Artificial Intelligence (AI) education framework.` : ''}${isNlsEnabled ? `
+4. Circular No. 02/2025/TT-BGDĐT on Digital Competence framework.` : ''}${isQpanEnabled ? `
+5. Circular No. 08/2024/TT-BGDĐT on integrating National Defense and Security Education into school subjects.` : ''}
 
-${!isQpanEnabled ? `**CRITICAL INSTRUCTION - NO NATIONAL DEFENSE INTEGRATION:**
-The teacher has explicitly TURNED OFF National Defense & Security Education (Circular 08/2024/TT-BGDĐT).
-YOU MUST NOT include any national defense, military, border/island sovereignty, or security integration tasks, aims, or notes in any section of this lesson plan. The lesson plan must focus purely on standard English language communicative learning.` : ''}
+**CRITICAL INSTRUCTION - STRICT INTEGRATION SELECTION RULES (CHỌN 1 CHỈ XUẤT HIỆN ĐÚNG 1):**
+${isNlsEnabled ? `- DIGITAL COMPETENCE (Circular 02/2025): [ENABLED]
+  * Selected domain(s): ${selectedDomains.join('; ')} (${domainCount} domain(s)).
+  ${domainCount === 1 ? `* ⚠️ STRICT REQUIREMENT: User selected ONLY ONE domain: "${selectedDomains[0]}". Output MUST contain ONLY this single domain with matching codes (${singleDomainPrefix}...). STRICTLY DO NOT output a 2nd domain or any other domains!` : `* Output MUST contain ONLY the selected ${domainCount} domain(s). Do NOT add unselected domains.`}` : `- DIGITAL COMPETENCE (Circular 02/2025): [DISABLED] -> YOU MUST NOT include any NLS codes, Circular 02/2025, or digital competence framework sections.`}
+${isAiEnabled ? `- ARTIFICIAL INTELLIGENCE (Decision 2422): [ENABLED] -> Include AI literacy (${aiStrandsText}).
+  ${hasSelectedAiTools ? `* Selected AI tools: ${suggestedToolsText}. Include these tools in Teaching aids.` : `* ⚠️ AI TOOLS NOTICE: User DID NOT select any pedagogical AI tools. STRICTLY DO NOT mention any specific AI tools (such as Canva, AutoDraw, Teachable Machine, QuickDraw...) anywhere in this lesson plan!`}` : `- ARTIFICIAL INTELLIGENCE (Decision 2422): [DISABLED] -> YOU MUST NOT include any AI codes (e.g. 4.A1.3), Decision 2422, or AI tools/activities anywhere.`}
+${isQpanEnabled ? `- NATIONAL DEFENSE & SECURITY (Circular 08/2024): [ENABLED] -> Integrate peaceful patriotism and discipline naturally (${qpanThemesText}).` : `- NATIONAL DEFENSE & SECURITY (Circular 08/2024): [DISABLED] -> YOU MUST NOT include any national defense, military, border/island sovereignty, or Circular 08/2024 tasks or notes anywhere in this lesson plan.`}
+
+${isNlsEnabled && !isAiEnabled ? `⚠️ STRICT MUTUAL EXCLUSIVITY: Digital competence is ON, but AI is OFF. In Section 2 (Competences), the line MUST BE ONLY: "- Digital competence (Circular 02/2025/TT-BGDĐT): ...". YOU MUST NOT write "Digital competence & AI literacy" and MUST NOT mention AI anywhere!` : ''}
+${!isNlsEnabled && isAiEnabled ? `⚠️ STRICT MUTUAL EXCLUSIVITY: AI is ON, but Digital competence is OFF. In Section 2 (Competences), the line MUST BE ONLY: "- AI literacy (Decision 2422/QĐ-BGDĐT): ...". YOU MUST NOT write "Digital competence" and MUST NOT mention Circular 02/2025 anywhere!` : ''}
+${!isNlsEnabled && !isAiEnabled ? `⚠️ STRICT EXCLUSION: Both Digital competence and AI are OFF. STRICTLY DO NOT include any digital competence or AI literacy lines in Section 2!` : ''}
 
 TASK: Prepare a complete, highly detailed, pedagogical **LESSON PLAN - ENGLISH (KẾ HOẠCH BÀI DẠY MÔN TIẾNG ANH)** written entirely in English, following the EXACT format, sections, procedures, and styling of the provided authentic lesson plan from the user's document.
 
@@ -101,12 +118,22 @@ CRITICAL FORMATTING & CONTENT RULES:
        - Communication and collaboration: work in pairs and groups to complete the learning tasks.
        - Self-control and independent learning: perform pronunciation and speaking tasks.
        - Critical thinking and creativity: learn how to ask and answer questions about personal information correctly and fluently.
-       ${(isNlsEnabled || isAiEnabled) ? `- Digital competence & AI literacy (Decision 2422/QĐ-BGDĐT & Circular 02/2025): identify and use educational tools (${suggestedToolsText}, hoclieu.vn) safely, verify information, and respect ethical digital practices.` : ''}
+${(() => {
+  if (isNlsEnabled && isAiEnabled) {
+    return `       - Digital competence & AI literacy (Circular 02/2025 & Decision 2422): identify and use educational tools (${hasSelectedAiTools ? suggestedToolsText : 'hoclieu.vn'}) safely, verify information, and respect ethical digital practices. (${domainCount === 1 ? `Domain: ${selectedDomains[0]}` : `Domains: ${selectedDomains.join(', ')}`})`;
+  } else if (isNlsEnabled) {
+    return `       - Digital competence (Circular 02/2025/TT-BGDĐT): use digital educational resources (hoclieu.vn, interactive software) safely, verify information, and practice digital skills (${domainCount === 1 ? `strictly focusing on single domain: ${selectedDomains[0]} with code prefix ${singleDomainPrefix}` : `domains: ${selectedDomains.join(', ')}`}). (DO NOT mention AI or Decision 2422).`;
+  } else if (isAiEnabled) {
+    return `       - AI literacy (Decision 2422/QĐ-BGDĐT): recognize simple educational AI concepts${hasSelectedAiTools ? ` and tools (${suggestedToolsText})` : ''}, understand humans control AI, verify outputs, and use technology ethically (${aiStrandsText}). (DO NOT mention Circular 02/2025${!hasSelectedAiTools ? ', DO NOT mention specific AI tool names' : ''}).`;
+  } else {
+    return '';
+  }
+})()}
      * **### 3. Attitudes/ Qualities:**
        - Show pride in their personal information, hobbies, hometown, family, and country.
-       ${isQpanEnabled ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): Foster love for peaceful Vietnam, pride in national sovereignty (sea and islands), solidarity, and traffic/cyber discipline.` : ''}
+       ${isQpanEnabled ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): Foster love for peaceful Vietnam, pride in national sovereignty (sea and islands), solidarity, and traffic/cyber discipline (${qpanThemesText}).` : ''}
    - Section **## B. TEACHING AIDS:**
-     * Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success - Kết nối tri thức), lesson plan, TV/projector, audio files, flashcards${isAiEnabled && suggestedToolsText ? `, AI teaching tools (${suggestedToolsText})` : ''}.
+     * Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success - Kết nối tri thức), lesson plan, TV/projector, audio files, flashcards${isAiEnabled && hasSelectedAiTools ? `, AI teaching tools (${suggestedToolsText})` : ''}.
      * Students: Students’ book Page [X], notebooks, school things.
    - Section **## C. PROCEDURES:**
      MUST BE IN A 2-COLUMN MARKDOWN TABLE:
@@ -264,11 +291,28 @@ const buildSubjectSpecificRules = (subject: string): string => {
   const norm = (subject || '').toLowerCase();
 
   if (norm.includes('toán') || norm.includes('vật lí') || norm.includes('vật lý') || norm.includes('hóa học') || norm.includes('khtn') || norm.includes('khoa học tự nhiên')) {
-    return `\n**QUY TẮC BẮT BUỘC VỚI MÔN TOÁN, VẬT LÍ, HÓA HỌC VÀ CÁC MÔN CÓ TÍNH TOÁN (MỤC 12):**
-1. BẮT BUỘC hệ thống AI phải TỰ GIẢI LẠI TOÀN BỘ bài toán trước khi đưa vào đề.
-2. Kiểm tra chặt chẽ: Dữ kiện, công thức áp dụng, các bước phép tính, đơn vị đo lường, kết quả và đáp số.
-3. Tuyệt đối không tạo bài toán vô nghiệm hoặc dữ kiện mâu thuẫn ngoài chủ đích sư phạm.
-4. Tuyệt đối không để đáp án trắc nghiệm khác với kết quả tính toán thực tế. Phương án nhiễu phải cùng kiểu dữ liệu, bắt nguồn từ các lỗi sai điển hình của học sinh.`;
+    return `\n**QUY TẮC BẮT BUỘC VỀ NỘI DUNG VÀ CÔNG THỨC TOÁN HỌC, KHOA HỌC TỰ NHIÊN:**
+1. **Tính chính xác tuyệt đối trong giải toán:**
+   - BẮT BUỘC hệ thống AI phải TỰ GIẢI LẠI TOÀN BỘ bài toán trước khi đưa vào đề và đáp án.
+   - Kiểm tra chặt chẽ: Dữ kiện, công thức áp dụng, các bước phép tính, đơn vị đo lường, kết quả và đáp số.
+   - Tuyệt đối không tạo bài toán vô nghiệm hoặc dữ kiện mâu thuẫn ngoài chủ đích sư phạm.
+   - Tuyệt đối không để đáp án trắc nghiệm khác với kết quả tính toán thực tế. Phương án nhiễu phải cùng kiểu dữ liệu, bắt nguồn từ các lỗi sai điển hình của học sinh.
+
+2. **Quy chuẩn trình bày Công thức Toán học sư phạm:**
+   - **Đối với Tiểu học (Toán 1, 2, 3, 4, 5):**
+     + Phép nhân: Dùng ký hiệu nhân '×' (hoặc 'x'), TUYỆT ĐỐI KHÔNG dùng dấu '*' hay '\\cdot'.
+     + Phép chia: Dùng dấu hai chấm ':' hoặc gạch phân số '/'.
+     + Số thập phân: Theo chuẩn sư phạm Việt Nam, BẮT BUỘC dùng dấu phẩy ',' (ví dụ: 2,5; 0,75; 14,8), TUYỆT ĐỐI KHÔNG dùng dấu chấm '2.5'.
+     + Phân số: Trình bày dạng phân số rõ ràng 'a/b' hoặc dùng cú pháp '\\frac{a}{b}' được kẹp trong cặp dấu '$' (ví dụ: '$\\frac{3}{4}$').
+     + Đơn vị đo: Phải có khoảng cách giữa số và tên đơn vị (ví dụ: 5 cm, 12 kg, 3,5 m², 15 phút, 120 km/h).
+   - **Đối với THCS & THPT (Toán 6-12, Vật lí, Hóa học):**
+     + BẮT BUỘC kẹp tất cả công thức toán học, biểu thức đại số, phương trình, hệ phương trình, căn thức, phân số, tích phân, đạo hàm, hình học, góc, vector trong cặp dấu '$...$' (cho công thức nội dòng - inline) hoặc '$$...$$' (cho công thức riêng dòng - block) để hệ thống tự động render sang công thức toán học KaTeX trực quan.
+     + Ký hiệu phép nhân đại số dùng '\\cdot' hoặc '\\times', KHÔNG dùng '*'.
+     + Ký hiệu so sánh dùng '\\le', '\\ge', '\\ne', '\\approx'.
+     + Phân thức, căn thức dùng '\\frac{a}{b}', '\\sqrt{x}', '\\sqrt[n]{x}'.
+     + Ký hiệu hình học: góc dùng '\\widehat{ABC}', vector dùng '\\vec{a}' hoặc '\\overrightarrow{AB}', vuông góc '\\perp', song song '//'.
+     + Số thập phân trong đề thi Việt Nam: Dùng dấu phẩy ',' (ví dụ: '$x = 2{,}5$' hoặc '$2,5$').
+     + Đảm bảo đóng mở dấu '$' chính xác, không để cú pháp LaTeX bị lỗi hoặc viết dở dang.`;
   }
 
   if (norm.includes('ngữ văn') || norm.includes('tiếng việt')) {
@@ -545,9 +589,11 @@ Bạn là một trợ lý AI chuyên gia cho giáo viên THCS và THPT Việt Na
    - **PHẦN 5: BẢN ĐẶC TẢ CHI TIẾT:** Bảng markdown chuẩn CV 7991 thể hiện:
      \`| Câu số | Chủ đề/Đơn vị kiến thức | Yêu cầu cần đạt | Mức độ | Dạng câu hỏi | Số lượng câu | Số điểm |\`
 
-5. **Định dạng Toán học và Khoa học:**
-   - Sử dụng ký tự Unicode (², ³, ₁, ₂) cho các chỉ số trên và dưới đơn giản.
-   - Sử dụng cú pháp LaTeX cho các công thức phức tạp (phân số, căn, tích phân, phương trình hóa học).
+5. **Định dạng Công thức Toán học và Khoa học:**
+   - Tất cả công thức toán học, biểu thức, phương trình, phân số, căn thức, hệ phương trình, tích phân, góc, vector BẮT BUỘC kẹp trong cặp dấu $...$ (nội dòng) hoặc $$...$$ (khối riêng dòng) để hiển thị chuẩn đẹp KaTeX.
+   - Sử dụng ký tự Unicode (², ³, ₁, ₂) hoặc mã LaTeX ($x^2$, $H_2O$) chuẩn xác.
+   - Số thập phân trong đề kiểm tra Việt Nam BẮT BUỘC dùng dấu phẩy ',' (ví dụ: '$3,5$' hoặc '$3{,}5$').
+   - Tuyệt đối không để sót hoặc thiếu dấu đóng '$'.
 
 ${buildKnowledgeAndReferenceDocSection(data)}
 
@@ -772,86 +818,89 @@ export const createLessonPlanPrompt = (data: LessonPlanFormData): string => {
   const classes = data.classesTaught || `${data.grade}A, ${data.grade}B, ${data.grade}C`;
   const periodText = data.periodNumber ? (data.periodNumber.startsWith('(') ? data.periodNumber : `(${data.periodNumber})`) : `(tiết 1)`;
 
-  const isDigitalGeneralEnabled = data.integrateDigitalCompetence !== false;
-  const isQpanEnabled = Boolean(
-    isDigitalGeneralEnabled &&
-    data.integrateQpan08 !== false &&
-    data.qpanThemes &&
-    data.qpanThemes.length > 0
-  );
-  const isAiEnabled = Boolean(
-    isDigitalGeneralEnabled &&
-    (data.integrateAi2422 ?? true)
-  );
   const isNlsEnabled = Boolean(
-    isDigitalGeneralEnabled &&
+    (data.integrateNls ?? (data.integrateDigitalCompetence && data.digitalDomains && data.digitalDomains.length > 0)) &&
     data.digitalDomains &&
     data.digitalDomains.length > 0
   );
 
-  const aiStrandsText = data.aiStrands && data.aiStrands.length > 0
+  const isAiEnabled = Boolean(
+    data.integrateAi2422 === true &&
+    data.aiStrands &&
+    data.aiStrands.length > 0
+  );
+
+  const isQpanEnabled = Boolean(
+    data.integrateQpan08 === true &&
+    data.qpanThemes &&
+    data.qpanThemes.length > 0
+  );
+
+  const selectedDomains = isNlsEnabled ? (data.digitalDomains || []) : [];
+  const domainCount = selectedDomains.length;
+  const domainNumberMatch = domainCount === 1 ? selectedDomains[0].match(/Miền\s*(\d+)/i) : null;
+  const singleDomainNumber = domainNumberMatch ? domainNumberMatch[1] : null;
+  const singleDomainPrefix = singleDomainNumber ? `NLS ${singleDomainNumber}.` : 'NLS ';
+
+  const aiStrandsText = isAiEnabled && data.aiStrands && data.aiStrands.length > 0
     ? data.aiStrands.join('; ')
-    : 'Mạch A: Tư duy lấy con người làm trung tâm & Mạch C: Kỹ thuật và Ứng dụng AI vào học tập';
+    : '';
 
-  const suggestedToolsText = data.suggestedAiTools && data.suggestedAiTools.length > 0
-    ? data.suggestedAiTools.join(', ')
-    : 'Ứng dụng AI nhận diện thực tế, Canva Magic Edu, trợ lý AI tra cứu an toàn';
+  const hasSelectedAiTools = Boolean(isAiEnabled && data.suggestedAiTools && data.suggestedAiTools.length > 0);
+  const suggestedToolsText = hasSelectedAiTools
+    ? (data.suggestedAiTools || []).join(', ')
+    : '';
 
-  const qpanThemesText = data.qpanThemes && data.qpanThemes.length > 0
+  const qpanThemesText = isQpanEnabled && data.qpanThemes && data.qpanThemes.length > 0
     ? data.qpanThemes.join('; ')
-    : 'Tình yêu quê hương, đất nước, niềm tự hào dân tộc, chủ quyền biển đảo và ý thức chấp hành pháp luật';
+    : '';
 
-  const qpanMethodsText = data.qpanMethods && data.qpanMethods.length > 0
+  const qpanMethodsText = isQpanEnabled && data.qpanMethods && data.qpanMethods.length > 0
     ? data.qpanMethods.join(', ')
-    : 'Quan sát tranh ảnh/video tư liệu, kể chuyện lịch sử, liên hệ thực tế';
+    : 'Quan sát tranh ảnh tư liệu, liên hệ thực tế';
 
   return `
 Bạn là một chuyên gia sư phạm tiểu học và phổ thông tại Việt Nam, am hiểu sâu sắc về:
 1. Bộ sách giáo khoa **Kết nối tri thức với cuộc sống**.
-2. **Thông tư số 02/2025/TT-BGDĐT** (Khung năng lực số) & **Công văn số 3456/BGDĐT-GDPT** (Hướng dẫn triển khai giáo dục năng lực số).
-3. **Quyết định số 2422/QĐ-BGDĐT của Bộ GD&ĐT** (Khung nội dung giáo dục Trí tuệ nhân tạo AI cho học sinh phổ thông).${isQpanEnabled ? `
-4. **Thông tư số 08/2024/TT-BGDĐT ngày 15/05/2024 của Bộ GD&ĐT** (Hướng dẫn lồng ghép nội dung giáo dục quốc phòng và an ninh trong trường tiểu học, trường trung học cơ sở và trường phổ thông có nhiều cấp học).` : ''}
+2. **Chương trình Giáo dục phổ thông 2018 (GDPT 2018)**.${isNlsEnabled ? `
+3. **Thông tư số 02/2025/TT-BGDĐT** (Khung năng lực số) & **Công văn số 3456/BGDĐT-GDPT** (Hướng dẫn triển khai giáo dục năng lực số).` : ''}${isAiEnabled ? `
+4. **Quyết định số 2422/QĐ-BGDĐT của Bộ GD&ĐT** (Khung nội dung giáo dục Trí tuệ nhân tạo AI cho học sinh phổ thông).` : ''}${isQpanEnabled ? `
+5. **Thông tư số 08/2024/TT-BGDĐT ngày 15/05/2024 của Bộ GD&ĐT** (Hướng dẫn lồng ghép nội dung giáo dục quốc phòng và an ninh trong trường phổ thông).` : ''}
 
 Nhiệm vụ của bạn là soạn một **KẾ HOẠCH BÀI DẠY (KHBD / GIÁO ÁN)** hoàn chỉnh, chi tiết, chuyên nghiệp theo **ĐÚNG FORMAT ĐỊNH DẠNG MẪU VĂN BẢN THỰC TẾ** sau đây:
 
-${isNlsEnabled && isAiEnabled ? `**QUY TẮC BẮT BUỘC VỀ BỘ MÃ NĂNG LỰC SỐ (TT 02/2025) & GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT):**
-Bạn PHẢI TỰ ĐỘNG TẠO ra mục Năng lực số và Giáo dục Trí tuệ nhân tạo KÈM THEO BỘ MÃ CHUẨN HÓA CỦA BỘ GD&ĐT:
-- Ví dụ mẫu chuẩn:
-\`Tích hợp Năng lực số (theo TT 02/2025: NLS 1.1.CB1a) & Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3; 4.C2.3) [nội dung hành vi nhiệm vụ cụ thể gắn với bài học, tra cứu, ứng dụng công cụ số/AI, bảo vệ môi trường, liên hệ thực tế, con người kiểm soát và làm chủ công nghệ]\`.
-- Quy cách mã NLS (theo Thông tư 02/2025/TT-BGDĐT và CV 3456/BGDĐT-GDPT):
-  * Lớp 1, 2, 3 (Cơ bản 1): \`NLS 1.1.CB1a\`, \`NLS 1.2.CB1b\`, \`NLS 2.1.CB1a\`, \`NLS 4.1.CB1a\`, \`NLS 6.1.CB1a\`...
-  * Lớp 4, 5 (Cơ bản 2): \`NLS 1.1.CB2a\`, \`NLS 2.1.CB2a\`, \`NLS 3.1.CB2a\`, \`NLS 4.1.CB2b\`, \`NLS 5.2.CB2a\`, \`NLS 6.2.CB2b\`...
-  * THCS / THPT: \`NLS 1.1.TC1a\`, \`NLS 2.1.TC2a\`, \`NLS 6.1.NC1a\`...
-- Quy cách mã AI (theo Khung nội dung giáo dục Trí tuệ nhân tạo Quyết định số 2422/QĐ-BGDĐT):
-  * Cấu trúc mã: \`[Khối].A[x].[y]; [Khối].B[x].[y]; [Khối].C[x].[y]; [Khối].D[x].[y]\`
-  * Mạch kiến thức đã chọn: ${aiStrandsText}
-  * Khối 3: \`3.A1.2; 3.B1.1; 3.C1.1\`
-  * Khối 4: \`4.A1.3; 4.B1.2; 4.C2.3\`
-  * Khối 5: \`5.A2.1; 5.C1.2; 5.D1.2\`
-  * Khối THCS (6-9): \`7.A1.2; 8.B2.1; 9.C1.3; 9.D1.1\`
-  * Khối THPT (10-12): \`11.A2.2; 11.B2.1; 12.C1.4; 12.D1.1\`` : isNlsEnabled ? `**QUY TẮC BẮT BUỘC VỀ BỘ MÃ NĂNG LỰC SỐ (TT 02/2025/TT-BGDĐT):**
-Bạn PHẢI TỰ ĐỘNG TẠO ra mục Năng lực số KÈM THEO BỘ MÃ NLS CHUẨN HÓA (theo TT 02/2025 và CV 3456/BGDĐT-GDPT).
-(LƯU Ý: Người dùng đã tắt tính năng Giáo dục AI QĐ 2422. TUYỆT ĐỐI KHÔNG sinh mã AI như 4.A1.3 hay đề cập đến QĐ 2422).` : isAiEnabled ? `**QUY TẮC BẮT BUỘC VỀ GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT):**
-Bạn PHẢI TỰ ĐỘNG TẠO ra mục Giáo dục AI KÈM THEO BỘ MÃ AI CHUẨN HÓA (theo QĐ 2422/QĐ-BGDĐT).
-(LƯU Ý: Người dùng đã tắt tính năng Năng lực số TT 02/2025. TUYỆT ĐỐI KHÔNG sinh mã NLS).` : `**LƯU Ý QUAN TRỌNG VỀ NĂNG LỰC SỐ & TRÍ TUỆ NHÂN TẠO (AI):**
-Người dùng ĐÃ TẮT tính năng tích hợp Năng lực số (TT 02/2025) và Giáo dục AI (QĐ 2422).
-TUYỆT ĐỐI KHÔNG tạo mục riêng cho Năng lực số / AI, không sinh các bộ mã NLS hay mã AI trong giáo án này.`}
+**QUY TẮC BẮT BUỘC VỀ NỘI DUNG TÍCH HỢP (TUÂN THỦ 100% - CHỌN GÌ RA ĐÓ, CHỌN 1 CHỈ XUẤT HIỆN ĐÚNG 1):**
 
-${isQpanEnabled ? `**QUY TẮC BẮT BUỘC VỀ LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (THÔNG TƯ 08/2024/TT-BGDĐT):**
-Bạn PHẢI LỒNG GHÉP NỘI DUNG GIÁO DỤC QUỐC PHÒNG VÀ AN NINH theo đúng Điều 2, Điều 3, Điều 4 Thông tư số 08/2024/TT-BGDĐT:
-- Chủ đề lồng ghép cho ${data.grade}: ${qpanThemesText}
-- Phương pháp & hình thức lồng ghép: ${qpanMethodsText}
-- Yêu cầu thực hiện theo Điều 4 TT 08: Lồng ghép tự nhiên, ngắn gọn, dễ nhớ, dễ hiểu; phát huy tính sáng tạo và cảm xúc tích cực của học sinh; không làm thay đổi thời lượng hay làm nặng nề bài học; kết hợp hình ảnh minh họa, liên hệ thực tế đời sống.
-- Lồng ghép GDQP&AN BẮT BUỘC xuất hiện ở:
-  1. Mục \`I. YÊU CẦU CẦN ĐẠT\` -> \`4. Phẩm chất\` (Phẩm chất Yêu nước & Trách nhiệm): Ghi rõ \`Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT): [nêu hành vi/tình cảm cụ thể phù hợp với bài học và khối lớp]\`.
-  2. Mục \`II. ĐỒ DÙNG DẠY HỌC\`: Nêu rõ hình ảnh, bản đồ, video tư liệu hoặc bài hát hỗ trợ lồng ghép QP-AN.
-  3. Trong bảng \`III. HOẠT ĐỘNG DẠY HỌC\`: Lồng ghép rõ ràng vào ít nhất 1 hoạt động (Khám phá hoặc Vận dụng) với chú thích: \`*(Lồng ghép GDQP&AN theo TT 08/2024: [nội dung GV hướng dẫn và HS thực hiện/cảm nhận/liên hệ])*\`.` : `**QUY TẮC BẮT BUỘC: ĐÃ TẮT LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (GDQP-AN):**
-NGƯỜI DÙNG ĐÃ TẮT TÍNH NĂNG TÍCH HỢP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (THÔNG TƯ 08/2024/TT-BGDĐT).
-YÊU CẦU BẮT BUỘC TUÂN THỦ 100%:
-1. TUYỆT ĐỐI KHÔNG đề cập đến "Thông tư 08/2024/TT-BGDĐT" hay "GDQP&AN", "GDQP-AN", "quốc phòng", "an ninh", "chủ quyền biển đảo" trong bất kỳ phần nào của giáo án này.
-2. Mục I. YÊU CẦU CẦN ĐẠT -> Phẩm chất yêu nước: Chỉ nêu tình cảm yêu quý quê hương, đất nước, yêu gia đình, thầy cô, bạn bè một cách tự nhiên theo đặc thù môn học; TUYỆT ĐỐI KHÔNG ghi chú thích hoặc lồng ghép GDQP&AN.
-3. Mục II. ĐỒ DÙNG DẠY HỌC: Chỉ chuẩn bị đồ dùng phục vụ bài học bình thường; TUYỆT ĐỐI KHÔNG ghi tranh ảnh, video lồng ghép GDQP&AN.
-4. Mục III. HOẠT ĐỘNG DẠY HỌC: TUYỆT ĐỐI KHÔNG chèn bất kỳ dòng chú thích nào dạng \`*(Lồng ghép GDQP&AN theo TT 08/2024...)*\`. Kế hoạch bài dạy phải hoàn toàn thuần túy chuyên môn nội dung bài học.`}
+${isNlsEnabled ? `✅ **NĂNG LỰC SỐ (TT 02/2025/TT-BGDĐT): [ĐƯỢC BẬT - SỐ MIỀN: ${domainCount}]**
+- Danh sách miền NLS người dùng chọn: ${selectedDomains.join('; ')}.
+${domainCount === 1 ? `⚠️ ⚠️ ⚠️ QUY TẮC SỐNG CÒN - CHỌN 1 MIỀN CHỈ XUẤT HIỆN ĐÚNG 1 MIỀN:
+- Người dùng CHỈ CHỌN DUY NHẤT 1 MIỀN: "${selectedDomains[0]}".
+- KẾT QUẢ GIÁO ÁN BẮT BUỘC CHỈ ĐƯỢC PHÉP XUẤT HIỆN DUY NHẤT 1 MIỀN NÀY!
+- TUYỆT ĐỐI CẤM KHÔNG ĐƯỢC XUẤT HIỆN MIỀN THỨ 2 HOẶC BẤT KỲ MIỀN NÀO KHÁC!
+- Bộ mã NLS phân bổ trong bài CHỈ ĐƯỢC MANG TIỀN TỐ CỦA MIỀN NÀY (${singleDomainPrefix}..., ví dụ: ${singleDomainPrefix}1.CB1a). CẤM sinh mã NLS của các miền khác!` : `- Chỉ phân bổ bộ mã NLS thuộc đúng ${domainCount} miền đã chọn (${selectedDomains.join(', ')}). Tuyệt đối không sinh thêm miền nào ngoài danh sách!`}` : `❌ **NĂNG LỰC SỐ (TT 02/2025/TT-BGDĐT): [ĐÃ TẮT HOÀN TOÀN]**
+- TUYỆT ĐỐI KHÔNG tạo mục Năng lực số, KHÔNG sinh bất kỳ mã NLS nào, KHÔNG nhắc đến Thông tư 02/2025 trong toàn bộ giáo án.`}
+
+${isAiEnabled ? `✅ **GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT): [ĐƯỢC BẬT]**
+- Mạch kiến thức đã chọn: ${aiStrandsText}.
+${hasSelectedAiTools ? `- Công cụ AI sư phạm đề xuất đã chọn: ${suggestedToolsText}. Tự động đưa các công cụ này vào Đồ dùng dạy học và tiến trình.` : `⚠️ CÔNG CỤ AI SƯ PHẠM ĐỀ XUẤT: NGƯỜI DÙNG KHÔNG CHỌN BẤT KỲ CÔNG CỤ NÀO! TUYỆT ĐỐI CẤM KHÔNG ĐƯỢC TỰ BỊA HOẶC NÊU BẤT KỲ TÊN CÔNG CỤ AI CỤ THỂ NÀO (như Canva, AutoDraw, QuickDraw, Teachable Machine, ChatGPT, Gemini, v.v.) trong Đồ dùng dạy học hay bất kỳ mục nào của giáo án!`}
+- Tự động tạo mục Giáo dục Trí tuệ nhân tạo và phân bổ mã AI chuẩn hóa (Ví dụ: Mã 4.A1.3; 4.C2.3).` : `❌ **GIÁO DỤC TRÍ TUỆ NHÂN TẠO (QĐ 2422/QĐ-BGDĐT): [ĐÃ TẮT HOÀN TOÀN]**
+- TUYỆT ĐỐI KHÔNG tạo mục Giáo dục AI, KHÔNG sinh bất kỳ mã AI nào, KHÔNG nhắc đến Quyết định 2422, KHÔNG nhắc đến chữ "AI" hay "Trí tuệ nhân tạo", KHÔNG đưa bất kỳ công cụ AI nào vào giáo án.`}
+
+${isQpanEnabled ? `✅ **LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (TT 08/2024/TT-BGDĐT): [ĐƯỢC BẬT]**
+- Lồng ghép GDQP&AN vào Phẩm chất yêu nước (Mục I.4), Đồ dùng dạy học (Mục II) và Hoạt động dạy học (Mục III).
+- Chủ đề lồng ghép: ${qpanThemesText}
+- Phương pháp: ${qpanMethodsText}` : `❌ **LỒNG GHÉP GIÁO DỤC QUỐC PHÒNG VÀ AN NINH (TT 08/2024/TT-BGDĐT): [ĐÃ TẮT HOÀN TOÀN]**
+- TUYỆT ĐỐI KHÔNG lồng ghép GDQP&AN, KHÔNG đề cập Thông tư 08/2024/TT-BGDĐT, KHÔNG nhắc đến "quốc phòng", "an ninh", "quân đội", "công an", "chủ quyền biển đảo" trong bất kỳ mục nào của giáo án.`}
+
+**QUY TẮC TÁCH BIỆT RÕ RÀNG GIỮA NĂNG LỰC SỐ VÀ GIÁO DỤC AI:**
+${isNlsEnabled && !isAiEnabled ? `🔴 CHỈ CHỌN NĂNG LỰC SỐ, KHÔNG CHỌN AI:
+- Trong giáo án CHỈ CÓ mục Năng lực số (TT 02/2025).
+- TIÊU ĐỀ MỤC BẮT BUỘC LÀ: "### 3. Năng lực số (theo Thông tư 02/2025/TT-BGDĐT)"
+- TUYỆT ĐỐI CẤM ghi "Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)"! CẤM nhắc tới AI hoặc QĐ 2422!` : ''}${!isNlsEnabled && isAiEnabled ? `🔴 CHỈ CHỌN GIÁO DỤC AI, KHÔNG CHỌN NĂNG LỰC SỐ:
+- Trong giáo án CHỈ CÓ mục Giáo dục Trí tuệ nhân tạo (QĐ 2422).
+- TIÊU ĐỀ MỤC BẮT BUỘC LÀ: "### 3. Giáo dục Trí tuệ nhân tạo (theo Quyết định 2422/QĐ-BGDĐT)"
+- TUYỆT ĐỐI CẤM ghi "Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)"! CẤM nhắc tới NLS, TT 02/2025 hay mã NLS!` : ''}${!isNlsEnabled && !isAiEnabled ? `🔴 CẢ NLS VÀ AI ĐỀU KHÔNG CHỌN:
+- TUYỆT ĐỐI KHÔNG CÓ MỤC 3 VỀ NLS HAY AI! Chuyển thẳng sang: "### 3. Phẩm chất".` : ''}
 
 **BỘ SÁCH ÁP DỤNG:** DUY NHẤT bộ sách **Kết nối tri thức với cuộc sống**.
 
@@ -877,21 +926,32 @@ ${data.themeName ? `${data.themeName.toUpperCase()}\n` : ''}BÀI: ${data.lessonN
 - Năng lực tự chủ, tự học: (Mô tả hành vi cụ thể học tập độc lập, chủ động).
 - Năng lực giải quyết vấn đề và sáng tạo: (Mô tả hành vi phát hiện và đề xuất giải pháp).
 - Năng lực giao tiếp và hợp tác: (Mô tả hành vi làm việc nhóm, chia sẻ, lắng nghe bạn bè).
-${isNlsEnabled || isAiEnabled ? `### 3. Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)
-- ${
-  isNlsEnabled && isAiEnabled
-    ? 'Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT: NLS 1.1.CB1a) & Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3; 4.C2.3) [Tự động tạo câu mô tả chuẩn chỉ rõ nội dung kiến thức bài học học sinh tra cứu, ứng dụng AI/thiết bị số an toàn, có trách nhiệm, hiểu AI là công cụ hỗ trợ và bảo vệ môi trường học đường/gia đình].'
-    : isNlsEnabled
-    ? 'Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT: NLS 1.1.CB1a) [Tự động tạo câu mô tả chuẩn chỉ rõ nội dung học sinh tra cứu, khai thác dữ liệu, an toàn số phù hợp bài học].'
-    : 'Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3) [Tự động tạo câu mô tả học sinh nhận biết ứng dụng AI, sử dụng AI có đạo đức, con người làm chủ].'
-}
-### 4. Phẩm chất` : `### 3. Phẩm chất`}
+${(() => {
+  if (isNlsEnabled && isAiEnabled) {
+    return `### 3. Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)
+- Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT): ${domainCount === 1 ? `Rèn luyện cho học sinh duy nhất ${selectedDomains[0]} [Gắn mã ${singleDomainPrefix}x... tương ứng. TUYỆT ĐỐI CHỈ XUẤT HIỆN 1 MIỀN NÀY, KHÔNG ĐƯỢC XUẤT HIỆN MIỀN THỨ 2]` : `Rèn luyện cho học sinh các miền đã chọn: ${selectedDomains.join('; ')}`}.
+- Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3): Nhận biết ứng dụng AI ${hasSelectedAiTools ? `minh họa (${suggestedToolsText})` : 'trong học tập và đời sống (không nêu tên công cụ cụ thể)'}, thuộc mạch kiến thức ${aiStrandsText}, con người làm chủ công nghệ.
+### 4. Phẩm chất`;
+  } else if (isNlsEnabled) {
+    return `### 3. Năng lực số (theo Thông tư 02/2025/TT-BGDĐT)
+- Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT): ${domainCount === 1 ? `Rèn luyện cho học sinh duy nhất ${selectedDomains[0]} [Gắn mã ${singleDomainPrefix}x... tương ứng bài học. TUYỆT ĐỐI CHỈ XUẤT HIỆN DUY NHẤT 1 MIỀN NÀY, CẤM XUẤT HIỆN MIỀN THỨ 2]` : `Rèn luyện cho học sinh các miền đã chọn: ${selectedDomains.join('; ')}`}.
+*(CHÚ Ý BẮT BUỘC: Giáo dục AI đang tắt, TUYỆT ĐỐI KHÔNG có dòng nào về AI hay QĐ 2422)*
+### 4. Phẩm chất`;
+  } else if (isAiEnabled) {
+    return `### 3. Giáo dục Trí tuệ nhân tạo (theo Quyết định 2422/QĐ-BGDĐT)
+- Giáo dục Trí tuệ nhân tạo (Mã 4.A1.3): Nhận biết và tìm hiểu về AI ${hasSelectedAiTools ? `qua công cụ (${suggestedToolsText})` : `theo mạch kiến thức ${aiStrandsText}`}, hiểu AI là công cụ hỗ trợ và con người giữ quyền quyết định.${!hasSelectedAiTools ? ' (LƯU Ý: Người dùng KHÔNG chọn công cụ AI cụ thể nào, TUYỆT ĐỐI KHÔNG tự thêm tên công cụ như Canva, AutoDraw...)' : ''}
+*(CHÚ Ý BẮT BUỘC: Năng lực số đang tắt, TUYỆT ĐỐI KHÔNG có dòng nào về NLS hay TT 02/2025)*
+### 4. Phẩm chất`;
+  } else {
+    return `### 3. Phẩm chất`;
+  }
+})()}
 - Phẩm chất yêu nước: Tự hào về truyền thống tốt đẹp của quê hương, đất nước${isQpanEnabled ? `; **Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT)**: (Ghi rõ nội dung học sinh nhận thức về tình yêu quê hương, đất nước, lòng biết ơn người có công, tự hào về Quân đội nhân dân, Công an nhân dân, hoặc ý thức về chủ quyền biển đảo/an ninh trật tự theo bài học)` : '; có ý thức giữ gìn, bảo vệ các giá trị văn hóa và môi trường xung quanh'}.
 - Phẩm chất chăm chỉ: Tích cực tham gia vào các hoạt động học tập, hoàn thành nhiệm vụ được giao.
 - Phẩm chất trách nhiệm: Có ý thức bảo quản thiết bị, đồ dùng học tập; sử dụng công nghệ an toàn; có ý thức chấp hành kỷ luật, nội quy trường lớp và quy định của pháp luật.
 
 ## II. ĐỒ DÙNG DẠY HỌC
-- **Giáo viên chuẩn bị:** Giáo án điện tử PowerPoint, máy tính, máy chiếu, thiết bị dạy học, trò chơi học tập (Quizizz/blooket...)${isAiEnabled ? `, công cụ AI minh họa (theo QĐ 2422/QĐ-BGDĐT: ${suggestedToolsText})` : ''}${isQpanEnabled ? `, tư liệu/hình ảnh/video lồng ghép GDQP&AN (theo TT 08/2024/TT-BGDĐT: ${qpanMethodsText})` : ''}, phiếu học tập.
+- **Giáo viên chuẩn bị:** Giáo án điện tử PowerPoint, máy tính, máy chiếu, thiết bị dạy học, trò chơi học tập (Quizizz/blooket...)${isAiEnabled && hasSelectedAiTools ? `, công cụ AI minh họa (${suggestedToolsText})` : ''}${isQpanEnabled ? `, tư liệu/hình ảnh/video lồng ghép GDQP&AN (theo TT 08/2024/TT-BGDĐT: ${qpanMethodsText})` : ''}, phiếu học tập.
 - **Học sinh chuẩn bị:** Sách giáo khoa Kết nối tri thức với cuộc sống, vở ghi bài, bút, nháp...
 
 ## III. HOẠT ĐỘNG DẠY HỌC
@@ -900,10 +960,30 @@ ${isNlsEnabled || isAiEnabled ? `### 3. Năng lực số & Giáo dục Trí tu�
 | HOẠT ĐỘNG CỦA GIÁO VIÊN | HOẠT ĐỘNG CỦA HỌC SINH |
 | :--- | :--- |
 | **1. Khởi động, kết nối.**<br/>- Ổn định lớp.<br/>- Yêu cầu: Thực hiện trò chơi "Ai nhanh hơn" (hoặc Đố bạn / video tương tác / câu đố). Luật chơi: Trả lời nhanh và đúng các câu hỏi trắc nghiệm đã cho.<br/>- GV nhận xét, tuyên dương, dẫn dắt vào bài mới. | - HS báo cáo sĩ số lớp.<br/>- HS tham gia trò chơi, trả lời câu hỏi.<br/>- HS chú ý lắng nghe. |
-| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1]**<br/>- GV giới thiệu nội dung bài tập / chia sẻ tranh ảnh, video / nêu câu hỏi cho học sinh thảo luận nhóm...<br/>${isNlsEnabled || isAiEnabled ? `*(Tích hợp ${isNlsEnabled ? 'NLS TT 02/2025: NLS 1.1.CB1a' : ''}${isNlsEnabled && isAiEnabled ? ' & ' : ''}${isAiEnabled ? 'Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.A1.3' : ''}: HS tìm kiếm, nhận biết ứng dụng công nghệ/AI...)*<br/>` : ''}- GV nhận xét tuyên dương, chốt kiến thức: ... | - HS chú ý quan sát tranh/video.<br/>- HS thảo luận nhóm làm bài tập vào phiếu bài tập.<br/>- Đại diện các nhóm báo cáo kết quả thảo luận.<br/>- HS khác nhận xét, bổ sung.<br/>- Lắng nghe rút kinh nghiệm. |
+| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1]**<br/>- GV giới thiệu nội dung bài tập / chia sẻ tranh ảnh, video / nêu câu hỏi cho học sinh thảo luận nhóm...<br/>${(() => {
+  if (isNlsEnabled && isAiEnabled) {
+    return `*(Tích hợp NLS TT 02/2025 [${domainCount === 1 ? selectedDomains[0] : 'các miền NLS đã chọn'}] & Giáo dục AI QĐ 2422: HS khai thác dữ liệu số và làm quen ứng dụng AI)*<br/>`;
+  } else if (isNlsEnabled) {
+    return `*(Tích hợp NLS TT 02/2025: HS tìm kiếm, khai thác dữ liệu theo ${domainCount === 1 ? `duy nhất ${selectedDomains[0]}` : 'các miền đã chọn'}. Tuyệt đối không lồng ghép AI)*<br/>`;
+  } else if (isAiEnabled) {
+    return `*(Tích hợp Giáo dục AI QĐ 2422: HS nhận biết và quan sát công cụ AI hỗ trợ theo mạch ${aiStrandsText}. Tuyệt đối không đưa mã NLS)*<br/>`;
+  } else {
+    return '';
+  }
+})()}- GV nhận xét tuyên dương, chốt kiến thức: ... | - HS chú ý quan sát tranh/video.<br/>- HS thảo luận nhóm làm bài tập vào phiếu bài tập.<br/>- Đại diện các nhóm báo cáo kết quả thảo luận.<br/>- HS khác nhận xét, bổ sung.<br/>- Lắng nghe rút kinh nghiệm. |
 | **2.2. [Tên hoạt động khám phá 2]**<br/>- GV nêu câu hỏi / nhiệm vụ tìm hiểu tiếp theo mở rộng kiến thức...<br/>${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo Thông tư 08/2024/TT-BGDĐT: GV khéo léo liên hệ nội dung bài học với truyền thống yêu nước, hình ảnh bộ đội, công an, bảo vệ an ninh trật tự, chủ quyền biển đảo hoặc ý thức giữ gìn kỷ luật học đường...)*<br/>` : ''}- GV nhận xét chung, tuyên dương và chốt kiến thức: ... | - HS đọc yêu cầu bài, quan sát và suy nghĩ.<br/>- HS thảo luận và trả lời câu hỏi.<br/>- Đại diện trình bày, nhóm khác nhận xét.<br/>- HS lắng nghe, tự hào và chốt nội dung. |
 | **3. Luyện tập**<br/>- GV hướng dẫn học sinh làm bài tập ... trong SGK Kết nối tri thức.<br/>- Yêu cầu học sinh làm việc cá nhân / nhóm đôi để hoàn thành.<br/>- GV quan sát, giúp đỡ học sinh gặp khó khăn.<br/>- GV nhận xét tuyên dương học sinh làm tốt. | - HS nghe hướng dẫn của giáo viên làm bài tập.<br/>- HS thực hành làm bài tập vào vở hoặc phiếu bài tập.<br/>- Một số HS trình bày trước lớp.<br/>- HS khác nhận xét bài làm của bạn. |
-| **4. Vận dụng**<br/>- GV giao nhiệm vụ vận dụng thực tế đời sống...<br/>${isNlsEnabled || isAiEnabled ? `*(Tích hợp ${isNlsEnabled ? 'NLS TT 02/2025' : ''}${isNlsEnabled && isAiEnabled ? ' & ' : ''}${isAiEnabled ? 'Giáo dục AI QĐ 2422/QĐ-BGDĐT: 4.C2.3' : ''}: Hướng dẫn HS tra cứu/chia sẻ kiến thức, áp dụng AI an toàn, đạo đức và trách nhiệm, kiểm chứng thông tin, bảo vệ môi trường, ứng dụng vào gia đình/trường học...)*<br/>` : ''}${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo TT 08/2024: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước...)*<br/>` : ''}- GV nhận xét tiết dạy, tuyên dương tinh thần học tập.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng.<br/>- HS chia sẻ với bạn về hiểu biết và ý tưởng thực tế.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
+| **4. Vận dụng**<br/>- GV giao nhiệm vụ vận dụng thực tế đời sống...<br/>${(() => {
+  if (isNlsEnabled && isAiEnabled) {
+    return `*(Tích hợp NLS TT 02/2025 & Giáo dục AI QĐ 2422: Hướng dẫn HS chia sẻ sản phẩm số, ứng dụng công nghệ/AI có đạo đức và trách nhiệm)*<br/>`;
+  } else if (isNlsEnabled) {
+    return `*(Tích hợp NLS TT 02/2025: Hướng dẫn HS ứng dụng công nghệ số an toàn theo ${domainCount === 1 ? `duy nhất ${selectedDomains[0]}` : 'các miền đã chọn'}. Tuyệt đối không lồng ghép AI)*<br/>`;
+  } else if (isAiEnabled) {
+    return `*(Tích hợp Giáo dục AI QĐ 2422: Hướng dẫn HS áp dụng AI an toàn, con người làm chủ, tuân thủ đạo đức học đường. Tuyệt đối không lồng ghép mã NLS)*<br/>`;
+  } else {
+    return '';
+  }
+})()}${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo TT 08/2024: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước...)*<br/>` : ''}- GV nhận xét tiết dạy, tuyên dương tinh thần học tập.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng.<br/>- HS chia sẻ với bạn về hiểu biết và ý tưởng thực tế.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
 
 ## IV. ĐIỀU CHỈNH SAU BÀI DẠY:
 .....................................................................................................................................
@@ -1007,7 +1087,7 @@ ${isEnglishSubject(formData.subject) ? `4. QUY ĐỊNH CHO MÔN TIẾNG ANH (ENG
 - TRƯỜNG: ${formData.schoolName || 'Trường học'}
 - BỘ SÁCH: Kết nối tri thức với cuộc sống
 - THỜI LƯỢNG: ${formData.durationInPeriods || 1} tiết
-- NĂNG LỰC SỐ & GIÁO DỤC AI: Thông tư 02/2025/TT-BGDĐT & Quyết định 2422/QĐ-BGDĐT (${(formData.digitalDomains || []).join(', ') || 'Khai thác dữ liệu, an toàn số, ứng dụng AI có đạo đức'})
+${(formData.integrateNls ?? formData.integrateDigitalCompetence) && formData.digitalDomains && formData.digitalDomains.length > 0 ? `- NĂNG LỰC SỐ: Thông tư 02/2025/TT-BGDĐT (${formData.digitalDomains.join(', ')})\n` : ''}${formData.integrateAi2422 && formData.aiStrands && formData.aiStrands.length > 0 ? `- GIÁO DỤC AI: Quyết định 2422/QĐ-BGDĐT (${formData.aiStrands.join(', ')})\n` : ''}${formData.integrateQpan08 && formData.qpanThemes && formData.qpanThemes.length > 0 ? `- LỒNG GHÉP GDQP&AN: Thông tư 08/2024/TT-BGDĐT (${formData.qpanThemes.join(', ')})\n` : ''}
 
 NỘI DUNG KẾ HOẠCH BÀI DẠY (GIÁO ÁN GỐC):
 """

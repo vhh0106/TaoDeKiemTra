@@ -184,9 +184,19 @@ const LessonPlanHistoryModal: React.FC<LessonPlanHistoryModalProps> = ({
                         <span className="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 rounded-md text-xs font-medium">
                           {formData.durationInPeriods} tiết
                         </span>
-                        {formData.integrateDigitalCompetence && (
+                        {(formData.integrateNls ?? formData.integrateDigitalCompetence) && (formData.digitalDomains || []).length > 0 && (
                           <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-md text-[11px] font-semibold">
-                            Tích hợp NLS
+                            NLS TT 02
+                          </span>
+                        )}
+                        {formData.integrateAi2422 && (formData.aiStrands || []).length > 0 && (
+                          <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-md text-[11px] font-semibold">
+                            AI QĐ 2422
+                          </span>
+                        )}
+                        {formData.integrateQpan08 && (formData.qpanThemes || []).length > 0 && (
+                          <span className="px-2 py-0.5 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-md text-[11px] font-semibold">
+                            GDQP-AN TT 08
                           </span>
                         )}
                       </div>

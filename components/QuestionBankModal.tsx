@@ -8,6 +8,7 @@ import {
   cloneQuestionInBank,
   type BankQuestionItem,
 } from '../services/questionBankService';
+import { renderMathInHtml } from '../services/mathRenderer';
 
 interface QuestionBankModalProps {
   isOpen: boolean;
@@ -331,9 +332,10 @@ const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                   </div>
 
                   {/* Nội dung câu hỏi */}
-                  <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">
-                    {q.question}
-                  </p>
+                  <p
+                    className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.question) }}
+                  />
 
                   {/* Phương án lựa chọn */}
                   {isMcq && q.options && (
@@ -351,7 +353,7 @@ const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                             }`}
                           >
                             <span>{isCorrect ? '✅' : '⚪'}</span>
-                            <span>{opt}</span>
+                            <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }} />
                           </div>
                         );
                       })}
@@ -362,7 +364,7 @@ const QuestionBankModal: React.FC<QuestionBankModalProps> = ({
                   {q.explanation && (
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-850 text-xs text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800">
                       <span className="font-bold text-indigo-700 dark:text-indigo-400">💡 Lời giải/Gợi ý chấm: </span>
-                      {q.explanation}
+                      <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(q.explanation) }} />
                     </div>
                   )}
                 </div>

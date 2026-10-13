@@ -375,20 +375,33 @@ const Footer: React.FC<{ visits: number; clicks: number; onOpenFeedback: () => v
 );
 
 /* ---------------------- Loading Indicator ---------------------- */
-const LoadingIndicator: React.FC<{ onCancel: () => void; isLessonPlan?: boolean; isQpanEnabled?: boolean }> = ({
+const LoadingIndicator: React.FC<{
+  onCancel: () => void;
+  isLessonPlan?: boolean;
+  isQpanEnabled?: boolean;
+  isNlsEnabled?: boolean;
+  isAiEnabled?: boolean;
+}> = ({
   onCancel,
   isLessonPlan,
-  isQpanEnabled = true,
+  isQpanEnabled = false,
+  isNlsEnabled = false,
+  isAiEnabled = false,
 }) => {
   const steps = isLessonPlan
     ? [
         { text: 'Đang gửi thông tin bài dạy đến AI...', duration: 1500, progress: 10 },
-        { text: 'AI đang phân tích mục tiêu & yêu cầu cần đạt...', duration: 6000, progress: 30 },
-        { text: 'Đang thiết lập năng lực & phẩm chất học sinh...', duration: 6000, progress: 55 },
+        { text: 'AI đang phân tích mục tiêu & yêu cầu cần đạt...', duration: 5000, progress: 28 },
+        isNlsEnabled
+          ? { text: 'Đang chuẩn hóa bộ mã Năng lực số (TT 02/2025/TT-BGDĐT)...', duration: 4500, progress: 45 }
+          : { text: 'Đang thiết lập năng lực chung & năng lực đặc thù...', duration: 4500, progress: 45 },
+        isAiEnabled
+          ? { text: 'Đang tích hợp Giáo dục Trí tuệ nhân tạo (QĐ 2422/QĐ-BGDĐT)...', duration: 4500, progress: 62 }
+          : { text: 'Đang thiết kế tiến trình sư phạm...', duration: 4500, progress: 62 },
         isQpanEnabled
-          ? { text: 'Đang lồng ghép GDQP&AN theo Thông tư số 08/2024/TT-BGDĐT...', duration: 6000, progress: 75 }
-          : { text: 'Đang thiết kế đồ dùng & tiến trình sư phạm...', duration: 6000, progress: 75 },
-        { text: 'AI đang soạn tiến trình 4 hoạt động dạy học...', duration: 7000, progress: 92 },
+          ? { text: 'Đang lồng ghép GDQP&AN theo Thông tư số 08/2024/TT-BGDĐT...', duration: 5000, progress: 78 }
+          : { text: 'Đang thiết kế đồ dùng dạy học trực quan...', duration: 5000, progress: 78 },
+        { text: 'AI đang soạn tiến trình 4 hoạt động dạy học...', duration: 6000, progress: 92 },
         { text: 'Đang hoàn thiện kế hoạch bài dạy...', duration: 2500, progress: 100 },
       ]
     : [
@@ -580,20 +593,16 @@ const App: React.FC = () => {
     teacherName: '',
     knowledgeContent: 'Nhận biết chức năng của phần cứng và phần mềm máy tính; mối quan hệ giữa phần cứng và phần mềm.',
     integrateDigitalCompetence: true,
+    integrateNls: true,
     digitalDomains: [
-      'Miền 1: Khai thác dữ liệu và thông tin',
-      'Miền 4: An toàn số',
-      'Miền 6: Ứng dụng Trí tuệ nhân tạo (AI)'
+      'Miền 1: Khai thác dữ liệu và thông tin'
     ],
-    integrateAi2422: true,
-    aiStrands: [
-      'Mạch A: Tư duy lấy con người làm trung tâm (Human-centred mindset)',
-      'Mạch C: Kỹ thuật và Ứng dụng AI (AI Techniques & Applications)'
-    ],
-    suggestedAiTools: ['AutoDraw / Quick, Draw!', 'Canva Magic Studio (Edu)'],
-    integrateQpan08: true,
-    qpanThemes: ['Bản đồ hành chính Việt Nam & Chủ quyền Hoàng Sa, Trường Sa'],
-    qpanMethods: ['Quan sát tranh ảnh, bản đồ chủ quyền & Video tư liệu'],
+    integrateAi2422: false,
+    aiStrands: [],
+    suggestedAiTools: [],
+    integrateQpan08: false,
+    qpanThemes: [],
+    qpanMethods: [],
     pedagogicalMethod: 'Dạy học khám phá và giải quyết vấn đề',
     additionalRequirements: 'Có trò chơi tương tác khởi động, tích hợp câu hỏi liên hệ thực tế.',
   });
@@ -1046,10 +1055,23 @@ const App: React.FC = () => {
                   <LoadingIndicator
                     onCancel={handleCancelLoading}
                     isLessonPlan
+                    isNlsEnabled={
+                      Boolean(
+                        (lessonPlanFormData.integrateNls ?? lessonPlanFormData.integrateDigitalCompetence) &&
+                        (lessonPlanFormData.digitalDomains || []).length > 0
+                      )
+                    }
+                    isAiEnabled={
+                      Boolean(
+                        lessonPlanFormData.integrateAi2422 &&
+                        (lessonPlanFormData.aiStrands || []).length > 0
+                      )
+                    }
                     isQpanEnabled={
-                      lessonPlanFormData.integrateDigitalCompetence &&
-                      lessonPlanFormData.integrateQpan08 !== false &&
-                      (lessonPlanFormData.qpanThemes || []).length > 0
+                      Boolean(
+                        lessonPlanFormData.integrateQpan08 &&
+                        (lessonPlanFormData.qpanThemes || []).length > 0
+                      )
                     }
                   />
                 )}

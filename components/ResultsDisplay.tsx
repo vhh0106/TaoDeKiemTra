@@ -6,6 +6,7 @@ import QualityCheckModal from './QualityCheckModal';
 import RichTextEditor, { isHtmlContent } from './RichTextEditor';
 import { saveMultipleQuestionsToBank } from '../services/questionBankService';
 import { extractQuestionsFromExam } from '../services/qualityCheckerService';
+import { renderMathInHtml, renderMathForWordExport } from '../services/mathRenderer';
 
 declare const JSZip: any;
 
@@ -56,12 +57,13 @@ const parseMarkdownTable = (content: string): ParsedTable | null => {
 
 const convertContentToHtml = (content: string): string => {
     if (!content) return '';
-    if (isHtmlContent(content)) {
-        return `<div style="font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${content}</div>`;
+    const wordSafeContent = renderMathForWordExport(content);
+    if (isHtmlContent(wordSafeContent)) {
+        return `<div style="font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${wordSafeContent}</div>`;
     }
-    const parsedTable = parseMarkdownTable(content);
+    const parsedTable = parseMarkdownTable(wordSafeContent);
     if (!parsedTable) {
-        return `<div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${content.replace(/\n/g, '<br>')}</div>`;
+        return `<div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; color: #000;">${wordSafeContent.replace(/\n/g, '<br>')}</div>`;
     }
     const { headers, rows } = parsedTable;
     let html = '<table border="1" style="border-collapse: collapse; width: 100%; font-family: \'Times New Roman\', serif; font-size: 12pt;">';
@@ -94,7 +96,7 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
         return (
             <div 
                 className="font-serif text-slate-800 dark:text-slate-100 text-sm sm:text-base leading-relaxed bg-white dark:bg-slate-900 select-text transition-colors p-2"
-                dangerouslySetInnerHTML={{ __html: content }}
+                dangerouslySetInnerHTML={{ __html: renderMathInHtml(content) }}
             />
         );
     }
@@ -128,7 +130,7 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                                 className="mt-4 mb-2 p-2 sm:p-2.5 bg-indigo-50/90 dark:bg-slate-800/90 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 font-bold text-xs sm:text-sm md:text-base text-indigo-950 dark:text-indigo-200 flex items-center gap-2"
                             >
                                 <span className="p-1 bg-indigo-600 text-white rounded-md text-[10px] sm:text-xs">📌</span>
-                                <span className="break-words">{cleanHeading}</span>
+                                <span className="break-words" dangerouslySetInnerHTML={{ __html: renderMathInHtml(cleanHeading) }} />
                             </div>
                         );
                     }
@@ -140,7 +142,7 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                                 key={idx}
                                 className="mt-3 pt-2 font-bold text-xs sm:text-sm md:text-base text-indigo-900 dark:text-indigo-300 border-t border-slate-100 dark:border-slate-800 flex items-start gap-1.5"
                             >
-                                <span className="break-words leading-relaxed">{trimmed}</span>
+                                <span className="break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMathInHtml(trimmed) }} />
                             </div>
                         );
                     }
@@ -157,15 +159,13 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-bold text-[11px] shrink-0 mt-0.5">
                                     {optLetter}
                                 </span>
-                                <span className="break-words leading-relaxed">{optText}</span>
+                                <span className="break-words leading-relaxed" dangerouslySetInnerHTML={{ __html: renderMathInHtml(optText) }} />
                             </div>
                         );
                     }
 
                     return (
-                        <p key={idx} className="my-0.5 leading-relaxed break-words text-slate-700 dark:text-slate-300">
-                            {trimmed}
-                        </p>
+                        <p key={idx} className="my-0.5 leading-relaxed break-words text-slate-700 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: renderMathInHtml(trimmed) }} />
                     );
                 })}
             </div>
@@ -185,9 +185,7 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                     <thead className="bg-slate-100/90 dark:bg-slate-800/90 sticky top-0">
                         <tr>
                             {headers.map((cell, cellIndex) => (
-                                <th key={cellIndex} scope="col" className="p-2 sm:p-3 text-left font-bold text-slate-800 dark:text-slate-100 border-b-2 border-slate-300 dark:border-slate-700 align-top">
-                                    {cell}
-                                </th>
+                                <th key={cellIndex} scope="col" className="p-2 sm:p-3 text-left font-bold text-slate-800 dark:text-slate-100 border-b-2 border-slate-300 dark:border-slate-700 align-top" dangerouslySetInnerHTML={{ __html: renderMathInHtml(cell) }} />
                             ))}
                         </tr>
                     </thead>
@@ -195,9 +193,7 @@ const ContentRenderer: React.FC<{ content: string }> = ({ content }) => {
                         {rows.map((row, rowIndex) => (
                              <tr key={rowIndex} className="even:bg-white dark:even:bg-slate-900 odd:bg-slate-50/70 dark:odd:bg-slate-850/60 hover:bg-indigo-50/60 dark:hover:bg-slate-800/80 transition-colors">
                                 {row.map((cell, cellIndex) => (
-                                    <td key={cellIndex} className="p-2 sm:p-3 border-t border-slate-200 dark:border-slate-800 align-top whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed break-words">
-                                        {cell}
-                                    </td>
+                                    <td key={cellIndex} className="p-2 sm:p-3 border-t border-slate-200 dark:border-slate-800 align-top whitespace-pre-wrap text-slate-700 dark:text-slate-300 leading-relaxed break-words" dangerouslySetInnerHTML={{ __html: renderMathInHtml(cell) }} />
                                 ))}
                                 {row.length < headers.length && Array.from({ length: headers.length - row.length }).map((_, i) => 
                                     <td key={`pad-${rowIndex}-${i}`} className="p-2 sm:p-3 border-t border-slate-200 dark:border-slate-800 align-top"></td>

@@ -182,7 +182,7 @@ export async function exportTeachingSlidesToPowerPoint(
       });
 
       // Thông tin bộ sách & định hướng
-      slide.addText('Bộ sách: Kết nối tri thức với cuộc sống • Tích hợp Khung năng lực số (TT 02/2025)', {
+      slide.addText('Bộ sách: Kết nối tri thức với cuộc sống • Chương trình GDPT 2018', {
         x: 0.8,
         y: 3.9,
         w: 11.5,

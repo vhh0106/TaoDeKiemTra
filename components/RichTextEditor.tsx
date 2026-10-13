@@ -153,6 +153,28 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [fontSize, setFontSize] = useState('3'); // 3 = 12pt in browser execCommand
   const [textColor, setTextColor] = useState('#000000');
   const [highlightColor, setHighlightColor] = useState('transparent');
+  const [showMathPalette, setShowMathPalette] = useState(false);
+
+  const insertMathSymbol = (sym: string) => {
+    executeCommand('insertText', sym);
+  };
+
+  const insertVerticalFraction = () => {
+    const fractionHtml = '<span style="display:inline-block; vertical-align:middle; text-align:center; margin:0 3px; font-family:\'Cambria Math\', serif;"><span style="display:block; border-bottom:1px solid currentColor; padding:0 3px; font-size:10pt;">a</span><span style="display:block; padding:0 3px; font-size:10pt;">b</span></span>&nbsp;';
+    executeCommand('insertHTML', fractionHtml);
+    setShowMathPalette(false);
+  };
+
+  const insertSquareRoot = () => {
+    const sqrtHtml = '√<span style="border-top:1px solid currentColor; padding-top:1px; margin-right:2px;">x</span>&nbsp;';
+    executeCommand('insertHTML', sqrtHtml);
+    setShowMathPalette(false);
+  };
+
+  const insertLatexTemplate = () => {
+    executeCommand('insertText', '$x^2 + 2x + 1 = 0$');
+    setShowMathPalette(false);
+  };
 
   const updateStats = useCallback(() => {
     if (!editorRef.current) return;
@@ -344,8 +366,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           </button>
         </div>
 
-        {/* Superscript / Subscript (Toán & Hóa học: x², H₂O) */}
-        <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 shadow-2xs">
+        {/* Superscript / Subscript (Toán & Hóa học: x², H₂O) & Math Symbols */}
+        <div className="relative flex items-center bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 shadow-2xs">
           <button
             type="button"
             onClick={() => executeCommand('superscript')}
@@ -362,6 +384,80 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             x₂
           </button>
+          <button
+            type="button"
+            onClick={() => setShowMathPalette(!showMathPalette)}
+            className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-0.5 cursor-pointer transition ${
+              showMathPalette
+                ? 'bg-indigo-600 text-white'
+                : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-400'
+            }`}
+            title="Chèn công thức toán & ký hiệu"
+          >
+            <span>∑</span>
+            <span>fx</span>
+          </button>
+
+          {/* Math Symbols & Formulas Popover */}
+          {showMathPalette && (
+            <div className="absolute top-full left-0 mt-1 z-30 w-72 sm:w-80 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-xl text-xs space-y-2.5 animate-scale-in">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-1.5 font-bold text-slate-800 dark:text-slate-200">
+                <span>📐 Chèn ký hiệu & Công thức toán</span>
+                <button
+                  type="button"
+                  onClick={() => setShowMathPalette(false)}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Quick Math Symbols Grid */}
+              <div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-semibold">Ký hiệu thông dụng:</p>
+                <div className="grid grid-cols-8 gap-1 text-center">
+                  {['×', '÷', '±', '∓', '√', '≤', '≥', '≠', '≈', '°', 'π', '∞', 'Δ', 'α', 'β', 'γ', 'θ', '∠', '⊥', '∥', '½', '⅓', '¼', '¾'].map((sym) => (
+                    <button
+                      key={sym}
+                      type="button"
+                      onClick={() => insertMathSymbol(sym)}
+                      className="p-1 rounded bg-slate-50 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 font-semibold text-slate-800 dark:text-slate-200 hover:text-indigo-700 cursor-pointer text-sm"
+                    >
+                      {sym}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formula Templates */}
+              <div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 font-semibold">Mẫu công thức:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={insertVerticalFraction}
+                    className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold cursor-pointer"
+                  >
+                    Phân số a/b
+                  </button>
+                  <button
+                    type="button"
+                    onClick={insertSquareRoot}
+                    className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-semibold cursor-pointer"
+                  >
+                    Căn thức √x
+                  </button>
+                  <button
+                    type="button"
+                    onClick={insertLatexTemplate}
+                    className="px-2 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-semibold cursor-pointer"
+                  >
+                    LaTeX: $x^2 + 2x + 1 = 0$
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Text Color / Highlight */}

@@ -9,6 +9,7 @@ import {
   exportTeachingSlidesToPowerPoint,
   type PresentationTheme,
 } from '../services/pptExportService';
+import { renderMathInHtml } from '../services/mathRenderer';
 
 interface TeachingSlidesModalProps {
   isOpen: boolean;
@@ -368,7 +369,7 @@ const TeachingSlidesModal: React.FC<TeachingSlidesModalProps> = ({
                       <div className="p-3 sm:p-4 bg-white/95 dark:bg-slate-800/95 rounded-xl sm:rounded-2xl border border-purple-200 dark:border-purple-800 shadow-xs">
                         <h3 className="text-sm sm:text-lg font-bold text-purple-950 dark:text-purple-200 flex items-start gap-2">
                           <span className="shrink-0 text-purple-600 dark:text-purple-400">❓</span>
-                          <span>{currentSlide.question || currentSlide.title}</span>
+                          <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(currentSlide.question || currentSlide.title) }} />
                         </h3>
                       </div>
 
@@ -382,9 +383,8 @@ const TeachingSlidesModal: React.FC<TeachingSlidesModalProps> = ({
                                 ? 'bg-emerald-100/90 dark:bg-emerald-950/80 border-emerald-500 text-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-400 font-bold'
                                 : 'bg-white/90 dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-indigo-300 dark:hover:border-indigo-600'
                             }`}
-                          >
-                            {opt}
-                          </div>
+                            dangerouslySetInnerHTML={{ __html: renderMathInHtml(opt) }}
+                          />
                         ))}
                       </div>
 
@@ -392,23 +392,25 @@ const TeachingSlidesModal: React.FC<TeachingSlidesModalProps> = ({
                       <div className="flex items-center justify-between pt-1">
                         <button
                           onClick={() => setRevealedQuizAnswer(!revealedQuizAnswer)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-2xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer"
                         >
                           <span>{revealedQuizAnswer ? '🙈 Ẩn đáp án' : '👁️ Xem đáp án & Giải thích'}</span>
                         </button>
 
                         {revealedQuizAnswer && currentSlide.explanation && (
                           <div className="text-xs sm:text-sm font-semibold text-purple-900 dark:text-purple-200 bg-purple-100/80 dark:bg-purple-950/80 px-3 py-1 rounded-lg border border-purple-200 dark:border-purple-800 animate-scale-in">
-                            🎉 Đáp án {currentSlide.correctAnswer}: {currentSlide.explanation}
+                            <span>🎉 Đáp án {currentSlide.correctAnswer}: </span>
+                            <span dangerouslySetInnerHTML={{ __html: renderMathInHtml(currentSlide.explanation) }} />
                           </div>
                         )}
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2.5 sm:space-y-3.5">
-                      <h2 className="text-base sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
-                        {currentSlide.title}
-                      </h2>
+                      <h2
+                        className="text-base sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100"
+                        dangerouslySetInnerHTML={{ __html: renderMathInHtml(currentSlide.title) }}
+                      />
 
                       {/* Bullets Card */}
                       {currentSlide.bullets && currentSlide.bullets.length > 0 && (
@@ -416,7 +418,7 @@ const TeachingSlidesModal: React.FC<TeachingSlidesModalProps> = ({
                           {currentSlide.bullets.map((b, bIdx) => (
                             <div key={bIdx} className="flex items-start gap-2 sm:gap-2.5 text-xs sm:text-sm md:text-base text-slate-800 dark:text-slate-200 leading-relaxed">
                               <span className="text-indigo-600 dark:text-indigo-400 font-bold shrink-0 mt-0.5">•</span>
-                              <span className="break-words">{b}</span>
+                              <span className="break-words" dangerouslySetInnerHTML={{ __html: renderMathInHtml(b) }} />
                             </div>
                           ))}
                         </div>
@@ -426,7 +428,7 @@ const TeachingSlidesModal: React.FC<TeachingSlidesModalProps> = ({
                       {currentSlide.highlightBox && (
                         <div className="p-2.5 sm:p-3 bg-amber-100/80 dark:bg-amber-950/60 rounded-xl border border-amber-300 dark:border-amber-800 text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200 flex items-start gap-2 shadow-2xs">
                           <span className="shrink-0 text-base">💡</span>
-                          <span className="leading-snug">{currentSlide.highlightBox}</span>
+                          <span className="leading-snug" dangerouslySetInnerHTML={{ __html: renderMathInHtml(currentSlide.highlightBox) }} />
                         </div>
                       )}
                     </div>

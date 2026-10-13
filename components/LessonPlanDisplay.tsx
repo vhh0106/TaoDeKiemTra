@@ -4,6 +4,7 @@ import { isEnglishSubject } from '../constants';
 import WorksheetRubricModal from './WorksheetRubricModal';
 import TeachingSlidesModal from './TeachingSlidesModal';
 import RichTextEditor, { isHtmlContent } from './RichTextEditor';
+import { renderMathInHtml, renderMathForWordExport } from '../services/mathRenderer';
 
 interface LessonPlanDisplayProps {
   content: string;
@@ -15,7 +16,8 @@ interface LessonPlanDisplayProps {
 // Convert markdown text + tables into professional HTML for Word export (.doc)
 const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormData): string => {
   if (!content) return '';
-  if (isHtmlContent(content)) {
+  const wordSafeContent = renderMathForWordExport(content);
+  if (isHtmlContent(wordSafeContent)) {
     return `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -30,13 +32,13 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
         </style>
       </head>
       <body>
-        ${content}
+        ${wordSafeContent}
       </body>
       </html>
     `;
   }
 
-  const lines = content.split('\n');
+  const lines = wordSafeContent.split('\n');
   let html = '';
   let inTable = false;
   let tableRows: string[][] = [];
@@ -148,7 +150,7 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
     return (
       <div 
         className="font-serif text-slate-800 dark:text-slate-100 text-sm sm:text-base leading-relaxed bg-white dark:bg-slate-900 select-text transition-colors p-2"
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: renderMathInHtml(content) }}
       />
     );
   }
@@ -161,7 +163,7 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
   let tableRows: string[][] = [];
 
   const formatText = (text: string) => {
-    return text
+    const formatted = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/(NLS\s+[0-9a-zA-Z\.\-]+)/g, '<span class="inline-block bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
@@ -170,6 +172,7 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
       .replace(/(Thông tư\s*(?:số\s*)?08\/2024(?:\/TT-BGDĐT)?)/g, '<span class="inline-block bg-red-100 dark:bg-red-950/70 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
       .replace(/(Lồng ghép GDQP&AN[^\.\:\;\*]*)/g, '<span class="inline-block bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-sans text-[11px] px-1.5 py-0.5 rounded font-semibold">$1</span>')
       .replace(/(QPAN\s+\d+\.\d+)/g, '<span class="inline-block bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>');
+    return renderMathInHtml(formatted);
   };
 
   const flushTable = (keyPrefix: number) => {
@@ -196,9 +199,8 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
                       className={`p-2.5 sm:p-3 text-left font-bold text-slate-800 dark:text-slate-200 border-r last:border-r-0 border-slate-300 dark:border-slate-700 ${
                         hIdx === 0 ? 'w-[52%]' : 'w-[48%]'
                       }`}
-                    >
-                      {header}
-                    </th>
+                      dangerouslySetInnerHTML={{ __html: renderMathInHtml(header) }}
+                    />
                   ))}
                 </tr>
               </thead>
@@ -580,9 +582,30 @@ const LessonPlanDisplay: React.FC<LessonPlanDisplayProps> = ({
             <p className="font-semibold text-slate-700 dark:text-slate-300">
               Kế hoạch bài dạy chuẩn hóa theo mẫu văn bản thực tế Bộ GD&amp;ĐT • Bộ sách Kết nối tri thức với cuộc sống
             </p>
-            <p className="mt-0.5">
-              Tích hợp Khung năng lực số (Thông tư 02/2025/TT-BGDĐT, Công văn 3456/BGDĐT-GDPT) &amp; Tích hợp AI có gắn mã chuẩn
-            </p>
+            {(() => {
+              const activeIntegrations: string[] = [];
+              if ((formData.integrateNls ?? formData.integrateDigitalCompetence) && formData.digitalDomains && formData.digitalDomains.length > 0) {
+                activeIntegrations.push('Khung năng lực số (TT 02/2025/TT-BGDĐT)');
+              }
+              if (formData.integrateAi2422 && formData.aiStrands && formData.aiStrands.length > 0) {
+                activeIntegrations.push('Giáo dục AI (QĐ 2422/QĐ-BGDĐT)');
+              }
+              if (formData.integrateQpan08 && formData.qpanThemes && formData.qpanThemes.length > 0) {
+                activeIntegrations.push('Lồng ghép GDQP&AN (TT 08/2024/TT-BGDĐT)');
+              }
+              if (activeIntegrations.length > 0) {
+                return (
+                  <p className="mt-0.5 text-emerald-700 dark:text-emerald-400 font-medium">
+                    Tích hợp: {activeIntegrations.join(' • ')}
+                  </p>
+                );
+              }
+              return (
+                <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                  Tiến trình sư phạm chuẩn theo Chương trình GDPT 2018
+                </p>
+              );
+            })()}
           </div>
         </div>
       )}
