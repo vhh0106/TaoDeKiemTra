@@ -21,7 +21,7 @@ async function generateLessonPlanClientDirect(data: LessonPlanFormData, apiKey: 
       ? 'You are an expert Vietnamese primary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 2345/BGDĐT-GDTH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.'
       : 'You are an expert Vietnamese secondary education pedagogical specialist AI creating comprehensive lesson plans adhering strictly to Official Dispatch 5512/BGDĐT-GDTrH and Digital Competence Framework Circular 02/2025/TT-BGDĐT.';
 
-  const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
 
   let lastError: any = null;
   for (const model of models) {
@@ -89,7 +89,7 @@ async function generateLessonPlanClientDirect(data: LessonPlanFormData, apiKey: 
 
 export const generateLessonPlan = async (data: LessonPlanFormData): Promise<string> => {
   try {
-    // 1. Nếu đang chạy trên máy chủ tĩnh (GitHub Pages), không gọi /api/ vì chắc chắn sẽ bị 405 Method Not Allowed
+    // 1. Nếu đang chạy trên máy chủ tĩnh (GitHub Pages), trực tiếp gọi client direct
     if (isStaticHosting()) {
       const apiKey = ensureClientApiKey();
       if (!apiKey) {
@@ -102,39 +102,74 @@ export const generateLessonPlan = async (data: LessonPlanFormData): Promise<stri
 
     // 2. Chạy trên môi trường server thông thường (Node/Cloud Run)
     let response: Response | null = null;
+    let responseText = '';
+    let isJson = false;
+
     try {
       response = await fetch('/api/generate-lesson-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ data }),
       });
-    } catch (netErr) {
-      console.warn('Network error calling /api/generate-lesson-plan, falling back to client mode if key exists', netErr);
-    }
 
-    if (response && response.ok) {
-      const json = await response.json();
-      if (json.text) return json.text;
-    }
-
-    // Nếu server trả về 404 hoặc 405 (không có endpoint POST), thử fallback qua client key
-    if (!response || response.status === 404 || response.status === 405 || response.status === 501) {
-      const apiKey = ensureClientApiKey();
-      if (apiKey) {
-        return await generateLessonPlanClientDirect(data, apiKey);
+      if (response) {
+        const contentType = response.headers.get('content-type') || '';
+        responseText = await response.text();
+        isJson =
+          contentType.includes('application/json') ||
+          (responseText.trim().startsWith('{') && responseText.trim().endsWith('}'));
       }
-      throw new Error(
-        'Máy chủ không hỗ trợ endpoint /api/generate-lesson-plan (Lỗi ' + (response?.status || 'kết nối') + '). Vui lòng kiểm tra lại cấu hình server hoặc cung cấp Gemini API Key.'
-      );
+    } catch (netErr) {
+      console.warn('Network error calling /api/generate-lesson-plan:', netErr);
     }
 
-    // Nếu server trả về lỗi nghiệp vụ có thông điệp
-    const errData = await response.json().catch(() => null);
-    throw new Error(errData?.error || `Lỗi máy chủ (${response.status})`);
+    // Trường hợp server phản hồi thành công và trả về JSON hợp lệ
+    if (response && response.ok && isJson && responseText) {
+      try {
+        const json = JSON.parse(responseText);
+        if (json.text) return json.text;
+      } catch (jsonErr) {
+        console.warn('Failed to parse server JSON response:', jsonErr);
+      }
+    }
+
+    // Nếu server trả về lỗi dạng JSON có thông điệp
+    if (isJson && responseText) {
+      try {
+        const errJson = JSON.parse(responseText);
+        if (errJson?.error) {
+          throw new Error(errJson.error);
+        }
+      } catch (e: any) {
+        if (e.message && !e.message.includes('Unexpected token') && !e.message.includes('is not valid JSON')) {
+          throw e;
+        }
+      }
+    }
+
+    // Trường hợp server trả về HTML (<!doctype html> do SPA rewrite hoặc lỗi proxy 502/503) hoặc mất kết nối:
+    // Tự động fallback sang gọi trực tiếp từ Client bằng API Key nội bộ/người dùng
+    const clientKey = ensureClientApiKey(
+      'Máy chủ AI tạm thời trả về phản hồi không hợp lệ. Vui lòng cung cấp Gemini API Key để tiếp tục soạn giáo án:'
+    );
+    if (clientKey) {
+      console.log('[LessonPlan] Falling back to client-side direct generation...');
+      return await generateLessonPlanClientDirect(data, clientKey);
+    }
+
+    throw new Error(
+      `Máy chủ AI tạm thời không thể xử lý yêu cầu (Lỗi ${response?.status || 'kết nối'}). Vui lòng nhấn "Thử lại ngay" sau vài giây!`
+    );
   } catch (error: any) {
     console.error('Error in generateLessonPlan:', error);
-    throw new Error(error?.message || 'Đã xảy ra lỗi không xác định khi soạn kế hoạch bài dạy.');
+    const msg = error?.message || 'Đã xảy ra lỗi không xác định khi soạn kế hoạch bài dạy.';
+    // Làm sạch thông điệp nếu vô tình chứa lỗi parser JSON
+    if (msg.includes('is not valid JSON') || msg.includes('Unexpected token')) {
+      throw new Error('Máy chủ AI đang quá tải hoặc phản hồi chậm. Vui lòng nhấn nút "Thử lại ngay"!');
+    }
+    throw new Error(msg);
   }
 };

@@ -486,8 +486,16 @@ const ErrorMessage: React.FC<{ message: string; onRetry?: () => void }> = ({ mes
     message.toLowerCase().includes("use another api key") ||
     message.toLowerCase().includes("permission_denied");
 
+  const isJsonOrHtmlSyntax =
+    message.toLowerCase().includes("unexpected token") ||
+    message.toLowerCase().includes("<!doctype") ||
+    message.toLowerCase().includes("not valid json") ||
+    message.toLowerCase().includes("json.parse");
+
   const displayMessage = isLeaked
     ? 'Khóa API này đã bị Google vô hiệu hóa vì lý do bảo mật (bị lộ lên GitHub công khai - Leaked API Key). Vui lòng tạo một khóa API mới hoàn toàn miễn phí tại Google AI Studio và bấm nút "🔑 Đổi API Key" bên cạnh để tiếp tục.'
+    : isJsonOrHtmlSyntax
+    ? 'Hệ thống AI hoặc máy chủ phản hồi định dạng không hợp lệ do đang chịu tải cao (High Demand). Vui lòng bấm nút "Thử lại ngay" để kết nối lại!'
     : message.startsWith("{") && message.includes("message")
     ? (() => {
         try {

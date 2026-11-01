@@ -33,7 +33,7 @@ async function generateExamWithRetryAndFallback(options: {
   temperature?: number;
   responseMimeType?: string;
 }): Promise<string> {
-  const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
   let lastError: any = null;
 
   for (const model of models) {
@@ -254,6 +254,17 @@ app.post('/api/generate-slides', async (req, res) => {
     const rawMsg = String(error?.message || error || '');
     return res.status(500).json({ error: `Lỗi khi tạo slide bài giảng: ${rawMsg}` });
   }
+});
+
+// Chặn tuyệt đối việc các route /api rơi vào fallback index.html của SPA
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Endpoint API không tồn tại.' });
+});
+
+// Middleware bắt lỗi toàn cục cho máy chủ Express, luôn trả về JSON
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[Server Error Handler]:', err);
+  res.status(500).json({ error: err?.message || 'Đã xảy ra sự cố nội bộ trên máy chủ.' });
 });
 
 async function startServer() {

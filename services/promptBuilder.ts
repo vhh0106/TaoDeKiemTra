@@ -120,18 +120,22 @@ CRITICAL FORMATTING & CONTENT RULES:
        - Critical thinking and creativity: learn how to ask and answer questions about personal information correctly and fluently.
 ${(() => {
   if (isNlsEnabled && isAiEnabled) {
-    return `       - Digital competence & AI literacy (Circular 02/2025 & Decision 2422): identify and use educational tools (${hasSelectedAiTools ? suggestedToolsText : 'hoclieu.vn'}) safely, verify information, and respect ethical digital practices. (${domainCount === 1 ? `Domain: ${selectedDomains[0]}` : `Domains: ${selectedDomains.join(', ')}`})`;
+    return `       - **Digital Competence & AI Literacy:**
+         * **[${singleDomainPrefix}1.1] - Teacher's measure:** Prepares and displays digital flashcards/audio on hoclieu.vn/screen for topic "${lessonTitle}", guiding Ss to extract target words and communicative structures safely.
+         * **[Code 4.C1.2] - Teacher's measure:** Demonstrates contextual AI pronunciation/visual support ${hasSelectedAiTools ? `(${suggestedToolsText}) ` : ''}for "${lessonTitle}", reminding pupils that human learners control communication.`;
   } else if (isNlsEnabled) {
-    return `       - Digital competence (Circular 02/2025/TT-BGDĐT): use digital educational resources (hoclieu.vn, interactive software) safely, verify information, and practice digital skills (${domainCount === 1 ? `strictly focusing on single domain: ${selectedDomains[0]} with code prefix ${singleDomainPrefix}` : `domains: ${selectedDomains.join(', ')}`}). (DO NOT mention AI or Decision 2422).`;
+    return `       - **Digital Competence (Circular 02/2025/TT-BGDĐT):**
+         * **[${singleDomainPrefix}1.1] - Teacher's measure:** Uses interactive digital materials (hoclieu.vn/screen) for "${lessonTitle}", guiding Ss to extract vocabulary and structures safely. (DO NOT mention AI or Decision 2422).`;
   } else if (isAiEnabled) {
-    return `       - AI literacy (Decision 2422/QĐ-BGDĐT): recognize simple educational AI concepts${hasSelectedAiTools ? ` and tools (${suggestedToolsText})` : ''}, understand humans control AI, verify outputs, and use technology ethically (${aiStrandsText}). (DO NOT mention Circular 02/2025${!hasSelectedAiTools ? ', DO NOT mention specific AI tool names' : ''}).`;
+    return `       - **AI Literacy (Decision 2422/QĐ-BGDĐT):**
+         * **[Code 4.C1.2] - Teacher's measure:** Demonstrates AI-assisted language interaction ${hasSelectedAiTools ? `using ${suggestedToolsText} ` : ''}relevant to "${lessonTitle}", reminding pupils that humans master communication. (DO NOT mention Circular 02/2025${!hasSelectedAiTools ? ', DO NOT mention specific AI tool names' : ''}).`;
   } else {
     return '';
   }
 })()}
      * **### 3. Attitudes/ Qualities:**
        - Show pride in their personal information, hobbies, hometown, family, and country.
-       ${isQpanEnabled ? `- Integration of National Defense & Security Education (under Circular 08/2024/TT-BGDĐT): Foster love for peaceful Vietnam, pride in national sovereignty (sea and islands), solidarity, and traffic/cyber discipline (${qpanThemesText}).` : ''}
+       ${isQpanEnabled ? `- **[National Defense & Security Education - Teacher's measure]:** Integrates images of national sovereignty, peaceful border/sea guards, and social discipline into communicative language practice.` : ''}
    - Section **## B. TEACHING AIDS:**
      * Teacher: website hoclieu.vn, laptop, textbook (Tiếng Anh ${gradeNumber} - Global Success - Kết nối tri thức), lesson plan, TV/projector, audio files, flashcards${isAiEnabled && hasSelectedAiTools ? `, AI teaching tools (${suggestedToolsText})` : ''}.
      * Students: Students’ book Page [X], notebooks, school things.
@@ -902,6 +906,16 @@ ${isNlsEnabled && !isAiEnabled ? `🔴 CHỈ CHỌN NĂNG LỰC SỐ, KHÔNG CH�
 - TUYỆT ĐỐI CẤM ghi "Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)"! CẤM nhắc tới NLS, TT 02/2025 hay mã NLS!` : ''}${!isNlsEnabled && !isAiEnabled ? `🔴 CẢ NLS VÀ AI ĐỀU KHÔNG CHỌN:
 - TUYỆT ĐỐI KHÔNG CÓ MỤC 3 VỀ NLS HAY AI! Chuyển thẳng sang: "### 3. Phẩm chất".` : ''}
 
+**QUY TẮC BẮT BUỘC VỀ PHẦN TÍCH HỢP (GỌN GÀNG, SÚC TÍCH - CHỈ HIỆN MÃ TÍCH HỢP KÈM BIỆN PHÁP CỦA GIÁO VIÊN):**
+⚠️ TUYỆT ĐỐI TUÂN THỦ (TRÁNH DÀI DÒNG):
+- KHÔNG viết dài dòng, KHÔNG tạo các mục con rườm rà (TUYỆT ĐỐI KHÔNG chia các gạch đầu dòng con như "Hoạt động của HS", "Địa chỉ tích hợp", KHÔNG viết đoạn văn dẫn dắt dài dòng).
+- CHỈ CẦN HIỆN: **Mã tích hợp kèm biện pháp của giáo viên** phù hợp trực tiếp với nội dung bài học "${data.lessonName}".
+- Mỗi mã tích hợp trình bày GỌN GÀNG trên DUY NHẤT 1 gạch đầu dòng theo mẫu:
+  \`- **[Mã tích hợp] - Biện pháp của GV:** [Nội dung biện pháp sư phạm của GV gắn với bài học - ngắn gọn, súc tích 1-2 câu]\`
+
+VÀ TRONG BẢNG TIẾN TRÌNH DẠY HỌC (MỤC III):
+- Tại mỗi hoạt động tương ứng (Khởi động, Khám phá, Luyện tập, Vận dụng), chỉ cần ghi gọn gàng tag mã kèm việc làm ngắn gọn của GV: \`[NLS 1.1]\`, \`[Mã 4.C1.2]\`, \`[Lồng ghép GDQP&AN]\` một cách súc tích!
+
 **BỘ SÁCH ÁP DỤNG:** DUY NHẤT bộ sách **Kết nối tri thức với cuộc sống**.
 
 ---
@@ -921,7 +935,7 @@ ${data.themeName ? `${data.themeName.toUpperCase()}\n` : ''}BÀI: ${data.lessonN
 
 ## I. YÊU CẦU CẦN ĐẠT
 ### 1. Năng lực đặc thù
-- (Liệt kê từ 2-4 gạch đầu dòng rõ ràng về kiến thức, kỹ năng đặc thù của môn học mà học sinh làm được).
+- (Liệt kê từ 2-4 gạch đầu dòng rõ ràng về kiến thức, kỹ năng đặc thù của môn học mà học sinh làm được trong bài này).
 ### 2. Năng lực chung
 - Năng lực tự chủ, tự học: (Mô tả hành vi cụ thể học tập độc lập, chủ động).
 - Năng lực giải quyết vấn đề và sáng tạo: (Mô tả hành vi phát hiện và đề xuất giải pháp).
@@ -929,24 +943,26 @@ ${data.themeName ? `${data.themeName.toUpperCase()}\n` : ''}BÀI: ${data.lessonN
 ${(() => {
   if (isNlsEnabled && isAiEnabled) {
     return `### 3. Năng lực số & Giáo dục Trí tuệ nhân tạo (AI)
-- Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT): ${domainCount === 1 ? `Rèn luyện cho học sinh duy nhất ${selectedDomains[0]} [Gắn mã ${singleDomainPrefix}x... tương ứng. TUYỆT ĐỐI CHỈ XUẤT HIỆN 1 MIỀN NÀY, KHÔNG ĐƯỢC XUẤT HIỆN MIỀN THỨ 2]` : `Rèn luyện cho học sinh các miền đã chọn: ${selectedDomains.join('; ')}`}.
-- Giáo dục Trí tuệ nhân tạo (theo QĐ 2422/QĐ-BGDĐT: Mã 4.A1.3): Nhận biết ứng dụng AI ${hasSelectedAiTools ? `minh họa (${suggestedToolsText})` : 'trong học tập và đời sống (không nêu tên công cụ cụ thể)'}, thuộc mạch kiến thức ${aiStrandsText}, con người làm chủ công nghệ.
+- **[${singleDomainPrefix}1.1] - Biện pháp của GV:** Chuẩn bị và trình chiếu hình ảnh, bảng dữ liệu/video số về bài học "${data.lessonName}" trên máy chiếu/màn hình, hướng dẫn học sinh quan sát, định vị và trích xuất thông tin cần thiết.
+${domainCount > 1 ? `- **[NLS 4.3] - Biện pháp của GV:** Thiết kế tình huống thực tế về sử dụng dữ liệu số, hướng dẫn học sinh tôn trọng bản quyền, ghi rõ nguồn học liệu và có ý thức bảo vệ sản phẩm số.` : ''}
+- **[Mã 4.C1.2] - Biện pháp của GV:** Giới thiệu tình huống/hình ảnh trực quan ${hasSelectedAiTools ? `từ công cụ (${suggestedToolsText}) ` : ''}minh họa cách công nghệ/AI hỗ trợ xử lý dữ liệu cho bài học "${data.lessonName}", định hướng học sinh ý thức con người làm chủ công nghệ.
 ### 4. Phẩm chất`;
   } else if (isNlsEnabled) {
     return `### 3. Năng lực số (theo Thông tư 02/2025/TT-BGDĐT)
-- Tích hợp Năng lực số (theo TT 02/2025/TT-BGDĐT): ${domainCount === 1 ? `Rèn luyện cho học sinh duy nhất ${selectedDomains[0]} [Gắn mã ${singleDomainPrefix}x... tương ứng bài học. TUYỆT ĐỐI CHỈ XUẤT HIỆN DUY NHẤT 1 MIỀN NÀY, CẤM XUẤT HIỆN MIỀN THỨ 2]` : `Rèn luyện cho học sinh các miền đã chọn: ${selectedDomains.join('; ')}`}.
+- **[${singleDomainPrefix}1.1] - Biện pháp của GV:** Chuẩn bị và trình chiếu hình ảnh, dữ liệu số về bài học "${data.lessonName}" trên tivi/máy chiếu, hướng dẫn học sinh quan sát và khai thác thông tin trọng tâm.
+${domainCount > 1 ? `- **[NLS 4.3] - Biện pháp của GV:** Hướng dẫn học sinh văn hóa sử dụng thiết bị, bảo quản học liệu số và tôn trọng sản phẩm của bạn bè trong học tập.` : ''}
 *(CHÚ Ý BẮT BUỘC: Giáo dục AI đang tắt, TUYỆT ĐỐI KHÔNG có dòng nào về AI hay QĐ 2422)*
 ### 4. Phẩm chất`;
   } else if (isAiEnabled) {
     return `### 3. Giáo dục Trí tuệ nhân tạo (theo Quyết định 2422/QĐ-BGDĐT)
-- Giáo dục Trí tuệ nhân tạo (Mã 4.A1.3): Nhận biết và tìm hiểu về AI ${hasSelectedAiTools ? `qua công cụ (${suggestedToolsText})` : `theo mạch kiến thức ${aiStrandsText}`}, hiểu AI là công cụ hỗ trợ và con người giữ quyền quyết định.${!hasSelectedAiTools ? ' (LƯU Ý: Người dùng KHÔNG chọn công cụ AI cụ thể nào, TUYỆT ĐỐI KHÔNG tự thêm tên công cụ như Canva, AutoDraw...)' : ''}
+- **[Mã 4.C1.2] - Biện pháp của GV:** Giới thiệu tình huống/hình ảnh trực quan ${hasSelectedAiTools ? `từ công cụ (${suggestedToolsText}) ` : ''}minh họa ứng dụng AI hỗ trợ bài học "${data.lessonName}", định hướng học sinh hiểu AI là công cụ hỗ trợ và con người luôn giữ quyền quyết định.${!hasSelectedAiTools ? ' (LƯU Ý: Người dùng KHÔNG chọn công cụ AI cụ thể nào, TUYỆT ĐỐI KHÔNG tự thêm tên công cụ như Canva, AutoDraw...)' : ''}
 *(CHÚ Ý BẮT BUỘC: Năng lực số đang tắt, TUYỆT ĐỐI KHÔNG có dòng nào về NLS hay TT 02/2025)*
 ### 4. Phẩm chất`;
   } else {
     return `### 3. Phẩm chất`;
   }
 })()}
-- Phẩm chất yêu nước: Tự hào về truyền thống tốt đẹp của quê hương, đất nước${isQpanEnabled ? `; **Lồng ghép GDQP&AN (theo Thông tư 08/2024/TT-BGDĐT)**: (Ghi rõ nội dung học sinh nhận thức về tình yêu quê hương, đất nước, lòng biết ơn người có công, tự hào về Quân đội nhân dân, Công an nhân dân, hoặc ý thức về chủ quyền biển đảo/an ninh trật tự theo bài học)` : '; có ý thức giữ gìn, bảo vệ các giá trị văn hóa và môi trường xung quanh'}.
+- Phẩm chất yêu nước: Tự hào về truyền thống tốt đẹp của quê hương, đất nước${isQpanEnabled ? `; **[Lồng ghép GDQP&AN - Biện pháp của GV]**: GV khéo léo liên hệ kiến thức bài học "${data.lessonName}" với truyền thống yêu nước, lòng biết ơn người có công, tự hào về Quân đội nhân dân, Công an nhân dân hoặc ý thức giữ gìn an ninh trường học` : '; có ý thức giữ gìn, bảo vệ các giá trị văn hóa và môi trường xung quanh'}.
 - Phẩm chất chăm chỉ: Tích cực tham gia vào các hoạt động học tập, hoàn thành nhiệm vụ được giao.
 - Phẩm chất trách nhiệm: Có ý thức bảo quản thiết bị, đồ dùng học tập; sử dụng công nghệ an toàn; có ý thức chấp hành kỷ luật, nội quy trường lớp và quy định của pháp luật.
 
@@ -959,31 +975,40 @@ ${(() => {
 
 | HOẠT ĐỘNG CỦA GIÁO VIÊN | HOẠT ĐỘNG CỦA HỌC SINH |
 | :--- | :--- |
-| **1. Khởi động, kết nối.**<br/>- Ổn định lớp.<br/>- Yêu cầu: Thực hiện trò chơi "Ai nhanh hơn" (hoặc Đố bạn / video tương tác / câu đố). Luật chơi: Trả lời nhanh và đúng các câu hỏi trắc nghiệm đã cho.<br/>- GV nhận xét, tuyên dương, dẫn dắt vào bài mới. | - HS báo cáo sĩ số lớp.<br/>- HS tham gia trò chơi, trả lời câu hỏi.<br/>- HS chú ý lắng nghe. |
-| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1]**<br/>- GV giới thiệu nội dung bài tập / chia sẻ tranh ảnh, video / nêu câu hỏi cho học sinh thảo luận nhóm...<br/>${(() => {
-  if (isNlsEnabled && isAiEnabled) {
-    return `*(Tích hợp NLS TT 02/2025 [${domainCount === 1 ? selectedDomains[0] : 'các miền NLS đã chọn'}] & Giáo dục AI QĐ 2422: HS khai thác dữ liệu số và làm quen ứng dụng AI)*<br/>`;
-  } else if (isNlsEnabled) {
-    return `*(Tích hợp NLS TT 02/2025: HS tìm kiếm, khai thác dữ liệu theo ${domainCount === 1 ? `duy nhất ${selectedDomains[0]}` : 'các miền đã chọn'}. Tuyệt đối không lồng ghép AI)*<br/>`;
-  } else if (isAiEnabled) {
-    return `*(Tích hợp Giáo dục AI QĐ 2422: HS nhận biết và quan sát công cụ AI hỗ trợ theo mạch ${aiStrandsText}. Tuyệt đối không đưa mã NLS)*<br/>`;
-  } else {
-    return '';
+| **1. Khởi động, kết nối.**<br/>- Ổn định nền nếp lớp.<br/>- GV tổ chức trò chơi hoặc tình huống khởi động: [Nêu tên trò chơi/tình huống hấp dẫn liên quan trực tiếp đến bài học ${data.lessonName}].<br/>${(() => {
+  if (isAiEnabled) {
+    return `- **[Mã AI tương ứng - Gợi mở công nghệ]**: GV trình chiếu hình ảnh/câu đố tương tác do công nghệ gợi ý, dẫn dắt học sinh nhận biết ứng dụng thực tế của bài học.<br/>`;
   }
-})()}- GV nhận xét tuyên dương, chốt kiến thức: ... | - HS chú ý quan sát tranh/video.<br/>- HS thảo luận nhóm làm bài tập vào phiếu bài tập.<br/>- Đại diện các nhóm báo cáo kết quả thảo luận.<br/>- HS khác nhận xét, bổ sung.<br/>- Lắng nghe rút kinh nghiệm. |
-| **2.2. [Tên hoạt động khám phá 2]**<br/>- GV nêu câu hỏi / nhiệm vụ tìm hiểu tiếp theo mở rộng kiến thức...<br/>${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo Thông tư 08/2024/TT-BGDĐT: GV khéo léo liên hệ nội dung bài học với truyền thống yêu nước, hình ảnh bộ đội, công an, bảo vệ an ninh trật tự, chủ quyền biển đảo hoặc ý thức giữ gìn kỷ luật học đường...)*<br/>` : ''}- GV nhận xét chung, tuyên dương và chốt kiến thức: ... | - HS đọc yêu cầu bài, quan sát và suy nghĩ.<br/>- HS thảo luận và trả lời câu hỏi.<br/>- Đại diện trình bày, nhóm khác nhận xét.<br/>- HS lắng nghe, tự hào và chốt nội dung. |
-| **3. Luyện tập**<br/>- GV hướng dẫn học sinh làm bài tập ... trong SGK Kết nối tri thức.<br/>- Yêu cầu học sinh làm việc cá nhân / nhóm đôi để hoàn thành.<br/>- GV quan sát, giúp đỡ học sinh gặp khó khăn.<br/>- GV nhận xét tuyên dương học sinh làm tốt. | - HS nghe hướng dẫn của giáo viên làm bài tập.<br/>- HS thực hành làm bài tập vào vở hoặc phiếu bài tập.<br/>- Một số HS trình bày trước lớp.<br/>- HS khác nhận xét bài làm của bạn. |
-| **4. Vận dụng**<br/>- GV giao nhiệm vụ vận dụng thực tế đời sống...<br/>${(() => {
-  if (isNlsEnabled && isAiEnabled) {
-    return `*(Tích hợp NLS TT 02/2025 & Giáo dục AI QĐ 2422: Hướng dẫn HS chia sẻ sản phẩm số, ứng dụng công nghệ/AI có đạo đức và trách nhiệm)*<br/>`;
-  } else if (isNlsEnabled) {
-    return `*(Tích hợp NLS TT 02/2025: Hướng dẫn HS ứng dụng công nghệ số an toàn theo ${domainCount === 1 ? `duy nhất ${selectedDomains[0]}` : 'các miền đã chọn'}. Tuyệt đối không lồng ghép AI)*<br/>`;
-  } else if (isAiEnabled) {
-    return `*(Tích hợp Giáo dục AI QĐ 2422: Hướng dẫn HS áp dụng AI an toàn, con người làm chủ, tuân thủ đạo đức học đường. Tuyệt đối không lồng ghép mã NLS)*<br/>`;
-  } else {
-    return '';
+  return '';
+})()}- GV nhận xét, tuyên dương và dẫn dắt vào bài mới: [Lời dẫn dắt sư phạm cụ thể của bài học]. | - Lớp trưởng báo cáo sĩ số.<br/>- HS tích cực tham gia trò chơi, chú ý quan sát và xung phong trả lời câu hỏi.<br/>- HS lắng nghe GV nhận xét và hào hứng bước vào bài học mới. |
+| **2. Hình thành kiến thức mới / Khám phá**<br/>**2.1. [Tên hoạt động khám phá 1 gắn chặt với bài học ${data.lessonName}]**<br/>- GV giao nhiệm vụ học tập: [Mô tả chi tiết nhiệm vụ và câu hỏi thảo luận về kiến thức bài học ${data.lessonName}].<br/>${(() => {
+  if (isNlsEnabled) {
+    return `- **[${singleDomainPrefix}1.1 - Khai thác thông tin số]**: GV trình chiếu dữ liệu/hình ảnh/bảng số liệu học liệu số của bài học lên màn hình chiếu, hướng dẫn học sinh các bước quan sát và trích xuất dữ liệu trọng tâm.<br/>`;
   }
-})()}${isQpanEnabled ? `*(Lồng ghép GDQP&AN theo TT 08/2024: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước...)*<br/>` : ''}- GV nhận xét tiết dạy, tuyên dương tinh thần học tập.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng.<br/>- HS chia sẻ với bạn về hiểu biết và ý tưởng thực tế.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
+  return '';
+})()}- GV quan sát các nhóm thảo luận, kịp thời giúp đỡ học sinh.<br/>- GV cùng học sinh nhận xét, chốt kiến thức cốt lõi: [Nêu rõ kiến thức chốt cần ghi nhớ]. | - HS đọc yêu cầu nhiệm vụ và quan sát ngữ liệu trong SGK kết hợp màn chiếu.<br/>${(() => {
+  if (isNlsEnabled) {
+    return `- **[${singleDomainPrefix}1.1 - Thao tác với dữ liệu số]**: HS quan sát hình ảnh/bảng dữ liệu số, phân tích và trích xuất các thông tin cần thiết của bài học, ghi chép vào phiếu học tập nhóm.<br/>`;
+  }
+  return '';
+})()}- Đại diện nhóm báo cáo kết quả thảo luận.<br/>- Các nhóm khác lắng nghe, nhận xét và bổ sung.<br/>- HS ghi nhớ kiến thức trọng tâm của bài vào vở. |
+| **2.2. [Tên hoạt động khám phá 2 / Mở rộng kiến thức bài học]**<br/>- GV nêu câu hỏi/nhiệm vụ tìm hiểu tiếp theo mở rộng kiến thức bài học...<br/>${isQpanEnabled ? `- **[Lồng ghép GDQP&AN theo Thông tư 08/2024/TT-BGDĐT]**: GV khéo léo liên hệ kiến thức bài học với tình yêu quê hương đất nước, hình ảnh bộ đội, công an, bảo vệ an ninh trật tự, chủ quyền biển đảo hoặc ý thức giữ gìn kỷ luật học đường.<br/>` : ''}- GV nhận xét chung, tuyên dương và chốt kiến thức. | - HS đọc yêu cầu, quan sát và trao đổi nhóm đôi để suy nghĩ câu trả lời.<br/>- Đại diện HS trình bày kết quả, nhóm khác nhận xét.<br/>${isQpanEnabled ? `- HS bày tỏ tình cảm tự hào, ý thức kỷ luật học đường và trách nhiệm giữ gìn an ninh trường lớp.<br/>` : ''}- HS lắng nghe, tự hào và chốt nội dung. |
+| **3. Luyện tập, thực hành**<br/>- GV giao các bài tập cụ thể trong SGK Kết nối tri thức: [Nêu rõ bài tập 1, bài tập 2 trong SGK của bài ${data.lessonName}].<br/>- Yêu cầu học sinh làm việc cá nhân / nhóm đôi để hoàn thành.<br/>${(() => {
+  if (isNlsEnabled) {
+    return `- **[${singleDomainPrefix}1.2 / NLS an toàn số]**: Hướng dẫn học sinh hoàn thành bài tập, giữ gìn phương tiện học tập và chia sẻ kết quả trung thực với bạn.<br/>`;
+  }
+  return '';
+})()}- GV quan sát, giúp đỡ học sinh gặp khó khăn.<br/>- GV nhận xét, chữa bài và tuyên dương học sinh làm tốt. | - HS nghe hướng dẫn của giáo viên làm bài tập.<br/>- HS thực hành làm bài tập vào vở hoặc phiếu bài tập.<br/>- Một số HS lên bảng trình bày hoặc chia sẻ kết quả trước lớp.<br/>- HS khác nhận xét bài làm của bạn, tự sửa bài vào vở. |
+| **4. Vận dụng**<br/>- GV giao thử thách vận dụng kiến thức bài học vào đời sống thực tế: [Nhiệm vụ cụ thể học sinh thực hiện sau bài học ${data.lessonName}].<br/>${(() => {
+  if (isNlsEnabled && isAiEnabled) {
+    return `- **[Tích hợp NLS & Giáo dục AI]**: Hướng dẫn học sinh chia sẻ sản phẩm số, ứng dụng công nghệ/AI có đạo đức, con người luôn làm chủ và kiểm tra thông tin.<br/>`;
+  } else if (isNlsEnabled) {
+    return `- **[${singleDomainPrefix}4.3 - Ý thức công dân số]**: Hướng dẫn học sinh ứng dụng công nghệ số an toàn, thời lượng hợp lý và chia sẻ điều bổ ích với người thân.<br/>`;
+  } else if (isAiEnabled) {
+    return `- **[Mã AI tương ứng - Con người làm chủ]**: Hướng dẫn học sinh áp dụng công nghệ thông minh hỗ trợ giải quyết tình huống thực tế, luôn có sự kiểm tra và hỏi ý kiến thầy cô, cha mẹ.<br/>`;
+  }
+  return '';
+})()}${isQpanEnabled ? `- **[Lồng ghép GDQP&AN]**: Dặn dò học sinh phát huy tinh thần đoàn kết, tương trợ bạn bè, chấp hành tốt an toàn giao thông, yêu quý quê hương đất nước.<br/>` : ''}- GV nhận xét tiết dạy, tuyên dương tinh thần học tập của cả lớp.<br/>- Dặn dò về nhà chuẩn bị cho bài học tiếp theo. | - HS lắng nghe nhiệm vụ vận dụng thực tế.<br/>- HS suy nghĩ và đề xuất cách giải quyết tình huống của bản thân.<br/>- HS ghi nhớ nhiệm vụ về nhà và chuẩn bị bài mới.<br/>- Lắng nghe, rút kinh nghiệm. |
 
 ## IV. ĐIỀU CHỈNH SAU BÀI DẠY:
 .....................................................................................................................................

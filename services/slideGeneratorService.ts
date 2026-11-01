@@ -80,7 +80,7 @@ async function generateSlidesClientDirect(
   });
 
   const { prompt, systemInstruction } = createSlidePresentationPrompt(data, lessonPlanContent);
-  const models = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
 
   let lastError: any = null;
   for (const model of models) {
@@ -143,22 +143,38 @@ export async function generateStudentTeachingSlides(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ data, lessonPlanContent }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Lỗi máy chủ (${response.status})`);
+    const contentType = response.headers.get('content-type') || '';
+    const responseText = await response.text();
+    const isJson = contentType.includes('application/json') || (responseText.trim().startsWith('{') && responseText.trim().endsWith('}'));
+
+    if (response.ok && isJson) {
+      const resJson = JSON.parse(responseText);
+      if (resJson.text) {
+        return cleanAndParseJson(resJson.text);
+      }
     }
 
-    const resJson = await response.json();
-    return cleanAndParseJson(resJson.text);
+    let errorMessage = `Lỗi máy chủ (${response.status})`;
+    if (isJson) {
+      try {
+        const errorData = JSON.parse(responseText);
+        if (errorData.error) errorMessage = errorData.error;
+      } catch {}
+    }
+    throw new Error(errorMessage);
   } catch (err) {
     console.warn('[Server Slide API Failed, trying client fallback]:', err);
     // Dự phòng gọi trực tiếp nếu server không có API key hoặc lỗi mạng
     const clientKey = await ensureClientApiKey();
-    const rawAiText = await generateSlidesClientDirect(data, lessonPlanContent, clientKey);
-    return cleanAndParseJson(rawAiText);
+    if (clientKey) {
+      const rawAiText = await generateSlidesClientDirect(data, lessonPlanContent, clientKey);
+      return cleanAndParseJson(rawAiText);
+    }
+    throw err instanceof Error ? err : new Error('Không thể tạo slide bài giảng.');
   }
 }

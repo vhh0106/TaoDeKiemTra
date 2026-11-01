@@ -43,6 +43,36 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
   let inTable = false;
   let tableRows: string[][] = [];
 
+  const formatWordContent = (text: string) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(
+        /\[(NLS\s+[0-9a-zA-Z\.\-]+(?:\s*-\s*[^\]]+)?)\]/g,
+        '<span style="background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10.5pt;">[$1]</span>'
+      )
+      .replace(
+        /\[((?:Mã|Code)\s+\d+\.[A-D]\d+(?:\.\d+)?(?:\s*-\s*[^\]]+)?)\]/g,
+        '<span style="background-color: #faf5ff; color: #581c87; border: 1px solid #e9d5ff; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10.5pt;">[$1]</span>'
+      )
+      .replace(
+        /\[((?:Lồng ghép GDQP&AN|QPAN)[^\]]*)\]/g,
+        '<span style="background-color: #fff1f2; color: #881337; border: 1px solid #fecdd3; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10.5pt;">[$1]</span>'
+      )
+      .replace(
+        /(Biện pháp(?: sư phạm)?(?: của GV|\s*\(GV\))?:|Teacher's (?:pedagogical )?measure:)/gi,
+        '<strong style="color: #1e3a8a;">$1</strong>'
+      )
+      .replace(
+        /(Hoạt động(?: cụ thể)? của HS(?: sinh)?(?:\s*\(HS\))?:|Students' Learning Activity:|Students' Activity:)/gi,
+        '<strong style="color: #065f46;">$1</strong>'
+      )
+      .replace(
+        /(Địa chỉ tích hợp(?: trong bài| trong tiến trình)?:|Integration Address in Procedures:)/gi,
+        '<strong style="color: #92400e;">$1</strong>'
+      );
+  };
+
   const flushTable = () => {
     if (tableRows.length === 0) return;
     html += '<table border="1" style="border-collapse: collapse; width: 100%; margin-top: 10px; margin-bottom: 15px; font-family: \'Times New Roman\', serif; font-size: 11pt;">';
@@ -62,10 +92,7 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
         html += '<tr>';
         row.forEach((cell, cIdx) => {
           const width = cIdx === 0 ? '55%' : '45%';
-          const formatted = cell
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/<br\s*\/?>/gi, '<br/>');
+          const formatted = formatWordContent(cell).replace(/<br\s*\/?>/gi, '<br/>');
           html += `<td style="padding: 8px 10px; border: 1px solid #cbd5e1; width: ${width}; vertical-align: top; text-align: left;">${formatted}</td>`;
         });
         html += '</tr>';
@@ -114,9 +141,7 @@ const convertLessonPlanToWordHtml = (content: string, formData: LessonPlanFormDa
       // code block boundaries, skip or format
       continue;
     } else {
-      let formatted = line
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      const formatted = formatWordContent(line);
       html += `<p style="margin: 3px 0; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.45;">${formatted}</p>`;
     }
   }
@@ -163,15 +188,71 @@ const FormattedLessonPlanRenderer: React.FC<{ content: string }> = ({ content })
   let tableRows: string[][] = [];
 
   const formatText = (text: string) => {
-    const formatted = text
+    let formatted = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/(NLS\s+[0-9a-zA-Z\.\-]+)/g, '<span class="inline-block bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
-      .replace(/(QĐ\s*2422(?:\/QĐ-BGDĐT)?(?::\s*Mã\s+[\d\.A-D\;\s]+)?)/g, '<span class="inline-block bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
-      .replace(/(Mã\s+\d+\.[A-D]\d+\.\d+(?:;\s*\d+\.[A-D]\d+\.\d+)*)/g, '<span class="inline-block bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
-      .replace(/(Thông tư\s*(?:số\s*)?08\/2024(?:\/TT-BGDĐT)?)/g, '<span class="inline-block bg-red-100 dark:bg-red-950/70 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>')
-      .replace(/(Lồng ghép GDQP&AN[^\.\:\;\*]*)/g, '<span class="inline-block bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-sans text-[11px] px-1.5 py-0.5 rounded font-semibold">$1</span>')
-      .replace(/(QPAN\s+\d+\.\d+)/g, '<span class="inline-block bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>');
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // 1. Tag brackets for NLS, AI, QPAN
+    formatted = formatted
+      .replace(
+        /\[(NLS\s+[0-9a-zA-Z\.\-]+(?:\s*-\s*[^\]]+)?)\]/g,
+        '<span class="inline-flex items-center gap-1 bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-sans text-[11px] px-2 py-0.5 rounded-md font-bold shadow-2xs">$1</span>'
+      )
+      .replace(
+        /\[((?:Mã|Code)\s+\d+\.[A-D]\d+(?:\.\d+)?(?:\s*-\s*[^\]]+)?)\]/g,
+        '<span class="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-sans text-[11px] px-2 py-0.5 rounded-md font-bold shadow-2xs">$1</span>'
+      )
+      .replace(
+        /\[((?:Lồng ghép GDQP&AN|QPAN)[^\]]*)\]/g,
+        '<span class="inline-flex items-center gap-1 bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-sans text-[11px] px-2 py-0.5 rounded-md font-bold shadow-2xs">$1</span>'
+      );
+
+    // 2. Standalone codes & circulars
+    formatted = formatted
+      .replace(
+        /(?<![">])\b(NLS\s+[0-9a-zA-Z\.\-]+)\b(?![<"])/g,
+        '<span class="inline-block bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      )
+      .replace(
+        /(QĐ\s*2422(?:\/QĐ-BGDĐT)?(?::\s*Mã\s+[\d\.A-D\;\s]+)?)/g,
+        '<span class="inline-block bg-indigo-100 dark:bg-indigo-950/70 text-indigo-900 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      )
+      .replace(
+        /(?<![">])\b(Mã\s+\d+\.[A-D]\d+(?:\.\d+)?(?:;\s*\d+\.[A-D]\d+(?:\.\d+)?)*)\b(?![<"])/g,
+        '<span class="inline-block bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      )
+      .replace(
+        /(?<![">])\b(Mã\s+\d+\.\d+)\b(?![<"])/g,
+        '<span class="inline-block bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      )
+      .replace(
+        /(Thông tư\s*(?:số\s*)?08\/2024(?:\/TT-BGDĐT)?)/g,
+        '<span class="inline-block bg-red-100 dark:bg-red-950/70 text-red-900 dark:text-red-300 border border-red-300 dark:border-red-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      )
+      .replace(
+        /(Lồng ghép GDQP&AN[^\.\:\;\*]*)/g,
+        '<span class="inline-block bg-rose-50 dark:bg-rose-950/50 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-sans text-[11px] px-1.5 py-0.5 rounded font-semibold">$1</span>'
+      )
+      .replace(
+        /(?<![">])\b(QPAN\s+\d+\.\d+)\b(?![<"])/g,
+        '<span class="inline-block bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-800 font-mono text-[11px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">$1</span>'
+      );
+
+    // 3. Highlight pedagogical structure labels
+    formatted = formatted
+      .replace(
+        /(Biện pháp(?: sư phạm)?(?: của GV|\s*\(GV\))?:|Teacher's (?:pedagogical )?measure:)/gi,
+        '<strong class="text-indigo-900 dark:text-indigo-300 font-bold">$1</strong>'
+      )
+      .replace(
+        /(Hoạt động(?: cụ thể)? của HS(?: sinh)?(?:\s*\(HS\))?:|Students' Learning Activity:|Students' Activity:)/gi,
+        '<strong class="text-emerald-900 dark:text-emerald-300 font-bold">$1</strong>'
+      )
+      .replace(
+        /(Địa chỉ tích hợp(?: trong bài| trong tiến trình)?:|Integration Address in Procedures:)/gi,
+        '<strong class="text-amber-800 dark:text-amber-400 font-bold">$1</strong>'
+      );
+
     return renderMathInHtml(formatted);
   };
 
